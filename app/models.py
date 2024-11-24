@@ -1,3 +1,4 @@
+from PIL.ImageChops import duplicate
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
 from sqlalchemy.orm import relationship, backref
 from app import db, app
@@ -5,14 +6,14 @@ from enum import Enum as StatusEnum
 from flask_security import RoleMixin, UserMixin
 from sqlalchemy.sql import func
 import hashlib
-import json, random,os
+import json, random, os
 
 
 class OrderEnum(StatusEnum):
-    CHOXULY = 1,
-    DAXACNHAN = 2,
-    DAGIAO = 3,
-    DANGGIAOHANG = 4,
+    CHOXULY = 1
+    DAXACNHAN = 2
+    DAGIAO = 3
+    DANGGIAOHANG = 4
     DAHUY = 5
 
 
@@ -29,7 +30,7 @@ class Role(BaseModel):
     description = Column(String(45, 'utf8mb4_unicode_ci'))
 
     permissions = relationship('Permission', secondary='role_has_permission', lazy='subquery',
-                        backref=backref('roles', lazy=True))
+                               backref=backref('roles', lazy=True))
     users = relationship('User', backref='role', lazy=True)
 
 
@@ -67,8 +68,9 @@ class User(BaseModel):
                                backref=db.backref('users', lazy=True))  # n-n
     permission = db.relationship('Permission', secondary='user_has_permission', lazy='subquery',
                                  backref=backref('users', lazy=True))  # n-n
-    wish_list_book=relationship('Book',secondary='wish_list_book',lazy='subquery',
-                                 backref=backref('users', lazy=True))
+    wish_list_book = relationship('Book', secondary='wish_list_book', lazy='subquery',
+                                  backref=backref('users', lazy=True))
+
 
 class BankingInformation(BaseModel):
     __tablename__ = 'banking_information'
@@ -89,11 +91,10 @@ class Order(BaseModel):
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
     status = Column(Enum(OrderEnum), default=OrderEnum.CHOXULY)
-
     payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False)
-    banking_information_id = Column(ForeignKey(BankingInformation.id), unique=True, nullable=True)#1-1
+    banking_information_id = Column(ForeignKey(BankingInformation.id), unique=True, nullable=True)  # 1-1
 
-    books = relationship('order_detail', backref='order')
+    books = relationship('OrderDetail', backref='order')
 
 
 class Author(BaseModel):
@@ -101,6 +102,7 @@ class Author(BaseModel):
 
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
+
 
 class WishListBook(BaseModel):
     __tablename__ = 'wish_list_book'
@@ -110,7 +112,7 @@ class WishListBook(BaseModel):
 
 class Category(BaseModel):
     __tablename__ = 'category'
-    name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
+    name = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
 
     def __str__(self):
         return self.name
@@ -123,35 +125,36 @@ class Book(BaseModel):
     unit_price = Column(DECIMAL(18, 2), nullable=False, default=0)
     available_quantity = Column(Integer, nullable=False, default=0)
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
-    image = Column(String(100, 'utf8mb4_unicode_ci'), nullable=False,
+    image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
     discount = Column(DOUBLE, nullable=True)
     description = Column(Text)
 
-
     reviews = relationship('Review', backref='book', lazy=True)  # 1-n
 
     authors = db.relationship('Author', secondary='author_book', lazy='subquery',
-                              backref=db.backref('books', lazy=True))  # n-n
+                              backref=db.backref('book', lazy=True))  # n-n
     categories = db.relationship('Category', secondary='book_category', lazy='subquery',
-                                 backref=db.backref('books', lazy=True))  # n-n
+                                 backref=db.backref('book', lazy=True))  # n-n
     vouchers = db.relationship('Voucher', secondary='book_has_voucher', lazy='subquery',
-                               backref=db.backref('books', lazy=True))  # n-n
+                               backref=db.backref('book', lazy=True))  # n-n
 
-    orders = relationship('order_detail', backref='book')  # n-1
-    import_tickets = relationship('import_detail', backref='book')  # n-1
+    orders = relationship('OrderDetail', backref='book')  # n-1
+    import_tickets = relationship('ImportDetail', backref='book')  # n-1
 
 
-author_book= db.Table(
+author_book = db.Table(
     'author_book',
     Column('book_id', ForeignKey('book.id'), primary_key=True),
-    Column('author_id', ForeignKey('author.id'), primary_key=True)
+    Column('author_id', ForeignKey('author.id'), primary_key=True),
+
 )
 
 book_category = db.Table(
     'book_category',
     Column('book_id', ForeignKey('book.id'), primary_key=True),
-    Column('category_id', ForeignKey('category.id'), primary_key=True)
+    Column('category_id', ForeignKey('category.id'), primary_key=True),
+
 )
 
 
@@ -185,9 +188,9 @@ class Voucher(BaseModel):
 
 
 book_has_voucher = db.Table('book_has_voucher', BaseModel.metadata,
-    Column('book_id', Integer, ForeignKey('book.id')),
-    Column('voucher_id', Integer, ForeignKey('voucher.id'))
-)
+                            Column('book_id', Integer, ForeignKey('book.id')),
+                            Column('voucher_id', Integer, ForeignKey('voucher.id'))
+                            )
 
 
 class UserHasVoucher(BaseModel):
@@ -207,7 +210,7 @@ class ImportTicket(BaseModel):
     import_date = Column(DateTime, nullable=False, default=func.now())
     employee_id = Column(ForeignKey('user.id'), nullable=False, index=True)
 
-    books = relationship('Importdetail', backref="importticket")
+    books = relationship('ImportDetail', backref="import_ticket")
 
 
 class Review(BaseModel):
@@ -251,7 +254,7 @@ class OrderDetail(BaseModel):
 if __name__ == '__main__':
     with app.app_context():
         # db.create_all()
-    # # def build_sample_db():
+        # # def build_sample_db():
         with open('../app/static/data_import/book_data.json', 'rb') as f:
             data = json.load(f)
             for book in data:
@@ -260,7 +263,7 @@ if __name__ == '__main__':
                 image = str(book['image']).strip()
                 standard_price = random.randint(20, 200) * 1000
                 sell_price = int(standard_price * 1.25)
-                discount=  random.randint(10, 20) * 1000
+                discount = random.randint(10, 20) * 1000
 
                 categories = []
                 for category_name in book['category']:
@@ -269,18 +272,22 @@ if __name__ == '__main__':
                     if not db_category:
                         db_category = Category(name=category_name)
                         db.session.add(db_category)
-                    categories.append(db_category)
-
+                        db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+                    if db_category not in categories:
+                        categories.append(db_category)
                 authors = []
                 for author_name in book['author']:
                     author_name = str(author_name).strip()
-                    db_author = Author.query.filter_by(name=author_name).first()
+                    first_name, last_name = author_name.split(' ', 1) if ' ' in author_name else (author_name, "")
+                    db_author = Author.query.filter_by(last_name=author_name).first()
                     if not db_author:
-                        db_author = Author(name=author_name)
+                        db_author = Author(first_name=author_name, last_name=author_name)
                         db.session.add(db_author)
-                    authors.append(db_author)
+                        db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+                    if db_author not in authors:
+                        authors.append(db_author)
 
-                new_book = Book(name=name,
+                new_book = Book(name= name,
                                 description=description,
                                 image=image,
                                 standard_price=standard_price,
@@ -289,7 +296,9 @@ if __name__ == '__main__':
                                 is_enable=True,
                                 )
 
-                new_book.categories = categories
-                new_book.authors = authors
+                # Gán categories và authors cho sách, tránh trùng lặp
+                new_book.categories.extend([c for c in categories if c not in new_book.categories])
+                new_book.authors.extend([a for a in authors if a not in new_book.authors])
+
                 db.session.add(new_book)
             db.session.commit()
