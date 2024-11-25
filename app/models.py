@@ -254,7 +254,7 @@ class OrderDetail(BaseModel):
 if __name__ == '__main__':
     with app.app_context():
         # db.create_all()
-        # # def build_sample_db():
+        # read data from json:
         with open('../app/static/data_import/book_data.json', 'rb') as f:
             data = json.load(f)
             for book in data:
@@ -281,7 +281,7 @@ if __name__ == '__main__':
                     first_name, last_name = author_name.split(' ', 1) if ' ' in author_name else (author_name, "")
                     db_author = Author.query.filter_by(last_name=author_name).first()
                     if not db_author:
-                        db_author = Author(first_name=author_name, last_name=author_name)
+                        db_author = Author(first_name=first_name, last_name=last_name)
                         db.session.add(db_author)
                         db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
                     if db_author not in authors:
@@ -302,3 +302,4 @@ if __name__ == '__main__':
 
                 db.session.add(new_book)
             db.session.commit()
+        # END read data from json
