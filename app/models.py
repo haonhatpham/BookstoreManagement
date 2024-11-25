@@ -253,7 +253,7 @@ class OrderDetail(BaseModel):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
+        db.create_all()
         # read data from json:
         with open('../app/static/data_import/book_data.json', 'rb') as f:
             data = json.load(f)
@@ -278,8 +278,8 @@ if __name__ == '__main__':
                 authors = []
                 for author_name in book['author']:
                     author_name = str(author_name).strip()
-                    first_name, last_name = author_name.split(' ', 1) if ' ' in author_name else (author_name, "")
-                    db_author = Author.query.filter_by(last_name=author_name).first()
+                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
+                    db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
                     if not db_author:
                         db_author = Author(first_name=first_name, last_name=last_name)
                         db.session.add(db_author)

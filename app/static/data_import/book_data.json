@@ -170,7 +170,7 @@
     {
         "title": "Memory the sword",
         "author": ["Nguyễn Thị Lan"],
-        "category": "Physicists",
+        "category": ["Physicists"],
         "image": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732253107/book-10_vazjb3.png",
         "description": "A. Einstein was a genius of mankind. He is of Jewish descent, born in Germany and a citizen of the United States.The book introduces his role in the development of the atomic bomb and his efforts to preserve world peace . Einstein's theory of relativity won the Nobel Prize. There has not been a scientist in the world devoted to science and physics as talented and extraordinary as A. Einstein."
     },
@@ -198,7 +198,7 @@
     {
         "title": "A Brief History of Time",
         "author": ["Trần Bình An"],
-        "category": "Science",
+        "category": ["Science"],
         "image": "http://books.google.com/books/content?id=oZhagX6UWOMC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
         "description": "#1 NEW YORK TIMES BESTSELLER A landmark volume in science writing by one of the great minds of our time, Stephen Hawking’s book explores such profound questions as: How did the universe begin—and what made its start possible? Does time always flow forward? Is the universe unending—or are there boundaries? Are there other dimensions in space? What will happen when it all ends? Told in language we all can understand, A Brief History of Time plunges into the exotic realms of black holes and quarks, of antimatter and “arrows of time,” of the big bang and a bigger God—where the possibilities are wondrous and unexpected. With exciting images and profound imagination, Stephen Hawking brings us closer to the ultimate secrets at the very heart of creation."
     },
