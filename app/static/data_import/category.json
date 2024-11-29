@@ -1,0 +1,66 @@
+[
+    {
+        "name": "Sách kỹ năng sống",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/sach-ky-nang-song_eg8osq.png"
+    },
+    {
+        "name": "Sách thiếu nhi",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/sach-thieu-nhi_bsoirf.png"
+    },
+    {
+        "name": "Sách khoa học",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252869/sach-khoa-hoc_yanqdc.png"
+    },
+    {
+        "name": "Tiểu thuyết",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png"
+    },
+    {
+        "name": "Truyện dài",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252869/truyen-dai_csyghc.png"
+    },
+    {
+        "name": "Truyện tranh",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/truyen-tranh_dewlvt.png"
+    },
+    {
+        "name": "Sách kỹ thuật",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/sach-ky-thuat_gsf6gh.png"
+    },
+    {
+        "name": "Sách giáo trình",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252869/sach-giao-trinh_na6bss.png"
+
+    },
+    {
+        "name": "Sách giáo khoa",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/sach-giao-khoa_dae42m.jpg.png"
+    },
+    {
+        "name": "Truyện ngắn",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/truyen-ngan_eay2af.png"
+    },
+    {
+        "name": "Sách nông nghiệp",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252869/sach-nong-nghiep_pel1x4.png"
+    },
+    {
+        "name": "Tạp chí",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/tap-chi_h50us9.png"
+    },
+    {
+        "name": "Tập san",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/tap-san_uadqtd.png"
+
+    },
+    {
+        "name": "Báo in",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/bao-in_jowafe.png"
+
+
+    },
+    {
+        "name": "Sách nấu ăn",
+        "image_url": "https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252870/nau-an_qjup4g.png"
+    }
+]
