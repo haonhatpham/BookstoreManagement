@@ -113,7 +113,8 @@ class WishListBook(BaseModel):
 class Category(BaseModel):
     __tablename__ = 'category'
     name = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
-
+    image= Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
+                  default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
     def __str__(self):
         return self.name
 
@@ -127,7 +128,7 @@ class Book(BaseModel):
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
     image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
-    discount = Column(DOUBLE, nullable=True)
+    discount = Column(DECIMAL, nullable=False,default=0)
     description = Column(Text)
 
     reviews = relationship('Review', backref='book', lazy=True)  # 1-n
@@ -145,6 +146,7 @@ class Book(BaseModel):
 
 author_book = db.Table(
     'author_book',
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('book_id', ForeignKey('book.id'), primary_key=True),
     Column('author_id', ForeignKey('author.id'), primary_key=True),
 
@@ -152,9 +154,9 @@ author_book = db.Table(
 
 book_category = db.Table(
     'book_category',
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('book_id', ForeignKey('book.id'), primary_key=True),
     Column('category_id', ForeignKey('category.id'), primary_key=True),
-
 )
 
 
@@ -263,7 +265,7 @@ if __name__ == '__main__':
                 image = str(book['image']).strip()
                 standard_price = random.randint(20, 200) * 1000
                 sell_price = int(standard_price * 1.25)
-                discount = random.randint(10, 20) * 1000
+                discount = random.choice([0, 20])
 
                 categories = []
                 for category_name in book['category']:
@@ -293,6 +295,7 @@ if __name__ == '__main__':
                                 standard_price=standard_price,
                                 unit_price=sell_price,
                                 available_quantity=random.randint(100, 300),
+                                discount= discount,
                                 is_enable=True,
                                 )
 
@@ -303,3 +306,22 @@ if __name__ == '__main__':
                 db.session.add(new_book)
             db.session.commit()
         # END read data from json
+
+        #Cap nhật ảnh cho category
+        json_file_path = "path/to/your/json_file.json"
+
+        # Đọc file JSON
+        with open('../app/static/data_import/category.json', 'rb') as f:
+            data = json.load(f)
+
+        # Cập nhật cơ sở dữ liệu
+        for item in data:
+            # Tìm thể loại theo tên
+            cate = Category.query.filter_by(name=item["name"]).first()
+            if cate:
+                # Cập nhật đường dẫn ảnh
+                cate.image = item["image_url"]
+                db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
+
+        # Lưu thay đổi vào cơ sở dữ liệu
+        db.session.commit()
