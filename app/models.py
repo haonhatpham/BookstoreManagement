@@ -113,9 +113,8 @@ class WishListBook(BaseModel):
 class Category(BaseModel):
     __tablename__ = 'category'
     name = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
-    image = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
-                   default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
-
+    image= Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
+                  default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
     def __str__(self):
         return self.name
 
@@ -129,7 +128,7 @@ class Book(BaseModel):
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
     image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
-    discount = Column(DECIMAL, nullable=False, default=0)
+    discount = Column(DECIMAL, nullable=False,default=0)
     description = Column(Text)
 
     reviews = relationship('Review', backref='book', lazy=True)  # 1-n
@@ -158,7 +157,6 @@ book_category = db.Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('book_id', ForeignKey('book.id'), primary_key=True),
     Column('category_id', ForeignKey('category.id'), primary_key=True),
-
 )
 
 
@@ -282,8 +280,8 @@ if __name__ == '__main__':
                 authors = []
                 for author_name in book['author']:
                     author_name = str(author_name).strip()
-                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("", author_name)
-                    db_author = Author.query.filter_by(last_name=last_name, first_name=first_name).first()
+                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
+                    db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
                     if not db_author:
                         db_author = Author(first_name=first_name, last_name=last_name)
                         db.session.add(db_author)
@@ -291,13 +289,13 @@ if __name__ == '__main__':
                     if db_author not in authors:
                         authors.append(db_author)
 
-                new_book = Book(name=name,
+                new_book = Book(name= name,
                                 description=description,
                                 image=image,
                                 standard_price=standard_price,
                                 unit_price=sell_price,
                                 available_quantity=random.randint(100, 300),
-                                discount=discount,
+                                discount= discount,
                                 is_enable=True,
                                 )
 
@@ -309,11 +307,13 @@ if __name__ == '__main__':
             db.session.commit()
         # END read data from json
 
-        # Cap nhật ảnh cho category
+        #Cap nhật ảnh cho category
         json_file_path = "path/to/your/json_file.json"
+
         # Đọc file JSON
         with open('../app/static/data_import/category.json', 'rb') as f:
             data = json.load(f)
+
         # Cập nhật cơ sở dữ liệu
         for item in data:
             # Tìm thể loại theo tên
@@ -322,5 +322,6 @@ if __name__ == '__main__':
                 # Cập nhật đường dẫn ảnh
                 cate.image = item["image_url"]
                 db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
+
         # Lưu thay đổi vào cơ sở dữ liệu
         db.session.commit()

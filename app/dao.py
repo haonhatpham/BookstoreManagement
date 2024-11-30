@@ -1,18 +1,40 @@
-from app.models import Category, Book, User, Review
+from flask_sqlalchemy.session import Session
+
+from app.models import Category, Book, User, book_category
 from app import app, db
-from flask import request, jsonify
 import hashlib
 import cloudinary.uploader
-from sqlalchemy import desc
+from sqlalchemy import desc, engine
+from sqlalchemy.orm import session, sessionmaker
+
+Session = sessionmaker(bind=engine)
+session = Session()
 
 def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
 
+
 def load_feature_book():
     feature_book =  Book.query.offset(4).limit(6).all()
     return feature_book
 
+def load_book(book_id):
+    return Book.query.filter(Book.id == book_id)
+
+def load_relate_book(category_ids):
+    if isinstance(category_ids, str):
+        category_ids = list(map(int, category_ids.split(',')))
+    return (
+        Book.query
+        .join(book_category)
+        .filter(book_category.c.category_id.in_(category_ids))
+        .all()
+    )
+
+def load_category_ids():
+    category_ids = db.session.query(Category.id).all()
+    return [id[0] for id in category_ids]
 
 def load_categories():
     return Category.query.order_by('id').limit(8).all()
@@ -26,6 +48,7 @@ def load_new_products(kw=None, cate_id=None, page=1):
     page_size = app.config["PAGE_SIZE"]
     start = (page - 1) * page_size
     query = query.slice(start, start + page_size)
+
     return query.all()
 
 def count_products():
@@ -34,26 +57,9 @@ def count_products():
 def add_user(name, username, password, avatar):
     pass
 
+
 def auth_user(username, password):
     pass
 
 def get_user_by_id(id):
     pass
-
-def rate_product():
-    data = request.json
-    product_id = data.get("book_id")
-    rating_value = data.get("rating")
-    if not (1<= rating_value <=5):
-        return jsonify({'error': 'Invalid rating value'}), 400
-    new_rating = Review(book_id=product_id, rating=rating_value)
-    db.session.add(new_rating)
-    db.session.commit()
-    return jsonify({'message': 'Rating submitted successfully!'})
-
-def average_rating(book_id):
-    ratings = Review.query.filter_by(product_id=book_id).all()
-    if not ratings:
-        return jsonify({'average_rating': 0})
-    avg_rating = sum(r.rating for r in ratings) / len(ratings)
-    return jsonify({'average_rating': avg_rating})

@@ -1,30 +1,33 @@
 import math
 
 from flask import render_template, request, redirect
-from sympy.integrals.meijerint_doc import category
+
 
 import dao
 from app import app
 from flask_login import login_user, logout_user
 
+
 @app.route("/")
 def index():
-
     page = request.args.get('page', 1)
     cate_id = request.args.get('category_id')
     kw = request.args.get('kw')
     prods = dao.load_new_products(cate_id=cate_id, kw=kw, page=int(page))
-
-
     banner = dao.load_banner()
-    feature_books=dao.load_feature_book()
-    cates= dao.load_categories()
+    feature_books = dao.load_feature_book()
+    cates = dao.load_categories()
     page_size = app.config["PAGE_SIZE"]
     total = dao.count_products()
 
-    return render_template("index.html",banner=banner,feature_books=feature_books,
-                           new_books = prods,
-                           categories=cates,pages=math.ceil(total/page_size))
+
+
+    category_ids = dao.load_category_ids()
+    return render_template("index.html", banner=banner, feature_books=feature_books,
+                           new_books=prods,
+                           category_ids=category_ids,
+
+                           categories=cates, pages=math.ceil(total / page_size))
 
 
 @app.route("/register", methods=['get', 'post'])
@@ -57,6 +60,24 @@ def login_view():
             return redirect('/')
 
     return render_template('login.html')
+
+@app.route("/book_details")
+def book_details():
+
+    book_id = request.args.get('book_id')
+    book = dao.load_book(book_id).first()
+
+    category_ids = request.args.get('category_ids')
+    relate_books = dao.load_relate_book(category_ids=category_ids)
+    return render_template('book_details.html', relate_books=relate_books, category_ids=category_ids,book = book)
+
+@app.route('/book_details_2')
+def book_details_2():
+    book = request.args.get('book.id')
+    category_ids = request.args.get('category_ids')
+    relate_books = dao.load_relate_book(category_ids=category_ids)
+    return render_template('book_details_2.html', relate_books=relate_books, category_ids=category_ids, book=book)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

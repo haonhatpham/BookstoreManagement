@@ -14,24 +14,23 @@
                 Tìm kiếm những cuốn sách yêu thích từ các tác giả hàng đầu, khám phá hàng trăm thể loại đa dạng,
                 và tận hưởng ưu đãi lên đến 50% mỗi ngày. Hãy để mỗi trang sách trở thành hành trình khám phá đầy cảm
                 hứng!
+
             </p>
 
             <a href="#" class="button">Explore Now</a>
+        </div>
 
-            <h1 class="home__title">
-                <div class="home__images">
-                    <div class="home__swiper swiper">
-                        <div class="swiper-wrapper">
-                            {% for bb in banner %}
-                            <article class="home__article swiper-slide">
-                                <img src="{{ bb.image }}"
-                                     alt="{{ bb.name }}" class="home__img">
-                            </article>
-                            {% endfor %}
-                        </div>
-                    </div>
+        <div class="home__images">
+            <div class="home__swiper swiper">
+                <div class="swiper-wrapper">
+                    {% for bb in banner %}
+                    <article class="home__article swiper-slide">
+                        <img src="{{ bb.image }}"
+                             alt="{{ bb.name }}" class="home__img">
+                    </article>
+                    {% endfor %}
                 </div>
-            </h1>
+            </div>
         </div>
     </div>
 </section>
@@ -49,11 +48,12 @@
                 {% for fb in feature_books %}
                 <div class="col-lg-3 col-md-6 book swiper-slide">
                     <div class="card p-3 mb-4">
-                        <a href="#" class="img-wrap text-center">
+                        <a href="/book_details?book_id={{fb.id}}&category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
+                           class="img-wrap text-center">
                             <img class="img-fluid book__img" src="{{ fb.image }}">
                         </a>
                         <figcaption class="info-wrap mt-2">
-                            <a href="#" class="title">{{ fb.name }}</a>
+                            <a href="/book_details?book_id = {{fb.id}} & category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="title">{{ fb.name }}</a>
                             <div class="">
                                 <span class="price mt-1 fw-bol">{{  "{:,.0f}".format(fb.unit_price) }} VNĐ</span>
                                 {% if fb.discount != 0 %}
@@ -77,7 +77,11 @@
             </div>
 
             <div class="swiper-button-prev">
-                <h2 class="featured__title">Featured Book</h2>
+                <i class="ri-arrow-left-s-line"></i>
+            </div>
+
+            <div class="swiper-button-next">
+                <i class="ri-arrow-right-s-line"></i>
             </div>
         </div>
     </div>
@@ -150,11 +154,13 @@
             <h3 class="services__title">Free Shipping</h3>
             <p class="services__description">Orders paid online</p>
         </article>
+
         <article class="services__card">
             <i class="ri-lock-2-line"></i>
             <h3 class="services__title">Secure Payment</h3>
             <p class="services__description">100% Secure Payment</p>
         </article>
+
         <article class="services__card">
             <i class="ri-customer-service-2-line"></i>
             <h3 class="services__title">24/7 Support</h3>
