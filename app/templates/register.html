@@ -1,0 +1,53 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<section class="section-content" style="margin: 100px 0;">
+    <div class="card mx-auto" style="max-width: 380px">
+        <div class="card-body">
+            <h4 class="card-title mb-4">Đăng ký</h4>
+            <form>
+                <div class="mb-3">
+                    <label for="inputUsername" class="form-label">Tên đăng nhập</label>
+                    <input type="text" class="form-control" id="inputUsername">
+                </div>
+                <div class="mb-3">
+                    <label for="inputName" class="form-label">Họ tên</label>
+                    <input type="text" class="form-control" id="inputName">
+                </div>
+                <div class="mb-3">
+                    <label for="inputEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="inputEmail">
+                </div>
+                <div class="mb-3">
+                    <label for="inputPhoneNumber" class="form-label">Số điện thoại</label>
+                    <input type="number" class="form-control" id="inputPhoneNumber">
+                </div>
+                <div class="mb-3">
+                    <div class="form-check d-inline-block me-4">
+                        <input class="form-check-input" type="radio" name="radioGender" id="radioGender1" checked>
+                        <label class="form-check-label" for="radioGender1">Nam</label>
+                    </div>
+                    <div class="form-check d-inline-block">
+                        <input class="form-check-input" type="radio" name="radioGender" id="radioGender2">
+                        <label class="form-check-label" for="radioGender2">Nữ</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="inputAddress" class="form-label">Địa chỉ</label>
+                    <input type="text" class="form-control" id="inputAddress">
+                </div>
+                <div class="mb-3">
+                    <label for="inputPassword" class="form-label">Mật khẩu</label>
+                    <input type="password" class="form-control" id="inputPassword">
+                </div>
+                <div class="mb-3 form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="checkboxPolicy" checked>
+                    <label class="form-check-label" for="checkboxPolicy">Đồng ý với <a href="#">điều khoản sử
+                        dụng</a></label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Đăng ký</button>
+            </form>
+        </div> <!-- card-body.// -->
+    </div> <!-- card.// -->
+    <p class="text-center mt-4">Đã có tài khoản? <a href="#">Đăng nhập</a></p>
+</section> <!-- section-content.// -->
+{% endblock %}

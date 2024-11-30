@@ -1,0 +1,276 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="container-fluid position-relative" style="margin-top: 100px;">
+    <div class="row">
+        <div class="col-md-5" style="background-color: white; padding: 0;">
+            <div class="card" style="border: none">
+                <img src="static/image/1.jpg" class="card-img-top" alt="..." style="padding: 10px">
+                <div style="margin:auto; padding: 10px">
+                    <button type="button" class="btn" style=" width: 185px; border: 2px solid #4960D4">
+
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Thêm vào giỏ</span>
+                    </button>
+                    <button type="button" class="btn" style=" width: 185px; background-color: #4960D4; color: white">
+                        <span>Mua ngay</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7 position-relative"
+             style="background-color: white; border-left: 10px solid hsl(230, 100%, 96%); padding:0 ; height: 660px; overflow: auto; -ms-overflow-style: none; scrollbar-width: none;">
+            <div class="product-detail" style="border-bottom: 8px solid hsl(230, 100%, 96%); padding:10px; position: sticky">
+                <h4>Tieu de sach: Lịch Sử Việt Nam Bằng Hình - Bìa Cứng - Tặng Kèm 1 Bookmark + 4
+                    Postcard</h4>
+                <div style="display: flex">
+                    <div class="product-view" style="width: 335px">
+                        <div class="product-view-1">
+                            <span>
+                                <div class="product-view-suppllier">
+                                    <span>Nhà cung cấp: </span>
+                                    <span><i>{nhacungcap}</i></span>
+                                </div>
+                            </span>
+                            <span>
+                                <div class="product-view-suppllier">
+                                    <span>Nhà xuất bản: </span>
+                                    <span><i>{NXB}</i></span>
+                                </div>
+                            </span>
+                            <span>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <span>({n} lượt đánh giá)</span>
+                            </span>
+                            <div class="featured__prices" >
+                                <span class="featured__discount" style="font-size: 40px; color: red">$11.99</span>
+                                <span class="featured__price" style="font-size: 20px">$19.99</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="product-view" style="width: 335px">
+                        <div class="product-view-1">
+                            <span>
+                                <div class="product-view-suppllier">
+                                    <span>Tác giả: </span>
+                                    <span><i>{author}</i></span>
+                                </div>
+                            </span>
+                            <span>
+                                <div class="product-view-suppllier">
+                                    <span>Năm xuất bản : </span>
+                                    <span><i>{year}</i></span>
+                                </div>
+                            </span>
+                            <span>
+                                {n} đã bán
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="border-bottom: 8px solid hsl(230, 100%, 96%); padding: 10px">
+                <h4>Thông tin chi tiết</h4>
+                <table class="table table-striped">
+                    <tbody>
+                    <tr>
+                        <th scope="row">1</th>
+                        <td>Mark</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">2</th>
+                        <td>Jacob</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">3</th>
+                        <td colspan="2">Larry the Bird</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="description" style="padding:10px">
+                <h4>Mô tả sản phầm</h4>
+                <strong>
+                    Never Split the Difference: Negotiating as If Your Life Depended on It
+                </strong>
+                <p>
+                    From policing the rough streets of Kansas City, Missouri, to becoming the FBI's lead international kidnapping negotiator to teaching negotiation at leading universities, Chris Voss has tested the techniques in Never Split the Difference across the full spectrum of human endeavor and proved their effectiveness. Those who have benefited from these techniques include business clients generating millions in additional profits, MBA students getting better jobs, and even parents dealing with their kids.
+                </p>
+                <p>
+                   Never Split the Difference provides a gripping, behind-the-scenes recounting of dramatic scenarios from the gang-infested streets of Haiti to a Brooklyn bank robbery gone horribly wrong, revealing the negotiation strategies that helped Voss and his colleagues succeed where it mattered most: saving lives. Whether buying a car, getting a better raise, buying a home, renegotiating rent, or deliberating with your partner, Voss shows you how to use these skills in the workplace and in every other realm of your life.
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+<section class="featured section" id="featured">
+    <h2 class="section__title">
+        Featured Books
+    </h2>
+
+    <div class="featured__container container">
+        <div class="featured__swiper swiper">
+            <div class="swiper-wrapper d-flex justify-content-center flex-wrap">
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-1.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-2.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-3.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-4.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-5.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-6.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-7.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+                <article class="featured__card swiper-slide">
+                    <img src="assets/img/book-8.png" alt="image" class="featured__img">
+
+                    <h2 class="featured__title">Featured Book</h2>
+                    <div class="featured__prices">
+                        <span class="featured__discount">$11.99</span>
+                        <span class="featured__price">$19.99</span>
+                    </div>
+
+                    <button class="button">Add To Cart</button>
+
+                    <div class="featured__actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="swiper-button-prev">
+                <i class="ri-arrow-left-s-line"></i>
+            </div>
+
+            <div class="swiper-button-next">
+                <i class="ri-arrow-right-s-line"></i>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
