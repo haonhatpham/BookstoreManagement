@@ -48,12 +48,12 @@
                 {% for fb in feature_books %}
                 <div class="col-lg-3 col-md-6 book swiper-slide">
                     <div class="card p-3 mb-4">
-                        <a href="/book_details_2?book_id={{fb.id}}&category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
+                        <a href="/details?book_id={{fb.id}}&category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
                            class="img-wrap text-center">
                             <img class="img-fluid book__img" src="{{ fb.image }}">
                         </a>
                         <figcaption class="info-wrap mt-2">
-                            <a href="/book_details_2?book_id={{fb.id}}&category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="title">{{ fb.name }}</a>
+                            <a href="/details?book_id={{fb.id}}&category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="title">{{ fb.name }}</a>
                             <div class="">
                                 <span class="price mt-1 fw-bol">{{  "{:,.0f}".format(fb.unit_price) }} VNĐ</span>
                                 {% if fb.discount != 0 %}
@@ -122,11 +122,11 @@
             {% for b in new_books %}
             <div class="col-lg-3 col-md-6 book ">
                 <div class="card p-3 mb-4 ">
-                    <a href="/book_details_2?book_id={{b.id}}&category_ids={% for cat in b.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="img-wrap text-center">
+                    <a href="/details?book_id={{b.id}}&category_ids={% for cat in b.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="img-wrap text-center">
                         <img class="img-fluid book__img " src="{{ b.image }}">
                     </a>
                     <figcaption class="info-wrap mt-2">
-                        <a href="/book_details_2?book_id={{b.id}}&category_ids={% for cat in b.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="title">{{ b.name }} </a>
+                        <a href="/details?book_id={{b.id}}&category_ids={% for cat in b.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="title">{{ b.name }} </a>
                         <div class="">
                             <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(b.unit_price) }}₫</span>
                             {% if b.discount != 0 %}
