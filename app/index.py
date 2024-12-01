@@ -68,15 +68,18 @@ def book_details():
     book = dao.load_book(book_id).first()
 
     category_ids = request.args.get('category_ids')
-    relate_books = dao.load_relate_book(category_ids=category_ids)
+    relate_books = dao.load_related_book(category_ids=category_ids)
     return render_template('book_details.html', relate_books=relate_books, category_ids=category_ids,book = book)
 
 @app.route('/book_details_2')
 def book_details_2():
-    book = request.args.get('book.id')
+
+    book_id = request.args.get('book_id')
+    book = dao.load_book(book_id).first()
+
     category_ids = request.args.get('category_ids')
-    relate_books = dao.load_relate_book(category_ids=category_ids)
-    return render_template('book_details_2.html', relate_books=relate_books, category_ids=category_ids, book=book)
+    related_books = dao.load_related_book(category_ids=category_ids)
+    return render_template('book_details_2.html', related_books=related_books, category_ids=category_ids, book=book)
 
 
 if __name__ == '__main__':

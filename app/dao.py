@@ -22,7 +22,7 @@ def load_feature_book():
 def load_book(book_id):
     return Book.query.filter(Book.id == book_id)
 
-def load_relate_book(category_ids):
+def load_related_book(category_ids):
     if isinstance(category_ids, str):
         category_ids = list(map(int, category_ids.split(',')))
     return (

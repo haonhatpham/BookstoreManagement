@@ -16,7 +16,7 @@
     <div class="container">
         <div class="row">
 
-            <aside class="col-md-5 col-lg-6 mb-md-0 mb-4">
+            <aside class="col-md-5 col-lg-6 mb-md-0 mb-4 d-flex justify-content-center align-items-center">
                 <div id="productImageCarousel" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-indicators">
                         <button type="button" data-bs-target="#productImageCarousel" data-bs-slide-to="0" class="active"
@@ -215,54 +215,21 @@
     <div class="container">
         <h3 class="pb-2">Sản phẩm liên quan</h3>
         <div class="row item-grid">
-            {% for rb in relate_books %}
+            {% for rb in related_books %}
                 <div class="col-lg-3 col-md-6">
                     <div class="card p-3 mb-4">
-                        <a href="#" class="img-wrap text-center">
+                        <a href="/book_details_2?book_id={{rb.id}}&category_ids={% for cat in rb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="img-wrap text-center">
                             <img class="img-fluid" src= {{rb.image}}>
                         </a>
                         <figcaption class="info-wrap mt-2">
-                            <a href="#" class="title">{{rb.name}}</a>
+                            <a href="/book_details_2?book_id={{rb.id}}&category_ids={% for cat in rb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}" class="title">{{rb.name}}</a>
                             <div class="price mt-1 fw-bold">{{rb.price}}₫</div>
                         </figcaption>
                     </div>
-                </div> <!-- col.// -->
+                </div>
             {%endfor%}
-<!--            <div class="col-lg-3 col-md-6">-->
-<!--                <div class="card p-3 mb-4">-->
-<!--                    <a href="#" class="img-wrap text-center">-->
-<!--                        <img class="img-fluid" src="img/200px.png">-->
-<!--                    </a>-->
-<!--                    <figcaption class="info-wrap mt-2">-->
-<!--                        <a href="#" class="title">Tên một sản phẩm</a>-->
-<!--                        <div class="price mt-1 fw-bold">450.000₫</div>-->
-<!--                    </figcaption>-->
-<!--                </div>-->
-<!--            </div> &lt;!&ndash; col.// &ndash;&gt;-->
-<!--            <div class="col-lg-3 col-md-6">-->
-<!--                <div class="card p-3 mb-4">-->
-<!--                    <a href="#" class="img-wrap text-center">-->
-<!--                        <img class="img-fluid" src="img/200px.png">-->
-<!--                    </a>-->
-<!--                    <figcaption class="info-wrap mt-2">-->
-<!--                        <a href="#" class="title">Tên một sản phẩm</a>-->
-<!--                        <div class="price mt-1 fw-bold">450.000₫</div>-->
-<!--                    </figcaption>-->
-<!--                </div>-->
-<!--            </div> &lt;!&ndash; col.// &ndash;&gt;-->
-<!--            <div class="col-lg-3 col-md-6">-->
-<!--                <div class="card p-3 mb-4">-->
-<!--                    <a href="#" class="img-wrap text-center">-->
-<!--                        <img class="img-fluid" src="img/200px.png">-->
-<!--                    </a>-->
-<!--                    <figcaption class="info-wrap mt-2">-->
-<!--                        <a href="#" class="title">Tên một sản phẩm</a>-->
-<!--                        <div class="price mt-1 fw-bold">450.000₫</div>-->
-<!--                    </figcaption>-->
-<!--                </div>-->
-<!--            </div> &lt;!&ndash; col.// &ndash;&gt;-->
-        </div> <!-- row.// -->
-    </div><!-- container.// -->
-</section><!-- section-content.// -->
+        </div>
+    </div>
+</section>
 
 {% endblock %}
