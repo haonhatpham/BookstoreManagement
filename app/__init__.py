@@ -12,6 +12,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.config["PAGE_SIZE"] = 12
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
+
 db = SQLAlchemy(app)
 login = LoginManager(app=app)
 

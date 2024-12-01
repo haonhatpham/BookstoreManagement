@@ -1,0 +1,64 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<section class="section-pagetop bg-light" style="margin-top: 100px">
+    <div class="container">
+        <h2 class="title-page">Thiết đặt</h2>
+    </div> <!-- container.// -->
+</section> <!-- section-pagetop.// -->
+
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            {% block aside %}
+            {% include 'layout/user_info_aside.html' %}
+            {% endblock %}
+            <main class="col-md-9">
+                <article class="card">
+                    <div class="card-body">
+                        <div class="col-lg-6">
+                            <form>
+                                <div class="mb-3">
+                                    <label for="inputUsername" class="form-label">Tên đăng nhập</label>
+                                    <input type="text" class="form-control" id="inputUsername">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputName" class="form-label">Họ tên</label>
+                                    <input type="text" class="form-control" id="inputName">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="inputEmail">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputPhoneNumber" class="form-label">Số điện thoại</label>
+                                    <input type="number" class="form-control" id="inputPhoneNumber">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check d-inline-block me-4">
+                                        <input class="form-check-input" type="radio" name="radioGender"
+                                               id="radioGender1" checked>
+                                        <label class="form-check-label" for="radioGender1">Nam</label>
+                                    </div>
+                                    <div class="form-check d-inline-block">
+                                        <input class="form-check-input" type="radio" name="radioGender"
+                                               id="radioGender2">
+                                        <label class="form-check-label" for="radioGender2">Nữ</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputAddress" class="form-label">Địa chỉ</label>
+                                    <input type="text" class="form-control" id="inputAddress">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Cập nhật thông tin mới</button>
+                            </form>
+                        </div>
+                    </div> <!-- card-body.// -->
+                </article>
+            </main> <!-- col.// -->
+
+        </div> <!-- row.// -->
+    </div> <!-- container.// -->
+</section> <!-- section-content.// -->
+{%endblock%}

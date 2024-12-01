@@ -1,9 +1,10 @@
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
-from sqlalchemy.orm import relationship, backref
-from app import db, app
+
 from enum import Enum as StatusEnum
+from app import db, app
 from flask_login import UserMixin
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship, backref
 import hashlib
 import json, random, os
 import uuid
