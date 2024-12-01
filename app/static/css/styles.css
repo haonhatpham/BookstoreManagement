@@ -313,7 +313,7 @@ body.dark-theme .card{
   content: '';
   position: absolute;
   top: -18px; /* Đặt phía trên khung */
-  right: 10%;
+  right: 1%;
   transform: translateX(-50%);
   border-width: 10px; /* Kích thước tam giác */
   border-style: solid;
