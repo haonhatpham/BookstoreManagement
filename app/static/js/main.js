@@ -152,3 +152,23 @@ themeButton.addEventListener('click', () => {
 //sr.reveal(`.services__card`, {interval: 100})
 //sr.reveal(`.discount__data`, {origin: 'left'})
 //sr.reveal(`.discount__images`, {origin: 'right'})
+/*=============== XEM MẬT KHẨU ===============*/
+
+    // Lấy các phần tử
+    const passwordInput = document.getElementById("inputPassword");
+    const showPasswordToggle = document.getElementById("showPasswordToggle");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    // Thêm sự kiện khi nhấn vào icon con mắt
+    showPasswordToggle.addEventListener("click", function () {
+        // Kiểm tra trạng thái hiện tại của input type
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";  // Chuyển sang dạng text để người dùng nhìn thấy mật khẩu
+            eyeIcon.classList.remove("ri-eye-off-line");  // Thay đổi biểu tượng con mắt
+            eyeIcon.classList.add("ri-eye-line");  // Đổi sang biểu tượng "mắt bị che"
+        } else {
+            passwordInput.type = "password";  // Trở lại dạng password
+            eyeIcon.classList.remove("ri-eye-line");
+            eyeIcon.classList.add("ri-eye-off-line");
+        }
+    });

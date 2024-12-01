@@ -2,56 +2,83 @@
 
 {% block content %}
 
-
 <section class="section-content" style="margin: 100px 0;">
-    <div class="card mx-auto" style="max-width: 380px">
-      <div class="card-body">
-        <h4 class="card-title mb-4">Đăng ký</h4>
-        <form>
-          <div class="mb-3">
-            <label for="inputUsername" class="form-label">Tên đăng nhập</label>
-            <input type="text" class="form-control" id="inputUsername">
-          </div>
-          <div class="mb-3">
-            <label for="inputName" class="form-label">Họ tên</label>
-            <input type="text" class="form-control" id="inputName">
-          </div>
-          <div class="mb-3">
-            <label for="inputEmail" class="form-label">Email</label>
-            <input type="email" class="form-control" id="inputEmail">
-          </div>
-          <div class="mb-3">
-            <label for="inputPhoneNumber" class="form-label">Số điện thoại</label>
-            <input type="number" class="form-control" id="inputPhoneNumber">
-          </div>
-          <div class="mb-3">
-            <div class="form-check d-inline-block me-4">
-              <input class="form-check-input" type="radio" name="radioGender" id="radioGender1" checked>
-              <label class="form-check-label" for="radioGender1">Nam</label>
-            </div>
-            <div class="form-check d-inline-block">
-              <input class="form-check-input" type="radio" name="radioGender" id="radioGender2">
-              <label class="form-check-label" for="radioGender2">Nữ</label>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label for="inputAddress" class="form-label">Địa chỉ</label>
-            <input type="text" class="form-control" id="inputAddress">
-          </div>
-          <div class="mb-3">
-            <label for="inputPassword" class="form-label">Mật khẩu</label>
-            <input type="password" class="form-control" id="inputPassword">
-          </div>
-          <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" value="" id="checkboxPolicy" checked>
-            <label class="form-check-label" for="checkboxPolicy">Đồng ý với <a href="#">điều khoản sử
-                dụng</a></label>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Đăng ký</button>
-        </form>
-      </div> <!-- card-body.// -->
+
+    <div class="card mx-auto" style="max-width: 60%">
+        <div class="card-body">
+            <h4 class="card-title mb-4">Đăng ký</h4>
+            <form method="post" enctype="multipart/form-data" action="/register">
+                {% if err_msg %}
+                <div class="alert alert-danger ">
+                    {{ err_msg }}
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <label for="inputUsername" class="form-label">Tên đăng nhập</label>
+                    <input type="text" class="form-control" id="inputUsername" required
+                           placeholder="Nhập tên đăng nhập" name="username">
+                </div>
+                <div class="mb-3">
+                    <label for="inputName" class="form-label">Họ tên</label>
+                    <input type="text" class="form-control" id="inputName" required placeholder="Nhập họ tên"
+                           name="name">
+                </div>
+                <div class="mb-3">
+                    <label for="inputEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" required id="inputEmail" name="email">
+                </div>
+                <div class="mb-3">
+                    <label for="inputBirth" class="form-label">Ngày tháng năm sinh</label>
+                    <input type="date" class="form-control" id="inputBirth" required name="birth">
+                </div>
+                <div class="mb-3">
+                    <label for="inputPhoneNumber" class="form-label">Số điện thoại</label>
+                    <input type="number" class="form-control" required id="inputPhoneNumber" name="phone">
+                </div>
+                <div class="mb-3">
+                    <div class="form-check d-inline-block me-4">
+                        <input class="form-check-input" type="radio" name="radioGender" id="radioGender1" value="male"
+                               checked>
+                        <label class="form-check-label" for="radioGender1">Nam</label>
+                    </div>
+                    <div class="form-check d-inline-block">
+                        <input class="form-check-input" type="radio" name="radioGender" id="radioGender2"
+                               value="female">
+                        <label class="form-check-label" for="radioGender2">Nữ</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="inputAddress" class="form-label">Địa chỉ</label>
+                    <input type="text" class="form-control" id="inputAddress">
+                </div>
+                <div class="mb-3">
+                    <label for="inputPassword" class="form-label">Mật khẩu</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" required id="inputPassword" name="password" placeholder="Nhập mật khẩu">
+                        <span class="input-group-text" id="showPasswordToggle" style="cursor: pointer;">
+                            <i class="bi bi-eye" id="eyeIcon"></i> <!-- Bootstrap icon for eye -->
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="confirm" class="form-label">Xác nhận mật khẩu</label>
+                    <input type="password" class="form-control" required placeholder="Nhập lại mật khẩu" id="confirm"
+                           name="confirm">
+                </div>
+                <div class="mb-3">
+                    <label for="avatar">Ảnh đại diện</label>
+                    <input type="file" class="form-control" id="avatar" name="avatar">
+                </div>
+                <div class="mb-3 form-check">
+                    <input class="form-check-input" type="checkbox" required value="" id="checkboxPolicy" checked>
+                    <label class="form-check-label" for="checkboxPolicy">Đồng ý với <a href="#">điều khoản sử
+                        dụng</a></label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Đăng ký</button>
+            </form>
+        </div> <!-- card-body.// -->
     </div> <!-- card.// -->
     <p class="text-center mt-4">Đã có tài khoản? <a href="#">Đăng nhập</a></p>
-  </section> <!-- section-content.// -->
+</section> <!-- section-content.// -->
 
 {% endblock %}

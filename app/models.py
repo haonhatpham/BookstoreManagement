@@ -1,11 +1,13 @@
-from PIL.ImageChops import duplicate
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
-from sqlalchemy.orm import relationship, backref
-from app import db, app
+
 from enum import Enum as StatusEnum
+from app import db, app
+from flask_login import UserMixin
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship, backref
 import hashlib
 import json, random, os
+import uuid
 
 
 class OrderEnum(StatusEnum):
@@ -43,7 +45,7 @@ class Address(BaseModel):
     users = relationship("User", backref='Address', lazy=True)
 
 
-class User(BaseModel):
+class User(BaseModel,UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
@@ -51,9 +53,9 @@ class User(BaseModel):
     password = Column(String(100), nullable=False)
     email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     phone = Column(String(11, 'utf8mb4_unicode_ci'))
-    birth = Column(DateTime)
+    birth = Column(DateTime,nullable=True)
     gender = Column(Boolean, default=True)  # 1:nam 0:Nữ
-    avatar_file = Column(String(100, 'utf8mb4_unicode_ci'), nullable=True)
+    avatar_file = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
 
     role_id = Column(ForeignKey(Role.id), nullable=False, index=True)
@@ -69,6 +71,7 @@ class User(BaseModel):
                                  backref=backref('users', lazy=True))  # n-n
     wish_list_book = relationship('Book', secondary='wish_list_book', lazy='subquery',
                                   backref=backref('users', lazy=True))
+    fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
 
 class BankingInformation(BaseModel):
@@ -112,8 +115,9 @@ class WishListBook(BaseModel):
 class Category(BaseModel):
     __tablename__ = 'category'
     name = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
-    image= Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
-                  default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
+    image = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
+                   default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
+
     def __str__(self):
         return self.name
 
@@ -127,7 +131,7 @@ class Book(BaseModel):
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
     image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
-    discount = Column(DECIMAL, nullable=False,default=0)
+    discount = Column(DECIMAL, nullable=False, default=0)
     description = Column(Text)
 
     reviews = relationship('Review', backref='book', lazy=True)  # 1-n
@@ -254,73 +258,101 @@ class OrderDetail(BaseModel):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        # db.create_all()
         # read data from json:
-        with open('../app/static/data_import/book_data.json', 'rb') as f:
-            data = json.load(f)
-            for book in data:
-                name = str(book['title']).strip()
-                description = str(book['description']).strip()
-                image = str(book['image']).strip()
-                standard_price = random.randint(20, 200) * 1000
-                sell_price = int(standard_price * 1.25)
-                discount = random.choice([0, 20])
-
-                categories = []
-                for category_name in book['category']:
-                    category_name = str(category_name).strip()
-                    db_category = Category.query.filter_by(name=category_name).first()
-                    if not db_category:
-                        db_category = Category(name=category_name)
-                        db.session.add(db_category)
-                        db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
-                    if db_category not in categories:
-                        categories.append(db_category)
-                authors = []
-                for author_name in book['author']:
-                    author_name = str(author_name).strip()
-                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
-                    db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
-                    if not db_author:
-                        db_author = Author(first_name=first_name, last_name=last_name)
-                        db.session.add(db_author)
-                        db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
-                    if db_author not in authors:
-                        authors.append(db_author)
-
-                new_book = Book(name= name,
-                                description=description,
-                                image=image,
-                                standard_price=standard_price,
-                                unit_price=sell_price,
-                                available_quantity=random.randint(100, 300),
-                                discount= discount,
-                                is_enable=True,
-                                )
-
-                # Gán categories và authors cho sách, tránh trùng lặp
-                new_book.categories.extend([c for c in categories if c not in new_book.categories])
-                new_book.authors.extend([a for a in authors if a not in new_book.authors])
-
-                db.session.add(new_book)
-            db.session.commit()
-        # END read data from json
-
-        #Cap nhật ảnh cho category
-        json_file_path = "path/to/your/json_file.json"
-
-        # Đọc file JSON
-        with open('../app/static/data_import/category.json', 'rb') as f:
-            data = json.load(f)
-
-        # Cập nhật cơ sở dữ liệu
-        for item in data:
-            # Tìm thể loại theo tên
-            cate = Category.query.filter_by(name=item["name"]).first()
-            if cate:
-                # Cập nhật đường dẫn ảnh
-                cate.image = item["image_url"]
-                db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
-
-        # Lưu thay đổi vào cơ sở dữ liệu
+        # with open('../app/static/data_import/book_data.json', 'rb') as f:
+        #     data = json.load(f)
+        #     for book in data:
+        #         name = str(book['title']).strip()
+        #         description = str(book['description']).strip()
+        #         image = str(book['image']).strip()
+        #         standard_price = random.randint(20, 200) * 1000
+        #         sell_price = int(standard_price * 1.25)
+        #         discount = random.choice([0, 20])
+        #
+        #         categories = []
+        #         for category_name in book['category']:
+        #             category_name = str(category_name).strip()
+        #             db_category = Category.query.filter_by(name=category_name).first()
+        #             if not db_category:
+        #                 db_category = Category(name=category_name)
+        #                 db.session.add(db_category)
+        #                 db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+        #             if db_category not in categories:
+        #                 categories.append(db_category)
+        #         authors = []
+        #         for author_name in book['author']:
+        #             author_name = str(author_name).strip()
+        #             last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
+        #             db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
+        #             if not db_author:
+        #                 db_author = Author(first_name=first_name, last_name=last_name)
+        #                 db.session.add(db_author)
+        #                 db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+        #             if db_author not in authors:
+        #                 authors.append(db_author)
+        #
+        #         new_book = Book(name= name,
+        #                         description=description,
+        #                         image=image,
+        #                         standard_price=standard_price,
+        #                         unit_price=sell_price,
+        #                         available_quantity=random.randint(100, 300),
+        #                         discount= discount,
+        #                         is_enable=True,
+        #                         )
+        #
+        #         # Gán categories và authors cho sách, tránh trùng lặp
+        #         new_book.categories.extend([c for c in categories if c not in new_book.categories])
+        #         new_book.authors.extend([a for a in authors if a not in new_book.authors])
+        #
+        #         db.session.add(new_book)
+        #     db.session.commit()
+        # # END read data from json
+        #
+        # #Cap nhật ảnh cho category
+        # json_file_path = "path/to/your/json_file.json"
+        #
+        # # Đọc file JSON
+        # with open('../app/static/data_import/category.json', 'rb') as f:
+        #     data = json.load(f)
+        #
+        # # Cập nhật cơ sở dữ liệu
+        # for item in data:
+        #     # Tìm thể loại theo tên
+        #     cate = Category.query.filter_by(name=item["name"]).first()
+        #     if cate:
+        #         # Cập nhật đường dẫn ảnh
+        #         cate.image = item["image_url"]
+        #         db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
+        #
+        # # Lưu thay đổi vào cơ sở dữ liệu
+        # db.session.commit()
+        # admin_role = Role(
+        #     name="Admin",
+        #     description="Administrator with full access"
+        # )
+        # db.session.add(admin_role)
+        # db.session.commit()
+        #
+        user_role = Role(name="User", description="Default role for registered users")
+        db.session.add(user_role)
         db.session.commit()
+        # admin_role = Role.query.filter_by(name="Admin").first()
+        #
+        # # Lưu vai trò vào database
+        # admin_user = User(
+        #     first_name="Nhật Hào",
+        #     last_name="Phạm",
+        #     username="admin",
+        #     password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+        #     email="admin@example.com",
+        #     phone="1234567890",
+        #     birth=None,  # Không cần ngày sinh
+        #     gender=True,  # Nam
+        #     avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
+        #     active=True,
+        #     role_id=admin_role.id  # Liên kết với vai trò Admin
+        # )
+        # db.session.add(admin_user)
+        # db.session.commit()

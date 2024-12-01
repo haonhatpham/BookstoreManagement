@@ -1,21 +1,29 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
+<section class="section-content" style="margin: 100px 0;">
+    <h2 class="text-center">ĐĂNG NHẬP NGƯỜI DÙNG</h2>
+    <div class="card mx-auto" style="max-width: 60%;  justify-content: center;">
+        <div class="card-body">
+            <h4 class="card-title mb-4">Đăng nhập</h4>
+            <form method="post" action="/login">
+                <div class="mb-3">
+                    <input name="username" class="form-control" placeholder="Tên đăng nhập" type="text"
+                           autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="password" class="form-control" required id="inputPassword" name="password"
+                               placeholder="Nhập mật khẩu">
+                        <span class="input-group-text" id="showPasswordToggle" style="cursor: pointer;">
+                            <i class="ri-eye-off-line"  id="eyeIcon"></i><!-- Bootstrap icon for eye -->
+                        </span>
+                    </div>
+                </div>
 
-<section class="section-content container" style="padding-top:10rem">
-    <div class="card mx-auto" style="max-width: 380px">
-      <div class="card-body">
-        <h4 class="card-title mb-4">Đăng nhập</h4>
-        <form>
-          <div class="mb-3">
-            <input name="username" class="form-control" placeholder="Tên đăng nhập" type="text" autocomplete="off">
-          </div>
-          <div class="mb-3">
-            <input name="password" class="form-control" placeholder="Mật khẩu" type="password" autocomplete="off">
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
-        </form>
-      </div> <!-- card-body.// -->
+                <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+            </form>
+        </div> <!-- card-body.// -->
     </div> <!-- card .// -->
     <p class="text-center mt-4">Không có tài khoản? <a href="#">Đăng ký</a></p>
 </section> <!-- section-content.// -->
