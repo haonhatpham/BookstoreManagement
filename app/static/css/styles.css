@@ -151,10 +151,10 @@ body.dark-theme .card{
 }
 
 /*=============== REUSABLE CSS CLASSES ===============*/
-.container {
+/*.container {
   max-width: 1220px;
   margin-inline: 1.5rem;
-}
+}*/
 
 .grid {
   display: grid;
@@ -282,8 +282,8 @@ body.dark-theme .card{
   align-items: center;
   display: none;
   top: 100%;
-  left: -50%;
-  width: 200px;
+  right: -50%;
+  width: 300px;
   background-color:var(--body-color);
   border: 1px solid #ddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -313,11 +313,11 @@ body.dark-theme .card{
   content: '';
   position: absolute;
   top: -18px; /* Đặt phía trên khung */
-  left: 10%;
+  right: 10%;
   transform: translateX(-50%);
   border-width: 10px; /* Kích thước tam giác */
   border-style: solid;
-  border-color: transparent transparent red transparent; /* Chỉ hiển thị cạnh dưới */
+  border-color: transparent transparent var(--body-color) transparent; /* Chỉ hiển thị cạnh dưới */
 }
 .btn-login {
   background-color: #d73030; /* Màu đỏ */
