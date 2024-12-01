@@ -3,7 +3,7 @@ from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boo
 from sqlalchemy.orm import relationship, backref
 from app import db, app
 from enum import Enum as StatusEnum
-from flask_security import RoleMixin, UserMixin
+from flask_login import RoleMixin, UserMixin
 from sqlalchemy.sql import func
 import hashlib
 import json, random, os

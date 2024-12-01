@@ -19,15 +19,14 @@ def index():
     cates = dao.load_categories()
     page_size = app.config["PAGE_SIZE"]
     total = dao.count_products()
-
-
-
     category_ids = dao.load_category_ids()
-    return render_template("index.html", banner=banner, feature_books=feature_books,
+    return render_template("index.html",
+                           banner=banner,
+                           feature_books=feature_books,
                            new_books=prods,
                            category_ids=category_ids,
-
-                           categories=cates, pages=math.ceil(total / page_size))
+                           categories=cates,
+                           pages=math.ceil(total / page_size))
 
 
 @app.route("/register", methods=['get', 'post'])
@@ -61,16 +60,6 @@ def login_view():
 
     return render_template('login.html')
 
-@app.route("/book_details")
-def book_details():
-
-    book_id = request.args.get('book_id')
-    book = dao.load_book(book_id).first()
-
-    category_ids = request.args.get('category_ids')
-    relate_books = dao.load_related_book(category_ids=category_ids)
-    return render_template('book_details.html', relate_books=relate_books, category_ids=category_ids,book = book)
-
 @app.route('/details')
 def details():
 
@@ -80,6 +69,23 @@ def details():
     category_ids = request.args.get('category_ids')
     related_books = dao.load_related_book(category_ids=category_ids)
     return render_template('details.html', related_books=related_books, category_ids=category_ids, book=book)
+
+
+
+@app.route('/favourite')
+def favourite():
+    # query params = user.id, book.id
+    return render_template('favourite.html')
+
+@app.route('/manage_info')
+def manage_info():
+    return render_template('manage_info.html')
+
+@app.route('/change_password')
+def change_password():
+    return render_template('change_password.html')
+
+
 
 
 if __name__ == '__main__':
