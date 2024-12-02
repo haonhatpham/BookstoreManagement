@@ -83,7 +83,5 @@ def change_password():
     return render_template('change_password.html')
 
 
-
-
 if __name__ == '__main__':
     app.run(debug=True)
