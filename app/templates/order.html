@@ -1,0 +1,83 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+
+<section class="section-pagetop bg-light " style="margin-top: 100px; padding:40px">
+    <div class="container">
+      <h2 class="title-page">Đơn hàng</h2>
+    </div> <!-- container.// -->
+  </section> <!-- section-pagetop.// -->
+
+<section class="section-content padding-y">
+    <div class="container">
+      <div class="row">
+        {% block aside %}
+        {% include 'layout/user_info_aside.html' %}
+        {% endblock %}
+
+        <main class="col-md-9">
+
+          <div class="table-responsive-xxl">
+            <table class="table table-bordered table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th scope="col" style="min-width: 125px;">Mã đơn hàng</th>
+                  <th scope="col" style="min-width: 100px;">Ngày mua</th>
+                  <th scope="col" style="min-width: 300px;">Sản phẩm</th>
+                  <th scope="col" style="min-width: 100px;">Tổng tiền</th>
+                  <th scope="col" style="min-width: 175px;">Trạng thái đơn hàng</th>
+                  <th scope="col">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">3</th>
+                  <td>15/12/2021</td>
+                  <td>Tiếng Việt lớp 1</td>
+                  <td>10.000₫</td>
+                  <td><span class="badge bg-warning text-dark">Đang giao hàng</span></td>
+                  <td class="text-center text-nowrap">
+                    <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>10/12/2021</td>
+                  <td>Tiếng Việt lớp 2 ...và 1 sản phẩm khác</td>
+                  <td>60.000₫</td>
+                  <td><span class="badge bg-danger">Hủy đơn hàng</span></td>
+                  <td class="text-center text-nowrap">
+                    <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">1</th>
+                  <td>10/12/2021</td>
+                  <td>Tiếng Việt lớp 2 ...và 1 sản phẩm khác</td>
+                  <td>60.000₫</td>
+                  <td><span class="badge bg-success">Giao hàng thành công</span></td>
+                  <td class="text-center text-nowrap">
+                    <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <nav class="mt-4">
+            <ul class="pagination">
+              <li class="page-item disabled"><a class="page-link" href="#">Trang trước</a></li>
+              <li class="page-item active"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item"><a class="page-link" href="#">Trang sau</a></li>
+            </ul>
+          </nav>
+
+        </main> <!-- col.// -->
+
+      </div> <!-- row.// -->
+    </div> <!-- container.// -->
+  </section> <!-- section-content.// -->
+
+
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+
+<section class="section-pagetop bg-light" style="margin-top: 100px">
+    <div class="container">
+        <h2 class="title-page">{{ category.name }}</h2>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item" aria-current="page"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ category.name }} </li>
+            </ol>
+        </nav>
+    </div> <!-- container.// -->
+</section> <!-- section-pagetop.// -->
+
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <aside class="col-md-4 col-lg-3 mb-md-0 mb-3">
+                <div class="card">
+                    <form action="/category" method="get">
+                        <article class="filter-group">
+                            <header class="card-header my-1">
+                                <a data-bs-toggle="collapse" href="#collapse_1" aria-expanded="true"
+                                   aria-controls="collapse_1">
+                                    <i class="float-end bi bi-chevron-down"></i>
+                                    <h6 class="title fw-bold">Nhà xuất bản</h6>
+                                </a>
+                            </header>
+                            <div class="filter-content collapse show" id="collapse_1">
+                                <div class="card-body pt-0">
+                                    <input type="hidden" name="category_id" value="{{ category.id }}">
+                                    {% for publisher in publishers %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="{{ publisher.name }}"
+                                               id="checkbox_publisher_{{ loop.index }}" name="checkedPublishers"
+                                                {% if publisher.name in checked_publishers %} checked {% endif %} >
+                                        <label class="form-check-label" for="checkbox_publisher_{{ loop.index }}">
+                                           {{ publisher.name }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div> <!-- card-body.// -->
+                            </div>
+                        </article>
+                        <article class="filter-group">
+                            <header class="card-header my-1">
+                                <a data-bs-toggle="collapse" href="#collapse_2" aria-expanded="true"
+                                   aria-controls="collapse_2">
+                                    <i class="float-end bi bi-chevron-down"></i>
+                                    <h6 class="title fw-bold">Giá bán</h6>
+                                </a>
+                            </header>
+                            <div class="filter-content collapse show" id="collapse_2">
+                                <div class="card-body pt-0">
+                                     {% for range in all_price_ranges %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="{{ range }}"
+                                              id="checkbox_price_{{ loop.index }}" name="priceRanges"
+                                               {% if range in price_ranges %} checked {% endif %} />
+                                        <label class="form-check-label" for="checkbox_price_{{ loop.index }}">
+                                             {% if range == '0-50000' %} Dưới 50.000₫
+                                                {% elif range == '50000-200000' %} Từ 50.000₫ đến 200.000₫
+                                                {% elif range == '200000-infinity' %} Trên 200.000₫
+                                                {% endif %}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div> <!-- card-body.// -->
+                            </div>
+                        </article>
+                        <article class="filter-group">
+                            <header class="card-header my-1">
+                                <a data-bs-toggle="collapse" href="#collapse_3" aria-expanded="true"
+                                   aria-controls="collapse_3">
+                                    <i class="float-end bi bi-chevron-down"></i>
+                                    <h6 class="title fw-bold">Sắp xếp theo</h6>
+                                </a>
+                            </header>
+                            <div class="filter-content collapse show" id="collapse_3">
+                                <div class="card-body pt-0">
+                                    {% for option in ORDER_BY_OPTIONS %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" value="{{ option.value }}" name="order"
+                                               id="radio_order_{{ loop.index }}" {% if order == option.value %} checked {% endif %}>
+                                        <label class="form-check-label" for="radio_order_{{ loop.index }}">
+                                             {{ option.label }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div> <!-- card-body.// -->
+                            </div>
+                        </article>
+                        <article class="card-body">
+                            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                        </article>
+                    </form>
+                </div> <!-- card.// -->
+            </aside> <!-- col.// -->
+
+            <main class="col-md-8 col-lg-9">
+                <header class="border-bottom mb-4 pb-3">
+                    <div class="form-inline d-flex justify-content-between align-items-center">
+                        <span>{{ total_products }} sản phẩm</span>
+                        <div>
+                            <select class="form-select">
+                                <option>Bán chạy nhất</option>
+                                <option>Mới nhất</option>
+                                <option>Đánh giá cao nhất</option>
+                                <option>Giá thấp nhất</option>
+                            </select>
+                        </div>
+                    </div>
+                </header> <!-- sect-heading -->
+
+                <div class="row item-grid">
+                    {% for b in products %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card p-3 mb-4">
+                            <a href="/details?book_id={{b.id}}&category_id={{category.id}}&category_ids={% for cat in b.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
+                               class="img-wrap text-center">
+                                <img class="img-fluid book__img " src="{{ b.image }}">
+                            </a>
+                            <figcaption class="info-wrap mt-2">
+                                <a href="/details?book_id={{b.id}}&category_ids={% for cat in b.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
+                                   class="title">{{ b.name }} </a>
+                                <div class="">
+                                    <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(b.unit_price) }}₫</span>
+                                    {% if b.discount != 0 %}
+                                    <span class="ms-2 text-muted text-decoration-line-through">{{ "{:,.0f}".format(b.unit_price - (b.unit_price * b.discount) / 100)  }}₫</span>
+                                    <span class="ms-2 badge bg-info">-20%</span>
+                                    {% endif %}
+                                </div>
+                            </figcaption>
+                        </div>
+                    </div> <!-- col.// -->
+                    {% endfor %}
+
+                </div> <!-- row end.// -->
+
+                <nav class="mt-4">
+                    <ul class="pagination">
+                        <li class="page-item"><a class="page-link" href="#">Trang trước</a></li>
+                        {% for i in range(1, pages + 1) %}
+                        <li class="page-item active"><a class="page-link" href="/?page={{ i }}">{{ i }}</a></li>
+                        {% endfor %}
+                        <li class="page-item"><a class="page-link" href="#">Trang sau</a></li>
+
+                    </ul>
+                </nav>
+
+            </main> <!-- col.// -->
+        </div> <!-- row.// -->
+    </div> <!-- container.//  -->
+</section> <!-- section-content.// -->
+
+
+{% endblock %}

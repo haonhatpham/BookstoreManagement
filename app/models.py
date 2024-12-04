@@ -24,7 +24,13 @@ class BaseModel(db.Model):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+class Publisher(BaseModel):
+    __tablename__ = 'publishers'
+    name = db.Column(db.String(255), nullable=False)
+    books = db.relationship('Book', backref='publisher', lazy=True)
 
+    def __str__(self):
+        return self.name
 class Role(BaseModel):
     __tablename__ = 'role'
     name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
@@ -146,6 +152,8 @@ class Book(BaseModel):
     orders = relationship('OrderDetail', backref='book')  # n-1
     import_tickets = relationship('ImportDetail', backref='book')  # n-1
 
+    year_publishing = db.Column(db.Integer, nullable=False)
+    publisher_id = db.Column(db.Integer, db.ForeignKey('publishers.id'), nullable=False)
 
 author_book = db.Table(
     'author_book',
@@ -258,101 +266,110 @@ class OrderDetail(BaseModel):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
-        # read data from json:
-        # with open('../app/static/data_import/book_data.json', 'rb') as f:
-        #     data = json.load(f)
-        #     for book in data:
-        #         name = str(book['title']).strip()
-        #         description = str(book['description']).strip()
-        #         image = str(book['image']).strip()
-        #         standard_price = random.randint(20, 200) * 1000
-        #         sell_price = int(standard_price * 1.25)
-        #         discount = random.choice([0, 20])
-        #
-        #         categories = []
-        #         for category_name in book['category']:
-        #             category_name = str(category_name).strip()
-        #             db_category = Category.query.filter_by(name=category_name).first()
-        #             if not db_category:
-        #                 db_category = Category(name=category_name)
-        #                 db.session.add(db_category)
-        #                 db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
-        #             if db_category not in categories:
-        #                 categories.append(db_category)
-        #         authors = []
-        #         for author_name in book['author']:
-        #             author_name = str(author_name).strip()
-        #             last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
-        #             db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
-        #             if not db_author:
-        #                 db_author = Author(first_name=first_name, last_name=last_name)
-        #                 db.session.add(db_author)
-        #                 db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
-        #             if db_author not in authors:
-        #                 authors.append(db_author)
-        #
-        #         new_book = Book(name= name,
-        #                         description=description,
-        #                         image=image,
-        #                         standard_price=standard_price,
-        #                         unit_price=sell_price,
-        #                         available_quantity=random.randint(100, 300),
-        #                         discount= discount,
-        #                         is_enable=True,
-        #                         )
-        #
-        #         # Gán categories và authors cho sách, tránh trùng lặp
-        #         new_book.categories.extend([c for c in categories if c not in new_book.categories])
-        #         new_book.authors.extend([a for a in authors if a not in new_book.authors])
-        #
-        #         db.session.add(new_book)
-        #     db.session.commit()
-        # # END read data from json
-        #
-        # #Cap nhật ảnh cho category
-        # json_file_path = "path/to/your/json_file.json"
-        #
-        # # Đọc file JSON
-        # with open('../app/static/data_import/category.json', 'rb') as f:
-        #     data = json.load(f)
-        #
-        # # Cập nhật cơ sở dữ liệu
-        # for item in data:
-        #     # Tìm thể loại theo tên
-        #     cate = Category.query.filter_by(name=item["name"]).first()
-        #     if cate:
-        #         # Cập nhật đường dẫn ảnh
-        #         cate.image = item["image_url"]
-        #         db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
-        #
-        # # Lưu thay đổi vào cơ sở dữ liệu
-        # db.session.commit()
-        # admin_role = Role(
-        #     name="Admin",
-        #     description="Administrator with full access"
-        # )
-        # db.session.add(admin_role)
-        # db.session.commit()
-        #
+        db.create_all()
+        # #đọc data từ file json
+        with open('../app/static/data_import/book_data.json', 'rb') as f:
+            data = json.load(f)
+            for book in data:
+                name = str(book['title']).strip()
+                description = str(book['description']).strip()
+                image = str(book['image']).strip()
+                standard_price = random.randint(20, 200) * 1000
+                sell_price = int(standard_price * 1.25)
+                discount = random.choice([0, 20])
+                year_publishing=book['year_publishing']
+
+                categories = []
+                for category_name in book['category']:
+                    category_name = str(category_name).strip()
+                    db_category = Category.query.filter_by(name=category_name).first()
+                    if not db_category:
+                        db_category = Category(name=category_name)
+                        db.session.add(db_category)
+                        db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+                    if db_category not in categories:
+                        categories.append(db_category)
+                authors = []
+                for author_name in book['author']:
+                    author_name = str(author_name).strip()
+                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
+                    db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
+                    if not db_author:
+                        db_author = Author(first_name=first_name, last_name=last_name)
+                        db.session.add(db_author)
+                        db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+                    if db_author not in authors:
+                        authors.append(db_author)
+                # NXB
+                publisher_name = str(book['publisher']).strip()
+                db_publisher = Publisher.query.filter_by(name=publisher_name).first()
+                if not db_publisher:
+                    db_publisher = Publisher(name=publisher_name)
+                    db.session.add(db_publisher)
+                    db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
+                new_book = Book(name= name,
+                                description=description,
+                                image=image,
+                                standard_price=standard_price,
+                                unit_price=sell_price,
+                                available_quantity=random.randint(100, 300),
+                                discount= discount,
+                                is_enable=True,
+                                publisher_id=db_publisher.id,
+                                year_publishing=year_publishing
+                                )
+
+                # Gán categories và authors cho sách, tránh trùng lặp
+                new_book.categories.extend([c for c in categories if c not in new_book.categories])
+                new_book.authors.extend([a for a in authors if a not in new_book.authors])
+
+                db.session.add(new_book)
+            db.session.commit()
+        # END read data from json
+
+        #Cap nhật ảnh cho category
+        json_file_path = "path/to/your/json_file.json"
+
+        # Đọc file JSON
+        with open('../app/static/data_import/category.json', 'rb') as f:
+            data = json.load(f)
+
+        # Cập nhật cơ sở dữ liệu
+        for item in data:
+            # Tìm thể loại theo tên
+            cate = Category.query.filter_by(name=item["name"]).first()
+            if cate:
+                # Cập nhật đường dẫn ảnh
+                cate.image = item["image_url"]
+                db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
+
+        # Lưu thay đổi vào cơ sở dữ liệu
+        db.session.commit()
+        admin_role = Role(
+            name="Admin",
+            description="Administrator with full access"
+        )
+        db.session.add(admin_role)
+        db.session.commit()
+
         user_role = Role(name="User", description="Default role for registered users")
         db.session.add(user_role)
         db.session.commit()
-        # admin_role = Role.query.filter_by(name="Admin").first()
-        #
-        # # Lưu vai trò vào database
-        # admin_user = User(
-        #     first_name="Nhật Hào",
-        #     last_name="Phạm",
-        #     username="admin",
-        #     password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-        #     email="admin@example.com",
-        #     phone="1234567890",
-        #     birth=None,  # Không cần ngày sinh
-        #     gender=True,  # Nam
-        #     avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
-        #     active=True,
-        #     role_id=admin_role.id  # Liên kết với vai trò Admin
-        # )
-        # db.session.add(admin_user)
-        # db.session.commit()
+        admin_role = Role.query.filter_by(name="Admin").first()
+
+        # Lưu vai trò vào database
+        admin_user = User(
+            first_name="Nhật Hào",
+            last_name="Phạm",
+            username="admin",
+            password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+            email="admin@example.com",
+            phone="1234567890",
+            birth=None,  # Không cần ngày sinh
+            gender=True,  # Nam
+            avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
+            active=True,
+            role_id=admin_role.id  # Liên kết với vai trò Admin
+        )
+        db.session.add(admin_user)
+        db.session.commit()
