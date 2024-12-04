@@ -152,6 +152,43 @@ themeButton.addEventListener('click', () => {
 //sr.reveal(`.services__card`, {interval: 100})
 //sr.reveal(`.discount__data`, {origin: 'left'})
 //sr.reveal(`.discount__images`, {origin: 'right'})
+/*=============== zaasdad ===============*/
+//document.addEventListener('DOMContentLoaded', function () {
+//     if (document.referrer && !document.referrer.includes(window.location.hostname)) {
+//        localStorage.removeItem('selectedPriceRanges');
+//    }
+//
+//    // Lấy các checkbox
+//    const checkboxes = document.querySelectorAll('input[name="priceRanges"]');
+//
+//    // Kiểm tra nếu có trạng thái đã được lưu trong localStorage
+//    const savedSelections = JSON.parse(localStorage.getItem('selectedPriceRanges')) || [];
+//
+//    // Thiết lập trạng thái checkbox ban đầu
+//    checkboxes.forEach(function (checkbox) {
+//        if (savedSelections.includes(checkbox.value)) {
+//            checkbox.checked = true; // Đánh dấu lại các checkbox đã chọn
+//        } else {
+//            checkbox.checked = false; // Đảm bảo không có checkbox nào được chọn khi mới vào
+//        }
+//    });
+//
+//    // Lắng nghe sự thay đổi của các checkbox để lưu lại trạng thái khi người dùng thay đổi lựa chọn
+//    checkboxes.forEach(function (checkbox) {
+//        checkbox.addEventListener('change', function () {
+//            let selectedRanges = [];
+//            checkboxes.forEach(function (checkbox) {
+//                if (checkbox.checked) {
+//                    selectedRanges.push(checkbox.value);
+//                }
+//            });
+//            // Lưu trạng thái đã chọn vào localStorage
+//            localStorage.setItem('selectedPriceRanges', JSON.stringify(selectedRanges));
+//        });
+//    });
+//
+//});
+
 /*=============== XEM MẬT KHẨU ===============*/
 
     // Lấy các phần tử
@@ -172,3 +209,4 @@ themeButton.addEventListener('click', () => {
             eyeIcon.classList.add("ri-eye-off-line");
         }
     });
+
