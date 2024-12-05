@@ -1,9 +1,10 @@
 import math
+
 from app import app, login, dao
 from flask import render_template, request, redirect,session, jsonify
-from flask_login import login_user, logout_user
-from flask_login import current_user
+from flask_login import login_user, logout_user, current_user, login_required
 
+from app.dao import delete_from_favourites
 
 
 @app.route("/")
@@ -60,6 +61,8 @@ def login_process():
 
         u = dao.auth_user(username=username, password=password)
         if u:
+            session['user_id'] = u.id
+            print(u.id)
             login_user(user=u)
             print('thanh cong')
             return redirect('/')
@@ -71,41 +74,90 @@ def login_process():
 def logout_process():
     logout_user()
     return redirect('/')
-@app.route('/details')
 
+@app.route('/details', methods=['GET', 'POST'])
 def details():
     book_id = request.args.get('book_id')
-    book = dao.load_book(book_id).first()
-    categories = dao.get_category(book_id=book_id)
-    current_category=None
 
-    # Kiểm tra xem có đang truy cập từ một danh mục không
-    current_category_id = request.args.get('category_id')  # Lấy danh mục hiện tại từ query
+    # Kiểm tra book_id hợp lệ
+    if not book_id or not book_id.isdigit():
+        return jsonify({'error': 'ID sách không hợp lệ.'}), 400
+
+    book = dao.load_book(book_id).first()
+    if not book:
+        return jsonify({'error': 'Sách không tồn tại.'}), 404
+
+    categories = dao.get_category(book_id=book_id)
+    current_category = None
+    related_books = dao.load_related_book(book)
+
+    # Xử lý breadcrumbs
+    current_category_id = request.args.get('category_id')
     if current_category_id:
-        current_category = dao.get_category(cate_id=int(current_category_id))  # Lấy thông tin danh mục hiện tại
+        current_category = dao.get_category(cate_id=int(current_category_id))
     breadcrumbs = [{'name': 'Trang chủ', 'url': '/'}]
     if current_category:
         breadcrumbs.append({'name': current_category.name, 'url': f"/category?category_id={current_category.id}"})
     else:
         for category in categories:
             breadcrumbs.append({'name': category.name, 'url': f"/category?category_id={category.id}"})
+    breadcrumbs.append({'name': book.name, 'url': None})
 
-    breadcrumbs.append({'name': book.name, 'url': None})  # Sách hiện tại
-    print("breadcums:" ,breadcrumbs)
+    # Xử lý thêm vào danh sách yêu thích
+    if request.method == 'POST':
+        if 'user_id' not in session:
+            return jsonify({'error': 'Bạn cần đăng nhập để thêm sách vào danh sách yêu thích.'}), 401
+        user_id = session['user_id']
 
-    category_ids = request.args.get('category_ids')
-    related_books = dao.load_related_book(category_ids=category_ids)
-    return render_template('details.html', related_books=related_books, category_ids=category_ids, book=book,breadcrumbs=breadcrumbs)
+        favourite_added = dao.add_to_favourites(user_id=user_id, book_id=book_id)
+        if favourite_added:
+            return jsonify({'message': 'Đã thêm sách vào danh sách yêu thích thành công.'}), 200
+        else:
+            return jsonify({'error': 'Sách này đã có trong danh sách yêu thích.'}), 400
 
+    return render_template(
+        'details.html',
+        related_books=related_books,
+        book=book,
+        breadcrumbs=breadcrumbs
+    )
+
+
+@login_required
 @app.route('/account')
 def account():
     return render_template('account.html')
 
-@app.route('/favourite')
+@app.route('/favourite', methods=['GET','POST'])
 def favourite():
-    # query params = user.id, book.id
-    return render_template('favourite.html')
+    favourite_books = current_user.favourite_books
+    return render_template('favourite.html', favourite_books=favourite_books)
 
+
+
+@app.route('/delete_favourite', methods=['POST'])
+@login_required
+def delete_favourite():
+    # Lấy book_id từ request form data
+    book_id = request.form.get('book_id')
+
+    # Kiểm tra xem book_id có được gửi lên không
+    if not book_id:
+        return jsonify({'error': 'Không có ID sách được gửi.'}), 400
+
+    try:
+        # Chuyển đổi book_id sang kiểu int nếu cần
+
+        # Xóa sách khỏi danh sách yêu thích (thêm logic xử lý trong DAO)
+        result = dao.delete_from_favourites(current_user.id, book_id)
+
+        if result:
+            return jsonify({'message': 'Sách đã được xóa khỏi danh sách yêu thích.'}), 200
+        else:
+            return jsonify({'error': 'Không tìm thấy sách để xóa hoặc xảy ra lỗi.'}), 404
+
+    except ValueError:
+        return jsonify({'error': 'ID sách không hợp lệ.'}), 400
 
 @app.route('/change_password')
 def change_password():
@@ -114,9 +166,6 @@ def change_password():
 @app.route('/manage_info')
 def manage_info():
     return render_template('manage_info.html')
-
-
-
 
 
 @app.route("/login-admin", methods=['post'])

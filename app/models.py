@@ -50,7 +50,11 @@ class Address(BaseModel):
 
     users = relationship("User", backref='Address', lazy=True)
 
-
+favourite_books = db.Table(
+    'favourite_books',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('book_id', db.Integer, db.ForeignKey('book.id'), primary_key=True)
+)
 class User(BaseModel,UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
@@ -75,8 +79,7 @@ class User(BaseModel,UserMixin):
                                backref=db.backref('users', lazy=True))  # n-n
     permission = db.relationship('Permission', secondary='user_has_permission', lazy='subquery',
                                  backref=backref('users', lazy=True))  # n-n
-    wish_list_book = relationship('Book', secondary='wish_list_book', lazy='subquery',
-                                  backref=backref('users', lazy=True))
+    favourite_books = db.relationship('Book', secondary=favourite_books, back_populates='users')
     fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
 
@@ -112,11 +115,6 @@ class Author(BaseModel):
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
 
 
-class WishListBook(BaseModel):
-    __tablename__ = 'wish_list_book'
-    user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
-    book_id = Column(ForeignKey('book.id'), nullable=False, index=True)
-
 
 class Category(BaseModel):
     __tablename__ = 'category'
@@ -151,7 +149,7 @@ class Book(BaseModel):
 
     orders = relationship('OrderDetail', backref='book')  # n-1
     import_tickets = relationship('ImportDetail', backref='book')  # n-1
-
+    users = db.relationship('User', secondary=favourite_books, back_populates='favourite_books')
     year_publishing = db.Column(db.Integer, nullable=False)
     publisher_id = db.Column(db.Integer, db.ForeignKey('publishers.id'), nullable=False)
 
