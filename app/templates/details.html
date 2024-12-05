@@ -1,16 +1,26 @@
 {% extends 'layout/base.html' %}
 {% block content %}
-<section class="section-pagetop-2 bg-light">
+<section class="section-pagetop bg-light" style="margin-top: 100px">
     <div class="container">
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item" aria-current="page"><a href="#">Trang chủ</a></li>
-                <li class="breadcrumb-item" aria-current="page"><a href="#">Sách giáo khoa</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Tiếng Việt lớp 1</li>
+                <li class="breadcrumb-item">
+                    <a href="/">Trang chủ</a>
+                </li>
+                {% if breadcrumbs[1:-1] %}
+                <li class="breadcrumb-item">
+                    {% for crumb in breadcrumbs[1:-1] %}
+                    {% if crumb.url %}
+                    <a href="{{ crumb.url }}">{{ crumb.name }}</a>{% if not loop.last %}, {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </li>
+                {% endif %}
+                <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbs[-1].name }}</li>
             </ol>
         </nav>
     </div> <!-- container.// -->
-</section> <!-- section-pagetop-2.// -->
+</section> <!-- section-pagetop.// -->
 
 <section class="section-content padding-y">
     <div class="container">

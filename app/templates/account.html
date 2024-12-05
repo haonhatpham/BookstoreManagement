@@ -1,0 +1,64 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+  <section class="section-pagetop bg-light" style="margin-top: 100px; padding:40px">
+    <div class="container">
+      <h2 class="title-page">Tài khoản</h2>
+    </div> <!-- container.// -->
+  </section> <!-- section-pagetop.// -->
+
+  <section class="section-content padding-y">
+    <div class="container">
+      <div class="row">
+        {% block aside %}
+        {% include 'layout/user_info_aside.html' %}
+        {% endblock %}
+        <main class="col-md-9">
+          <article class="card">
+            <div class="card-body">
+              <div>
+                <h5>Nguyễn Thị A</h5>
+                <p>nguyenthia@gmail.com</p>
+              </div>
+              <hr>
+              <div>
+                <p class="bi bi-map d-block lh-lg">
+                  Địa chỉ:
+                  <br>
+                  Đường Nguyễn Duy Trinh, Phường Bình Trưng Đông, Quận 2, TP.HCM
+                </p>
+              </div>
+              <article class="card-group">
+                <figure class="card bg-light">
+                  <div class="p-3">
+                    <h4 class="title">2</h4>
+                    <span>Sản phẩm trong giỏ</span>
+                  </div>
+                </figure>
+                <figure class="card bg-light">
+                  <div class="p-3">
+                    <h4 class="title">5</h4>
+                    <span>Đơn hàng</span>
+                  </div>
+                </figure>
+                <figure class="card bg-light">
+                  <div class="p-3">
+                    <h4 class="title">5</h4>
+                    <span>Sản phẩm đang giao</span>
+                  </div>
+                </figure>
+                <figure class="card bg-light">
+                  <div class="p-3">
+                    <h4 class="title">10</h4>
+                    <span>Sản phẩm đã nhận</span>
+                  </div>
+                </figure>
+              </article> <!-- row .//  -->
+            </div> <!-- card-body.// -->
+          </article>
+        </main> <!-- col.// -->
+
+      </div> <!-- row.// -->
+    </div> <!-- container.// -->
+  </section> <!-- section-content.// -->
+
+{%endblock%}

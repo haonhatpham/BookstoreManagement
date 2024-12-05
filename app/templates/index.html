@@ -45,7 +45,7 @@
     <div class="featured__container container">
         <div class="featured__swiper swiper">
             <div class="swiper-wrapper">
-                {% for fb in feature_books %}
+                {% for fb in feature_books[4:8] %}
                 <div class="col-lg-3 col-md-6 book swiper-slide">
                     <div class="card p-3 mb-4">
                         <a href="/details?book_id={{fb.id}}&category_ids={% for cat in fb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
@@ -94,14 +94,14 @@
             <a class="btn btn-secondary" href="#" role="button" style="height: fit-content;">Xem tất cả</a>
         </header> <!-- section-heading.// -->
         <div class="row item-grid">
-            {% for cates in categories %}
+            {% for cate in categories[:8] %}
             <div class="col-lg-3 col-md-6">
                 <div class="card mb-4">
                     <div class="card-body">
-                        <a href="#" class="stretched-link">
+                        <a href="{{ url_for('category') }}?category_id={{ cate.id }}" class="stretched-link">
                             <div class="d-flex align-items-center">
-                                <img src="{{ cates.image}}">
-                                <span class="category-title ms-3">{{ cates. name}}</span>
+                                <img src="{{ cate.image}}">
+                                <span class="category-title ms-3">{{ cate. name}}</span>
                             </div>
                         </a>
                     </div>
@@ -158,7 +158,7 @@
         <article class="services__card">
             <i class="ri-lock-2-line"></i>
             <h3 class="services__title">Secure Payment</h3>
-            <p class="services__description">100% Secure Payment</p>
+            <p class="services__description">200% Secure Payment</p>
         </article>
 
         <article class="services__card">

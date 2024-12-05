@@ -1,11 +1,13 @@
-from PIL.ImageChops import duplicate
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
-from sqlalchemy.orm import relationship, backref
-from app import db, app
+
 from enum import Enum as StatusEnum
+from app import db, app
+from flask_login import UserMixin
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship, backref
 import hashlib
 import json, random, os
+import uuid
 
 
 class OrderEnum(StatusEnum):
@@ -22,7 +24,13 @@ class BaseModel(db.Model):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+class Publisher(BaseModel):
+    __tablename__ = 'publishers'
+    name = db.Column(db.String(255), nullable=False)
+    books = db.relationship('Book', backref='publisher', lazy=True)
 
+    def __str__(self):
+        return self.name
 class Role(BaseModel):
     __tablename__ = 'role'
     name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
@@ -43,7 +51,7 @@ class Address(BaseModel):
     users = relationship("User", backref='Address', lazy=True)
 
 
-class User(BaseModel):
+class User(BaseModel,UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
@@ -51,9 +59,9 @@ class User(BaseModel):
     password = Column(String(100), nullable=False)
     email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     phone = Column(String(11, 'utf8mb4_unicode_ci'))
-    birth = Column(DateTime)
+    birth = Column(DateTime,nullable=True)
     gender = Column(Boolean, default=True)  # 1:nam 0:Nữ
-    avatar_file = Column(String(100, 'utf8mb4_unicode_ci'), nullable=True)
+    avatar_file = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
 
     role_id = Column(ForeignKey(Role.id), nullable=False, index=True)
@@ -69,6 +77,7 @@ class User(BaseModel):
                                  backref=backref('users', lazy=True))  # n-n
     wish_list_book = relationship('Book', secondary='wish_list_book', lazy='subquery',
                                   backref=backref('users', lazy=True))
+    fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
 
 class BankingInformation(BaseModel):
@@ -112,8 +121,9 @@ class WishListBook(BaseModel):
 class Category(BaseModel):
     __tablename__ = 'category'
     name = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
-    image= Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
-                  default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
+    image = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
+                   default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
+
     def __str__(self):
         return self.name
 
@@ -127,7 +137,7 @@ class Book(BaseModel):
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
     image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
-    discount = Column(DECIMAL, nullable=False,default=0)
+    discount = Column(DECIMAL, nullable=False, default=0)
     description = Column(Text)
 
     reviews = relationship('Review', backref='book', lazy=True)  # 1-n
@@ -142,6 +152,8 @@ class Book(BaseModel):
     orders = relationship('OrderDetail', backref='book')  # n-1
     import_tickets = relationship('ImportDetail', backref='book')  # n-1
 
+    year_publishing = db.Column(db.Integer, nullable=False)
+    publisher_id = db.Column(db.Integer, db.ForeignKey('publishers.id'), nullable=False)
 
 author_book = db.Table(
     'author_book',
@@ -255,7 +267,7 @@ class OrderDetail(BaseModel):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # read data from json:
+        # #đọc data từ file json
         with open('../app/static/data_import/book_data.json', 'rb') as f:
             data = json.load(f)
             for book in data:
@@ -265,6 +277,7 @@ if __name__ == '__main__':
                 standard_price = random.randint(20, 200) * 1000
                 sell_price = int(standard_price * 1.25)
                 discount = random.choice([0, 20])
+                year_publishing=book['year_publishing']
 
                 categories = []
                 for category_name in book['category']:
@@ -287,7 +300,13 @@ if __name__ == '__main__':
                         db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
                     if db_author not in authors:
                         authors.append(db_author)
-
+                # NXB
+                publisher_name = str(book['publisher']).strip()
+                db_publisher = Publisher.query.filter_by(name=publisher_name).first()
+                if not db_publisher:
+                    db_publisher = Publisher(name=publisher_name)
+                    db.session.add(db_publisher)
+                    db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
                 new_book = Book(name= name,
                                 description=description,
                                 image=image,
@@ -296,6 +315,8 @@ if __name__ == '__main__':
                                 available_quantity=random.randint(100, 300),
                                 discount= discount,
                                 is_enable=True,
+                                publisher_id=db_publisher.id,
+                                year_publishing=year_publishing
                                 )
 
                 # Gán categories và authors cho sách, tránh trùng lặp
@@ -323,4 +344,32 @@ if __name__ == '__main__':
                 db.session.add(cate)  # Đánh dấu đối tượng để cập nhật
 
         # Lưu thay đổi vào cơ sở dữ liệu
+        db.session.commit()
+        admin_role = Role(
+            name="Admin",
+            description="Administrator with full access"
+        )
+        db.session.add(admin_role)
+        db.session.commit()
+
+        user_role = Role(name="User", description="Default role for registered users")
+        db.session.add(user_role)
+        db.session.commit()
+        admin_role = Role.query.filter_by(name="Admin").first()
+
+        # Lưu vai trò vào database
+        admin_user = User(
+            first_name="Nhật Hào",
+            last_name="Phạm",
+            username="admin",
+            password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+            email="admin@example.com",
+            phone="1234567890",
+            birth=None,  # Không cần ngày sinh
+            gender=True,  # Nam
+            avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
+            active=True,
+            role_id=admin_role.id  # Liên kết với vai trò Admin
+        )
+        db.session.add(admin_user)
         db.session.commit()
