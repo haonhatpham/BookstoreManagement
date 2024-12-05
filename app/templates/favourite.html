@@ -15,15 +15,17 @@
                 <article class="card">
                     <div class="card-body">
                         <div class="row g-3">
+                            {%for book in favourite_books%}
                             <div class="col-lg-6">
                                 <figure class="d-flex align-items-center m-0">
-                                    <div class="aside"><img src="img/80px.png" width="80" height="80"></div>
+                                    <div class="aside"><img src="{{book.image}}" width="80" height="80"></div>
                                     <figcaption class="ps-3">
-                                        <a href="#">Tiếng Việt lớp 1</a>
+                                        <a href="#">{{book.name}}</a>
                                         <p class="mb-2">
-                                            <span class="price">320.000₫</span>
+                                            <span class="price">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
                                             <span class="ms-2 text-muted text-decoration-line-through">
-                                                350.000₫
+                                                {{  "{:,.0f}".format(book.unit_price) }}₫
+
                                             </span>
                                         </p>
                                         <button type="button" class="btn btn-primary btn-sm">
@@ -31,55 +33,13 @@
                                         </button>
                                         <button type="button" class="btn btn-danger btn-sm ms-1" data-toggle="tooltip"
                                                 title="Xóa khỏi danh sách yêu thích"
-                                                data-original-title="Xóa khỏi danh sách yêu thích">
+                                                onclick="deleteFavourite({{book.id}})">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </figcaption>
                                 </figure>
                             </div> <!-- col.// -->
-
-                            <div class="col-lg-6">
-                                <figure class="d-flex align-items-center m-0">
-                                    <div class="aside"><img src="img/80px.png" width="80" height="80"></div>
-                                    <figcaption class="ps-3">
-                                        <a href="#">Tiếng Việt lớp 2</a>
-                                        <p class="mb-2">
-                                            <span class="price">320.000₫</span>
-                                            <span class="ms-2 text-muted text-decoration-line-through">
-                          350.000₫
-                        </span>
-                                        </p>
-                                        <button type="button" class="btn btn-primary btn-sm">
-                                            Thêm vào giỏ hàng
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm ms-1" data-toggle="tooltip"
-                                                title="Xóa khỏi danh sách yêu thích"
-                                                data-original-title="Xóa khỏi danh sách yêu thích">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </figcaption>
-                                </figure>
-                            </div> <!-- col.// -->
-
-                            <div class="col-lg-6">
-                                <figure class="d-flex align-items-center m-0">
-                                    <div class="aside"><img src="img/80px.png" width="80" height="80"></div>
-                                    <figcaption class="ps-3">
-                                        <a href="#">Tiếng Việt lớp 3</a>
-                                        <p class="mb-2">
-                                            <span class="price">320.000₫</span>
-                                        </p>
-                                        <button type="button" class="btn btn-primary btn-sm">
-                                            Thêm vào giỏ hàng
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm ms-1" data-toggle="tooltip"
-                                                title="Xóa khỏi danh sách yêu thích"
-                                                data-original-title="Xóa khỏi danh sách yêu thích">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </figcaption>
-                                </figure>
-                            </div> <!-- col.// -->
+                            {%endfor%}
                         </div> <!-- row .//  -->
                     </div> <!-- card-body.// -->
                 </article>
@@ -88,5 +48,35 @@
         </div> <!-- row.// -->
     </div> <!-- container.// -->
 </section> <!-- section-content.// -->
+<script>
+    function deleteFavourite(bookId) {
+    fetch('/delete_favourite', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `book_id=${bookId}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+            console.log(response)
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Server response:', data);
+        if (data.message) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
 
+</script>
 {%endblock%}

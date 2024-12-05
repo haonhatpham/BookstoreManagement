@@ -100,7 +100,7 @@
                 </dl>
 
                 <div>
-                    <a href="#" class="btn btn-danger"><i class="ri-heart-line"></i></a>
+                    <a href="#" class="btn btn-danger submit" id="favourite-form"  data-id="{{ book.id }}" ><i class="ri-heart-line"></i></a>
                     <a href="#" class="btn btn-primary">Mua ngay</a>
                     <a href="#" class="btn btn-light ms-2">Thêm vào giỏ hàng</a>
                 </div>
@@ -239,9 +239,9 @@
                         <a href="/details?book_id={{rb.id}}"
                            class="title">{{ rb.name }} </a>
                         <div class="">
-                            <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(rb.unit_price) }}₫</span>
+                            <span class="price mt-1 fw-bold">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
                             {% if rb.discount != 0 %}
-                            <span class="ms-2 text-muted text-decoration-line-through">{{ "{:,.0f}".format(rb.unit_price - (rb.unit_price * rb.discount) / 100)  }}₫</span>
+                            <span class="ms-2 text-muted text-decoration-line-through">{{  "{:,.0f}".format(book.unit_price) }}₫</span>
                             <span class="ms-2 badge bg-info">-20%</span>
                             {% endif %}
                         </div>
@@ -252,5 +252,29 @@
         </div>
     </div>
 </section>
+<script>
+    document.querySelector("#favourite-form").addEventListener("click", function (event) {
+        event.preventDefault(); // Ngăn không reload trang
 
+        const bookId = this.getAttribute("data-id"); // Lấy book_id từ nút
+
+        fetch("/details?book_id=" + bookId, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.error) {
+                alert(data.error); // Thông báo lỗi
+            } else {
+                alert(data.message); // Thông báo thành công
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+    });
+</script>
 {% endblock %}

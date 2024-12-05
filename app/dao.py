@@ -1,10 +1,12 @@
-from app.models import Category, Book, User, book_category,Role,Publisher
+from flask import jsonify
+from flask_login import current_user
+
+from app.models import Category, Book, User, book_category,Role,Publisher, favourite_books
 from app import app, db
 import hashlib
 import cloudinary.uploader
 from sqlalchemy import desc, engine, or_
 from sqlalchemy.orm import session, sessionmaker
-
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -192,3 +194,23 @@ def get_publishers_by_category(category_id):
         .all()
     )
     return publishers
+
+
+def add_to_favourites(user_id, book_id):
+
+    existing_favourite = db.session.query(favourite_books).filter_by(user_id=user_id, book_id=book_id).first()
+    if existing_favourite:
+        return False
+
+    db.session.execute(
+        favourite_books.insert().values(user_id=user_id, book_id=book_id)
+    )
+    db.session.commit()
+    return True
+
+def delete_from_favourites(user_id, book_id):
+    if user_id and book_id:
+        db.session.query(favourite_books).filter_by(user_id=user_id, book_id=book_id).delete()
+        db.session.commit()
+        return True
+    return False
