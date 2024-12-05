@@ -93,9 +93,9 @@ def details():
     breadcrumbs.append({'name': book.name, 'url': None})  # Sách hiện tại
     print("breadcums:" ,breadcrumbs)
 
-    category_ids = request.args.get('category_ids')
-    related_books = dao.load_related_book(category_ids=category_ids)
-    return render_template('details.html', related_books=related_books, category_ids=category_ids, book=book,breadcrumbs=breadcrumbs)
+
+    related_books = dao.load_related_book(book)
+    return render_template('details.html', related_books=related_books, book=book,breadcrumbs=breadcrumbs)
 
 @app.route('/account')
 def account():

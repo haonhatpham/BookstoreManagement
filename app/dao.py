@@ -25,13 +25,13 @@ def load_book(book_id=None):
         return Book.query.filter(Book.id == book_id)
     return Book.query.all()
 
-def load_related_book(category_ids):
-    if isinstance(category_ids, str):
-        category_ids = list(map(int, category_ids.split(',')))
+def load_related_book(book):
+    category_ids = [category.id for category in book.categories]
     return (
         Book.query
         .join(book_category)
         .filter(book_category.c.category_id.in_(category_ids))
+        .filter(Book.id != book.id)  # Loại trừ chính cuốn sách hiện tại
         .all()
     )
 

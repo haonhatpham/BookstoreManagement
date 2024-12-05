@@ -231,12 +231,12 @@
             {% for rb in related_books %}
             <div class="col-lg-3 col-md-6">
                 <div class="card p-3 mb-4">
-                    <a href="/details?book_id={{rb.id}}&category_ids={% for cat in rb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
+                    <a href="/details?book_id={{rb.id}}"
                        class="img-wrap text-center">
                         <img class="img-fluid" src={{rb.image}}>
                     </a>
                     <figcaption class="info-wrap mt-2">
-                        <a href="/details?book_id={{rb.id}}&category_ids={% for cat in rb.categories %}{{ cat.id }}{% if not loop.last %},{% endif %}{% endfor %}"
+                        <a href="/details?book_id={{rb.id}}"
                            class="title">{{ rb.name }} </a>
                         <div class="">
                             <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(rb.unit_price) }}₫</span>
