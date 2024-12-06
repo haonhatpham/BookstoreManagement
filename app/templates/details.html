@@ -75,7 +75,7 @@
               <i class="bi bi-star-fill"></i>
             </span>
                     <small class="label-rating text-muted me-2">20 đánh giá</small>
-                    <small class="label-rating text-success"><i class="bi bi-bag-check-fill"></i> 150 đã mua</small>
+                    <small class="label-rating text-success"><i class="bi bi-bag-check-fill"></i> {{book.sold_quantity}} đã mua</small>
                 </div>
 
                 <div class="mb-4">
@@ -85,13 +85,19 @@
 
                 <dl class="row mb-4">
                     <dt class="col-xl-4 col-sm-5 col-6">Nhà xuất bản</dt>
-                    <dd class="col-xl-8 col-sm-7 col-6"><a href="#">NXB Giáo dục</a></dd>
+                    <dd class="col-xl-8 col-sm-7 col-6"><a href="#">{{publisher.name}}</a></dd>
 
                     <dt class="col-xl-4 col-sm-5 col-6">Thời gian giao hàng</dt>
                     <dd class="col-xl-8 col-sm-7 col-6">2-5 ngày</dd>
 
                     <dt class="col-xl-4 col-sm-5 col-6">Tình trạng</dt>
-                    <dd class="col-xl-8 col-sm-7 col-6">còn hàng</dd>
+                    <dd class="col-xl-8 col-sm-7 col-6">
+                        {% if book_activated == True %}
+                            Còn hàng
+                        {% else %}
+                            Hết hàng
+                        {%endif%}
+                    </dd>
 
                     <dt class="col-xl-4 col-sm-5 col-6">Số lượng</dt>
                     <dd class="col-xl-8 col-sm-7 col-6">
@@ -117,22 +123,7 @@
             <div class="col">
                 <h3 class="pb-2">Mô tả sản phẩm</h3>
                 <p>
-                    Vestibulum at lectus eu mi volutpat condimentum sed vel libero. Etiam a finibus odio, sit amet
-                    pellentesque lorem. Proin sodales auctor ex, in tempus nunc dapibus ac. Sed sit amet tellus dui.
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam pellentesque at justo sed
-                    rutrum. Proin ac justo et libero iaculis malesuada. Quisque posuere urna eget nulla malesuada,
-                    sit amet mattis elit eleifend. Integer et mollis elit. Integer et massa at ipsum hendrerit porta
-                    quis vehicula nibh. Nullam tellus urna, blandit sed ligula a, posuere scelerisque massa. In ac
-                    lectus non risus facilisis finibus. Nulla neque risus, sodales et mi nec, lobortis scelerisque
-                    arcu. Proin at lectus ex.
-                </p>
-                <p>
-                    Nulla vel ante euismod, bibendum urna a, dapibus velit. Praesent vel magna mi. Vestibulum ante
-                    ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Phasellus bibendum
-                    tincidunt nibh. Fusce faucibus viverra ipsum, quis sagittis sem fermentum vel. Maecenas aliquet
-                    vulputate finibus. Cras vestibulum vel lacus sit amet convallis. Aliquam finibus egestas dui, id
-                    iaculis lectus lacinia nec. Praesent bibendum lorem at sem facilisis, quis placerat lorem
-                    laoreet.
+                    {{book.description}}
                 </p>
             </div>
         </div>
@@ -224,31 +215,54 @@
     </div> <!-- container.//  -->
 </section> <!-- section-content.// -->
 
-<section class="section-content mb-5">
+<section class="section-content mb-2" id="featured">
     <div class="container">
-        <h3 class="pb-2">Sản phẩm liên quan</h3>
-        <div class="row item-grid">
-            {% for rb in related_books %}
-            <div class="col-lg-3 col-md-6">
-                <div class="card p-3 mb-4">
-                    <a href="/details?book_id={{rb.id}}"
-                       class="img-wrap text-center">
-                        <img class="img-fluid" src={{rb.image}}>
-                    </a>
-                    <figcaption class="info-wrap mt-2">
+        <header class="section-heading py-4 d-flex justify-content-between">
+            <h3 class="section-title">Sản phẩm liên quan</h3>
+        </header>
+    </div>
+
+    <div class="featured__container container">
+        <div class="featured__swiper swiper">
+            <div class="swiper-wrapper">
+                {% for rb in related_books %}
+                <div class="col-lg-3 col-md-6 book swiper-slide">
+                    <div class="card p-3 mb-4">
                         <a href="/details?book_id={{rb.id}}"
-                           class="title">{{ rb.name }} </a>
-                        <div class="">
-                            <span class="price mt-1 fw-bold">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
-                            {% if rb.discount != 0 %}
-                            <span class="ms-2 text-muted text-decoration-line-through">{{  "{:,.0f}".format(book.unit_price) }}₫</span>
-                            <span class="ms-2 badge bg-info">-20%</span>
-                            {% endif %}
-                        </div>
-                    </figcaption>
+                           class="img-wrap text-center">
+                            <img class="img-fluid book__img" src="{{ rb.image }}">
+                        </a>
+                        <figcaption class="info-wrap mt-2">
+                            <a href="/details?book_id={{rb.id}}" class="title">{{ rb.name }}</a>
+                            <div class="">
+                                <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(rb.unit_price) }}₫</span>
+                                {% if rb.discount != 0 %}
+                                <span class="ms-2 text-muted text-decoration-line-through">{{ "{:,.0f}".format(rb.unit_price - (rb.unit_price * rb.discount) / 100)  }}₫</span>
+                                <span class="ms-2 badge bg-info">-20%</span>
+                                {% endif %}
+                            </div>
+                        </figcaption>
+                    </div>
+
+                    <div class="book_icon_actions">
+                        <button><i class="ri-search-line"></i></button>
+                        <button><i class="ri-heart-3-line"></i></button>
+                        <button><i class="ri-eye-line"></i></button>
+                    </div>
                 </div>
+
+
+                {% endfor %}
             </div>
-            {%endfor%}
+
+            <div class="swiper-button-prev">
+                <i class="ri-arrow-left-s-line"></i>
+            </div>
+
+            <div class="swiper-button-next">
+                <i class="ri-arrow-right-s-line"></i>
+            </div>
+
         </div>
     </div>
 </section>

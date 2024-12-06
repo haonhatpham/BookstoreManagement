@@ -1,31 +1,36 @@
 from flask import jsonify
 from flask_login import current_user
 
-from app.models import Category, Book, User, book_category,Role,Publisher, favourite_books
+from app.models import Category, Book, User, book_category, Role, Publisher, favourite_books, Address
 from app import app, db
 import hashlib
 import cloudinary.uploader
 from sqlalchemy import desc, engine, or_
 from sqlalchemy.orm import session, sessionmaker
+
 Session = sessionmaker(bind=engine)
 session = Session()
 
 
-#load banner_home
+# load banner_home
 def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
 
-#load sách tieu bieu ở home
+
+# load sách tieu bieu ở home
 def load_feature_book():
     # feature_book = Book.query.offset(4).limit(6).all()
     # return feature_book
-    pass #sách tiêu biểu sẽ xử lí theo số lượng có mặt của sách đó trong đơn hàng nên sẽ xử lí sau
-#lay sach theo id
+    pass  # sách tiêu biểu sẽ xử lí theo số lượng có mặt của sách đó trong đơn hàng nên sẽ xử lí sau
+
+
+# lay sach theo id
 def load_book(book_id=None):
     if book_id:
         return Book.query.filter(Book.id == book_id)
     return Book.query.all()
+
 
 def load_related_book(book):
     category_ids = [category.id for category in book.categories]
@@ -37,26 +42,29 @@ def load_related_book(book):
         .all()
     )
 
+
 def load_category_ids():
     category_ids = db.session.query(Category.id).all()
     return [id[0] for id in category_ids]
 
+
 # Lấy đối tượng category nếu có id_cate truyền vào
 # hoặc lấy các categories của 1 book nếu có book truyền vào
 # hoặc trả về tất cả đối tượng category
-def get_category(cate_id=None,book_id=None):
+def get_category(cate_id=None, book_id=None):
     if book_id:
-            # Lấy các category của book thông qua bảng trung gian book_category
-            categories = (Category.query
-                          .join(book_category)
-                          .filter(book_category.c.book_id == book_id).all())  # Trả về danh sách các category của book
-            return categories
+        # Lấy các category của book thông qua bảng trung gian book_category
+        categories = (Category.query
+                      .join(book_category)
+                      .filter(book_category.c.book_id == book_id).all())  # Trả về danh sách các category của book
+        return categories
     if cate_id:
         # Trả về một category cụ thể
         return Category.query.filter_by(id=cate_id).first()
     else:
         # Trả về toàn bộ category
         return Category.query.all()
+
 
 #
 def load_new_products(kw=None, cate_id=None, page=1):
@@ -71,6 +79,7 @@ def load_new_products(kw=None, cate_id=None, page=1):
     query = query.slice(start, start + page_size)
 
     return query.all()
+
 
 def count_products(category_id=None, checked_publishers=None, price_ranges=None):
     # Khởi tạo query
@@ -96,10 +105,25 @@ def count_products(category_id=None, checked_publishers=None, price_ranges=None)
 
     return query.count()
 
-#Thêm user ở Client
-def add_user(name, username, password, email, phone, birth, gender, avatar):
-    password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
+def existing_user(username):
+    return  User.query.filter_by(username=username).first()
 
+
+def add_address(city, district, ward, street):
+    address = Address(
+        city=city.strip(),
+        district=district.strip(),
+        ward=ward.strip(),
+        details =street.strip()
+    )
+    db.session.add(address)
+    db.session.commit()
+    # trả về id để khi gọi hàm ngoài index.py, id sẽ được thêm vào User.address_id
+    return address.id
+
+# Thêm user ở Client
+def add_user(name, username, password, email, phone, birth, gender, avatar, address_id):
+    password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
     user_role = Role.query.filter_by(name="User").first()
     name_parts = name.strip().split(" ", 1)
     if len(name_parts) > 1:
@@ -118,7 +142,8 @@ def add_user(name, username, password, email, phone, birth, gender, avatar):
         phone=phone.strip(),
         birth=birth,
         gender=gender,  # Nam active=True,
-        role_id=user_role.id
+        role_id=user_role.id,
+        address_id=address_id
     )
 
     if avatar:
@@ -129,24 +154,27 @@ def add_user(name, username, password, email, phone, birth, gender, avatar):
     db.session.add(u)
     db.session.commit()
 
-#chứng thực tài khoản khi đăng nhập
+# chứng thực tài khoản khi đăng nhập
 def auth_user(username, password):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
 
     return User.query.filter(User.username.__eq__(username.strip()),
                              User.password.__eq__(password)).first()
 
-#Lấy user theo id
+
+# Lấy user theo id
 def get_user_by_id(id):
     return User.query.get(id)
 
-#Lấy id các nhà xuất bản sách theo tên
+
+# Lấy id các nhà xuất bản sách theo tên
 def get_publisher_ids_by_names(names):
     publishers = Publisher.query.filter(Publisher.name.in_(names)).all()
     return [publisher.id for publisher in publishers]
 
-#Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
-def get_products_by_filters(category_id, checked_publishers,price_ranges, order_by, order_dir,page=1):
+
+# Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
+def get_products_by_filters(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
     books = Book.query
     from sqlalchemy.sql import text
 
@@ -162,7 +190,7 @@ def get_products_by_filters(category_id, checked_publishers,price_ranges, order_
         price_conditions = []
         for price_range in price_ranges:
             min_price, max_price = price_range.split('-')
-            print(min_price,max_price)
+            print(min_price, max_price)
             if max_price == "infinity":
                 # Lọc các sản phẩm có giá >= min_price
                 price_conditions.append(Book.unit_price >= float(min_price))
@@ -183,7 +211,8 @@ def get_products_by_filters(category_id, checked_publishers,price_ranges, order_
     books = books.slice(start, start + page_size)
     return books.all()
 
-#Lấy nhà xuất bản theo id của thể loại
+
+# Lấy nhà xuất bản theo id của thể loại
 def get_publishers_by_category(category_id):
     publishers = (
         db.session.query(Publisher)
@@ -197,7 +226,6 @@ def get_publishers_by_category(category_id):
 
 
 def add_to_favourites(user_id, book_id):
-
     existing_favourite = db.session.query(favourite_books).filter_by(user_id=user_id, book_id=book_id).first()
     if existing_favourite:
         return False
@@ -208,9 +236,29 @@ def add_to_favourites(user_id, book_id):
     db.session.commit()
     return True
 
+
 def delete_from_favourites(user_id, book_id):
     if user_id and book_id:
         db.session.query(favourite_books).filter_by(user_id=user_id, book_id=book_id).delete()
         db.session.commit()
         return True
     return False
+
+
+def get_publisher_by_book_id(book_id):
+    publisher = (
+        db.session.query(Publisher)
+        .join(Book, Publisher.id == Book.publisher_id)
+        .filter(book_id == Book.id)
+        .distinct()
+        .first()
+    )
+    return publisher
+
+def load_user_address(user_id):
+    return (
+        Address.query
+        .join(User, Address.id == User.address_id)
+        .filter(User.id == user_id)
+        .first()
+    )

@@ -14,33 +14,38 @@
             <main class="col-md-9">
                 <article class="card">
                     <div class="card-body">
+                        {% if favourite_books == [] %}
+                            <h2 class="text-center">Không có sản phẩm yêu thích!</h2>
+                        {% else %}
                         <div class="row g-3">
-                            {%for book in favourite_books%}
-                            <div class="col-lg-6">
-                                <figure class="d-flex align-items-center m-0">
-                                    <div class="aside"><img src="{{book.image}}" width="80" height="80"></div>
-                                    <figcaption class="ps-3">
-                                        <a href="#">{{book.name}}</a>
-                                        <p class="mb-2">
-                                            <span class="price">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
-                                            <span class="ms-2 text-muted text-decoration-line-through">
-                                                {{  "{:,.0f}".format(book.unit_price) }}₫
+                                {%for book in favourite_books%}
+                                    <div class="col-lg-6">
+                                    <figure class="d-flex align-items-center m-0">
+                                        <div class="aside"><img src="{{book.image}}" width="80" height="80"></div>
+                                        <figcaption class="ps-3">
+                                            <a href="#">{{book.name}}</a>
+                                            <p class="mb-2">
+                                                <span class="price">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
+                                                <span class="ms-2 text-muted text-decoration-line-through">
+                                                        {{  "{:,.0f}".format(book.unit_price) }}₫
 
-                                            </span>
-                                        </p>
-                                        <button type="button" class="btn btn-primary btn-sm">
-                                            Thêm vào giỏ hàng
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm ms-1" data-toggle="tooltip"
-                                                title="Xóa khỏi danh sách yêu thích"
-                                                onclick="deleteFavourite({{book.id}})">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </figcaption>
-                                </figure>
-                            </div> <!-- col.// -->
-                            {%endfor%}
+                                                    </span>
+                                            </p>
+                                            <button type="button" class="btn btn-primary btn-sm">
+                                                Thêm vào giỏ hàng
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm ms-1" data-toggle="tooltip"
+                                                    title="Xóa khỏi danh sách yêu thích"
+                                                    onclick="deleteFavourite({{book.id}})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </figcaption>
+                                    </figure>
+                                </div> <!-- col.// -->
+                                {%endfor%}
+
                         </div> <!-- row .//  -->
+                        {% endif %}
                     </div> <!-- card-body.// -->
                 </article>
             </main> <!-- col.// -->
