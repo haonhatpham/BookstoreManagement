@@ -1,9 +1,7 @@
 import math
-
 from app import app, login, dao
 from flask import render_template, request, redirect,session, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
-
 from app.dao import delete_from_favourites
 
 
@@ -12,12 +10,10 @@ def index():
     page = request.args.get('page', 1)
     cate_id = request.args.get('category_id')
     kw = request.args.get('kw')
-    prods = dao.load_new_products(cate_id=cate_id, kw=kw, page=int(page))
-
+    prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
     feature_books = dao.load_book()
     cates = dao.get_category()
-    page_size = app.config["PAGE_SIZE"]
     total = dao.count_products()
     category_ids = dao.load_category_ids()
     return render_template("index.html",
@@ -26,7 +22,7 @@ def index():
                            new_books=prods,
                            category_ids=category_ids,
                            categories=cates,
-                           pages=math.ceil(total / page_size))
+                           )
 
 @app.route("/register", methods=['get', 'post'])
 def register_process():
@@ -242,14 +238,15 @@ def category():
             price_ranges=price_ranges,
             order=order_param,
             all_price_ranges=all_price_ranges,
-            ORDER_BY_OPTIONS=ORDER_BY_OPTIONS
+            ORDER_BY_OPTIONS=ORDER_BY_OPTIONS,
+            current_page=int(page),
         )
 
 @app.route('/order')
 def order():
     return render_template('order.html')
 
+
 if __name__ == '__main__':
     with app.app_context():
-        app.run(debug=True)
-
+      app.run(debug=True)

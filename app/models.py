@@ -1,21 +1,20 @@
-
 from enum import Enum as StatusEnum
-from app import db, app
+from app import db,app
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum,DATE
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, backref
 import hashlib
 import json, random, os
 import uuid
-
+from flask_security import Security, SQLAlchemyUserDatastore
+import string
+from datetime import datetime,timedelta
 
 class OrderEnum(StatusEnum):
-    CHOXULY = 1
-    DAXACNHAN = 2
-    DAGIAO = 3
-    DANGGIAOHANG = 4
-    DAHUY = 5
+    GIAOHANGTHANHCONG = 1
+    DANGGIAOHANG = 2
+    HUYDONHANG = 3
 
 
 class BaseModel(db.Model):
@@ -52,6 +51,7 @@ class Address(BaseModel):
 
 favourite_books = db.Table(
     'favourite_books',
+    Column('id', Integer, primary_key=True, autoincrement=True),
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('book_id', db.Integer, db.ForeignKey('book.id'), primary_key=True)
 )
@@ -63,7 +63,7 @@ class User(BaseModel,UserMixin):
     password = Column(String(100), nullable=False)
     email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     phone = Column(String(11, 'utf8mb4_unicode_ci'))
-    birth = Column(DateTime,nullable=True)
+    birth = Column(DATE,nullable=True)
     gender = Column(Boolean, default=True)  # 1:nam 0:Nữ
     avatar_file = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
@@ -83,15 +83,6 @@ class User(BaseModel,UserMixin):
     fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
 
-class BankingInformation(BaseModel):
-    __tablename__ = 'banking_information'
-    vnpay_code = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
-    card_type = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
-    bank_code = Column(String(20, 'utf8mb4_unicode_ci'), nullable=False)
-    payment_status = Column(Boolean, nullable=False, default=True)
-
-    order = relationship('Order', backref='banking_information', lazy=True, uselist=False)
-
 
 class Order(BaseModel):
     __tablename__ = 'order'
@@ -99,14 +90,24 @@ class Order(BaseModel):
     employee_id = Column(ForeignKey(User.id), index=True, nullable=False)
     initiated_date = Column(DateTime, nullable=False)
     cancel_date = Column(DateTime, nullable=False)
+    total_payment = Column(Integer, nullable=False)
+    received_money = Column(Integer, nullable=True)
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
-    status = Column(Enum(OrderEnum), default=OrderEnum.CHOXULY)
-    payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False)
-    banking_information_id = Column(ForeignKey(BankingInformation.id), unique=True, nullable=True)  # 1-1
+    status = Column(Enum(OrderEnum),nullable=False )
+    payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False,default=1)
 
     books = relationship('OrderDetail', backref='order')
+    banking_information = relationship('BankingInformation', backref='order', lazy=True, uselist=False) # 1-1
 
+class BankingInformation(BaseModel):
+    __tablename__ = 'banking_information'
+    order_id = Column(ForeignKey(Order.id), unique=True, nullable=False)  # 1-1
+    bank_transaction_number = Column(String(255), nullable=False)
+    vnpay_transaction_number = Column(String(20), nullable=False)
+    card_type = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
+    bank_code = Column(String(20, 'utf8mb4_unicode_ci'), nullable=False)
+    secure_hash = Column(String(256), nullable=False)
 
 class Author(BaseModel):
     __tablename__ = 'author'
@@ -265,7 +266,7 @@ class OrderDetail(BaseModel):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # #đọc data từ file json
+        #đọc data từ file json
         with open('../app/static/data_import/book_data.json', 'rb') as f:
             data = json.load(f)
             for book in data:
@@ -343,18 +344,14 @@ if __name__ == '__main__':
 
         # Lưu thay đổi vào cơ sở dữ liệu
         db.session.commit()
-        admin_role = Role(
-            name="Admin",
-            description="Administrator with full access"
-        )
-        db.session.add(admin_role)
+        admin_role = Role(name="Admin", description="Administrator with full access")
+        customer_role = Role(name="Customer", description="Role for registered customers")
+        sales_role = Role(name="Sales", description="Role for sales staff")
+        storekeeper = Role(name="Storekeeper", description="Role for storekeeper staff")
+        db.session.add_all([admin_role,customer_role,sales_role,storekeeper])
         db.session.commit()
 
-        user_role = Role(name="User", description="Default role for registered users")
-        db.session.add(user_role)
-        db.session.commit()
-        admin_role = Role.query.filter_by(name="Admin").first()
-
+        test_admin_role = Role.query.filter_by(name="Admin").first()
         # Lưu vai trò vào database
         admin_user = User(
             first_name="Nhật Hào",
@@ -363,11 +360,121 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email="admin@example.com",
             phone="1234567890",
-            birth=None,  # Không cần ngày sinh
+            birth="2004-10-08",  # Không cần ngày sinh
             gender=True,  # Nam
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
             active=True,
-            role_id=admin_role.id  # Liên kết với vai trò Admin
+            role_id=test_admin_role.id  # Liên kết với vai trò Admin
         )
         db.session.add(admin_user)
         db.session.commit()
+        test_staff_role = Role.query.filter_by(name="Sales").first()
+        test_staff = User(
+            first_name='Saler',
+            last_name='2024',
+            username='saler',
+            password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+            email='saler@example.com',
+            phone="1234567891",
+            birth="2004-01-01",
+            gender=False,
+            avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733467650/photo_sspnsa.jpg",
+            active=True,
+            role_id=test_staff_role.id,
+        )
+        db.session.add(test_staff)
+        db.session.commit()
+        test_warehouse_role = Role.query.filter_by(name="Storekeeper").first()
+        test_warehouse_staff = User(
+            first_name='storekeeper',
+            last_name='2024',
+            username='thukho',
+            password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+            email='storekeeper@example.com',
+            phone="0987654321",
+            birth="2000-12-08",
+            gender=True,
+            avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733422179/vien-ngoc-trai-ki-dieu_bia_abb1f5dda267482e861d051f77bd41e1_master_v4sroz.jpg",
+            active=True,
+            role_id=test_warehouse_role.id  # Lấy ID của vai trò "Warehouse"
+        )
+        db.session.add(test_warehouse_staff)
+        db.session.commit()
+
+        # payment method
+        in_cash = PaymentMethod(name='CASH')
+        internet_banking = PaymentMethod(name='BANKING')
+        db.session.add_all([in_cash, internet_banking])
+        db.session.commit()
+
+
+
+        first_names = [
+            'Harry', 'Amelia', 'Oliver', 'Jack', 'Isabella', 'Charlie', 'Sophie', 'Mia',
+            'Jacob', 'Thomas', 'Emily', 'Lily', 'Ava', 'Isla', 'Alfie', 'Olivia', 'Jessica',
+            'Riley', 'William', 'James', 'Geoffrey', 'Lisa', 'Benjamin', 'Stacey', 'Lucy'
+        ]
+        last_names = [
+            'Brown', 'Smith', 'Patel', 'Jones', 'Williams', 'Johnson', 'Taylor', 'Thomas',
+            'Roberts', 'Khan', 'Lewis', 'Jackson', 'Clarke', 'James', 'Phillips', 'Wilson',
+            'Ali', 'Mason', 'Mitchell', 'Rose', 'Davis', 'Davies', 'Rodriguez', 'Cox', 'Alexander'
+        ]
+
+
+        def random_birthday(start_year=1980, end_year=2005):
+            start_date = datetime(start_year, 1, 1)
+            end_date = datetime(end_year, 12, 31)
+            delta = end_date - start_date
+            random_days = random.randint(0, delta.days)
+            return (start_date + timedelta(days=random_days)).strftime('%Y-%m-%d')
+        for i in range(len(first_names)):
+            tmp_email = first_names[i].lower() + "." + last_names[i].lower() + "@example.com"
+            # tmp_pass = ''.join(random.choice(string.ascii_lowercase + string.digits) for i in range(10))
+            phone = "0"
+            random_birth = random_birthday()
+            temp_role=Role.query.filter_by(name="Customer").first()
+            for k in range(0, 9):
+                phone += str(random.randint(6, 9))
+
+            temp_user = User(
+                first_name=first_names[i],
+                last_name=last_names[i],
+                username=f'user{i}',
+                password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                email=tmp_email,
+                phone=phone,
+                birth=random_birth,
+                gender=random.choice([True, False]),
+                avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733412995/Remove-bg.ai_1733412613451_jyuilr.png",
+                active=True,
+                role_id=temp_role.id  # Lấy ID của vai trò "Customer"
+            )
+            db.session.add(temp_user)
+            db.session.commit()
+
+
+            #QUI ĐỊNH
+            rules = [
+                {"key": "time_to_cancel_order", "value": "48",
+                 "description": "Time in hours before an unpaid online order is canceled."},
+                {"key": "min_import_quantity", "value": "150", "description": "Minimum quantity for book import."},
+                {"key": "max_stock_for_import", "value": "300", "description": "Maximum stock allowed to import books."}
+            ]
+
+            # Insert rules into the configuration table
+            for rule in rules:
+                existing_rule = Configuration.query.filter_by(key=rule["key"]).first()
+                if existing_rule:
+                    print(f"Rule with key '{rule['key']}' already exists. Skipping.")
+                    continue
+
+                new_rule = Configuration(
+                    key=rule["key"],
+                    value=rule["value"],
+                    description=rule["description"],
+                    created_at=datetime.now()
+                )
+                db.session.add(new_rule)
+
+            db.session.commit()
+
