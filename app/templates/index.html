@@ -55,7 +55,7 @@
                         <figcaption class="info-wrap mt-2">
                             <a href="/details?book_id={{fb.id}}" class="title">{{ fb.name }}</a>
                             <div class="">
-                                <span class="price mt-1 fw-bol">{{  "{:,.0f}".format(fb.unit_price) }} VNĐ</span>
+                                <span class="price mt-1 fw-bol">{{  "{:,.0f}".format(fb.unit_price) }}₫</span>
                                 {% if fb.discount != 0 %}
                                 <span class="ms-2 text-muted text-decoration-line-through">{{ "{:,.0f}".format(fb.unit_price - (fb.unit_price * fb.discount) / 100)  }}₫</span>
                                 <span class="ms-2 badge bg-info">-20%</span>

@@ -33,20 +33,36 @@ def register_process():
     err_msg = ''
 
     if request.method.__eq__('POST'):
+        username = request.form.get('username')
         password = request.form.get('password')
         confirm = request.form.get('confirm')
         gender = True if request.form.get('radioGender') == 'male' else False
 
         if not password.__eq__(confirm):
             err_msg = 'Mật khẩu không khớp!'
+        if dao.existing_user(username):
+            err_msg = 'Tên đăng nhập đã được sử dụng!'
         else:
             data = request.form.copy()
+
+            city = data['city']
+            district = data['district']
+            ward = data['ward']
+            street = data['street']
+
+            address_id = dao.add_address(city, district, ward, street)
+
             del data['confirm']
             del data['radioGender']
+            del data['city']
+            del data['district']
+            del data['ward']
+            del data['street']
+
             avatar = request.files.get('avatar')
             data['gender'] = gender
 
-            dao.add_user(avatar=avatar, **data)
+            dao.add_user(address_id=address_id,avatar=avatar, **data)
 
             return redirect('/login')
 
@@ -87,6 +103,8 @@ def details():
     if not book:
         return jsonify({'error': 'Sách không tồn tại.'}), 404
 
+    book_activated = book.is_enable
+    book_sold_quantity = book.sold_quantity
     categories = dao.get_category(book_id=book_id)
     current_category = None
     related_books = dao.load_related_book(book)
@@ -103,6 +121,9 @@ def details():
             breadcrumbs.append({'name': category.name, 'url': f"/category?category_id={category.id}"})
     breadcrumbs.append({'name': book.name, 'url': None})
 
+    # Lấy tên NXB
+    publisher = dao.get_publisher_by_book_id(book_id)
+
     # Xử lý thêm vào danh sách yêu thích
     if request.method == 'POST':
         if 'user_id' not in session:
@@ -117,20 +138,27 @@ def details():
 
     return render_template(
         'details.html',
+        book_activated=book_activated,
         related_books=related_books,
         book=book,
-        breadcrumbs=breadcrumbs
+        breadcrumbs=breadcrumbs,
+        publisher=publisher,
+        book_sold_quantity=book_sold_quantity
     )
-
 
 @login_required
 @app.route('/account')
 def account():
-    return render_template('account.html')
+    address = dao.load_user_address(current_user.id)
+    return render_template('account.html',
+                           current_user=current_user,
+                           address=address
+                           )
 
 @app.route('/favourite', methods=['GET','POST'])
 def favourite():
     favourite_books = current_user.favourite_books
+    # print('this', favourite_books)
     return render_template('favourite.html', favourite_books=favourite_books)
 
 
@@ -248,6 +276,8 @@ def category():
 @app.route('/order')
 def order():
     return render_template('order.html')
+
+
 
 if __name__ == '__main__':
     with app.app_context():

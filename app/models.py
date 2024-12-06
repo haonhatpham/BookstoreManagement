@@ -40,6 +40,11 @@ class Role(BaseModel):
                                backref=backref('roles', lazy=True))
     users = relationship('User', backref='role', lazy=True)
 
+favourite_books = db.Table(
+    'user_has_favourite_books',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('book_id', db.Integer, db.ForeignKey('book.id'), primary_key=True)
+)
 
 class Address(BaseModel):
     __tablename__ = 'address'
@@ -50,11 +55,8 @@ class Address(BaseModel):
 
     users = relationship("User", backref='Address', lazy=True)
 
-favourite_books = db.Table(
-    'favourite_books',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('book_id', db.Integer, db.ForeignKey('book.id'), primary_key=True)
-)
+
+
 class User(BaseModel,UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
@@ -132,6 +134,7 @@ class Book(BaseModel):
     standard_price = Column(DECIMAL(18, 2), nullable=False, default=0)
     unit_price = Column(DECIMAL(18, 2), nullable=False, default=0)
     available_quantity = Column(Integer, nullable=False, default=0)
+    sold_quantity = Column(Integer,default=0)
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
     image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
@@ -273,6 +276,7 @@ if __name__ == '__main__':
                 description = str(book['description']).strip()
                 image = str(book['image']).strip()
                 standard_price = random.randint(20, 200) * 1000
+                sold_quantity = random.randint(10, 200)
                 sell_price = int(standard_price * 1.25)
                 discount = random.choice([0, 20])
                 year_publishing=book['year_publishing']
@@ -314,7 +318,8 @@ if __name__ == '__main__':
                                 discount= discount,
                                 is_enable=True,
                                 publisher_id=db_publisher.id,
-                                year_publishing=year_publishing
+                                year_publishing=year_publishing,
+                                sold_quantity=sold_quantity
                                 )
 
                 # Gán categories và authors cho sách, tránh trùng lặp

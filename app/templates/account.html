@@ -16,15 +16,18 @@
           <article class="card">
             <div class="card-body">
               <div>
-                <h5>Nguyễn Thị A</h5>
-                <p>nguyenthia@gmail.com</p>
+                <h5>{{ current_user.last_name + ' ' + current_user.first_name}}</h5>
+                <p>{{current_user.email}}</p>
               </div>
               <hr>
               <div>
                 <p class="bi bi-map d-block lh-lg">
                   Địa chỉ:
                   <br>
-                  Đường Nguyễn Duy Trinh, Phường Bình Trưng Đông, Quận 2, TP.HCM
+                  <span>{{address.details}}, </span>
+                  <span>{{address.ward}}, </span>
+                  <span>{{address.district}}, </span>
+                  <span>{{address.city}}</span>
                 </p>
               </div>
               <article class="card-group">
