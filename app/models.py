@@ -237,8 +237,8 @@ class Review(BaseModel):
     __tablename__ = 'review'
     user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
     book_id = Column(ForeignKey('book.id'), nullable=False, index=True)
-    comment = Column(Text, nullable=False)  # Nội dung Đánh giá
-    rating = Column(Float, nullable=False)  # Số điểm đánh giá: từ 0 -> 5 sao
+    comment = Column(Text, nullable=False)
+    rating = Column(Float, nullable=False)
 
 
 class Permission(BaseModel):

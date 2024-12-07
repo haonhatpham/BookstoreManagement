@@ -119,8 +119,21 @@ def details():
 
     # Lấy tên NXB
     publisher = dao.get_publisher_by_book_id(book_id)
+
     # lấy số lượng đã bán
     sold_quantity = dao.get_sold_quantity(book_id)
+
+    # lấy review
+    reviews = dao.load_review(book_id)
+    reviews_numbers = len(reviews)
+    avg_rating = 0
+    if reviews_numbers > 0:
+        for r in reviews:
+            avg_rating += r.rating
+        avg_rating /= reviews_numbers
+    else:
+        avg_rating=0
+
     # Xử lý thêm vào danh sách yêu thích
     if request.method == 'POST':
         if 'user_id' not in session:
@@ -140,9 +153,38 @@ def details():
         book=book,
         breadcrumbs=breadcrumbs,
         publisher=publisher,
-        sold_quantity=sold_quantity
+        sold_quantity=sold_quantity,
+        reviews=reviews,
+        reviews_numbers=reviews_numbers,
+        avg_rating=avg_rating
 
     )
+
+
+@app.route('/post_comment', methods=['POST'])
+@login_required
+def post_comment():
+    data = request.json
+
+    book_id = data.get('book_id')
+    comment = data.get('comment')
+    rating = data.get('rating')
+
+    if not book_id:
+        return jsonify({'error': 'Không có ID sách được gửi.'}), 400
+    if not current_user:
+        return jsonify({'error': 'Hãy đăng nhập để gửi bình luận. '}), 400
+    try:
+        review = dao.add_review(current_user.id, book_id, comment, rating )
+
+        if review:
+            return jsonify({'message': 'Bình luận đã được gửi.'}), 200
+        else:
+            return jsonify({'error': 'Đã xảy ra lỗi.'}), 404
+
+    except ValueError:
+        return jsonify({'error': 'ID sách không hợp lệ.'}), 400
+
 
 @login_required
 @app.route('/account')
@@ -156,7 +198,6 @@ def account():
 @app.route('/favourite', methods=['GET','POST'])
 def favourite():
     favourite_books = current_user.favourite_books
-    # print('this', favourite_books)
     return render_template('favourite.html', favourite_books=favourite_books)
 
 
