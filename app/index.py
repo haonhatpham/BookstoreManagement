@@ -100,7 +100,7 @@ def details():
         return jsonify({'error': 'Sách không tồn tại.'}), 404
 
     book_activated = book.is_enable
-    book_sold_quantity = book.sold_quantity
+    # book_sold_quantity = book.sold_quantity
     categories = dao.get_category(book_id=book_id)
     current_category = None
     related_books = dao.load_related_book(book)
@@ -139,7 +139,7 @@ def details():
         book=book,
         breadcrumbs=breadcrumbs,
         publisher=publisher,
-        book_sold_quantity=book_sold_quantity
+        # book_sold_quantity=book_sold_quantity
     )
 
 @login_required
