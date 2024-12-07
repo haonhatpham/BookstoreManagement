@@ -41,8 +41,9 @@ class Role(BaseModel):
 
 favourite_books = db.Table(
     'user_has_favourite_books',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('book_id', db.Integer, db.ForeignKey('book.id'), primary_key=True)
+    db.Column('id', Integer, primary_key=True, autoincrement=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('book_id', db.Integer, db.ForeignKey('book.id'))
 )
 
 class Address(BaseModel):
@@ -82,7 +83,6 @@ class User(BaseModel,UserMixin):
     fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
 
-
 class Order(BaseModel):
     __tablename__ = 'order'
     customer_id = Column(ForeignKey(User.id), index=True, nullable=False)
@@ -110,7 +110,6 @@ class BankingInformation(BaseModel):
 
 class Author(BaseModel):
     __tablename__ = 'author'
-
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
 
@@ -132,7 +131,7 @@ class Book(BaseModel):
     standard_price = Column(DECIMAL(18, 2), nullable=False, default=0)
     unit_price = Column(DECIMAL(18, 2), nullable=False, default=0)
     available_quantity = Column(Integer, nullable=False, default=0)
-    sold_quantity = Column(Integer,default=0)
+    # sold_quantity = Column(Integer,default=0)
     is_enable = Column(Boolean, nullable=False, default=True)  # 1:còn bán,0:hết bán
     image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252871/temp-16741118072528735594_qnbjoi.jpg")
@@ -157,16 +156,16 @@ class Book(BaseModel):
 author_book = db.Table(
     'author_book',
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('book_id', ForeignKey('book.id'), primary_key=True),
-    Column('author_id', ForeignKey('author.id'), primary_key=True),
+    Column('book_id', ForeignKey('book.id')),
+    Column('author_id', ForeignKey('author.id')),
 
 )
 
 book_category = db.Table(
     'book_category',
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('book_id', ForeignKey('book.id'), primary_key=True),
-    Column('category_id', ForeignKey('category.id'), primary_key=True),
+    Column('book_id', ForeignKey('book.id')),
+    Column('category_id', ForeignKey('category.id')),
 )
 
 
@@ -274,7 +273,7 @@ if __name__ == '__main__':
                 description = str(book['description']).strip()
                 image = str(book['image']).strip()
                 standard_price = random.randint(20, 200) * 1000
-                sold_quantity = random.randint(10, 200)
+                # sold_quantity = random.randint(10, 200)
                 sell_price = int(standard_price * 1.25)
                 discount = random.choice([0, 20])
                 year_publishing=book['year_publishing']
@@ -317,7 +316,7 @@ if __name__ == '__main__':
                                 is_enable=True,
                                 publisher_id=db_publisher.id,
                                 year_publishing=year_publishing,
-                                sold_quantity=sold_quantity
+                                # sold_quantity=sold_quantity
                                 )
 
                 # Gán categories và authors cho sách, tránh trùng lặp
