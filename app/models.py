@@ -1,7 +1,7 @@
 from enum import Enum as StatusEnum
-from app import db,app
+from app import db, app
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum,DATE
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Boolean, Text, DECIMAL, DOUBLE, Enum, DATE
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, backref
 import hashlib
@@ -9,7 +9,8 @@ import json, random, os
 import uuid
 from flask_security import Security, SQLAlchemyUserDatastore
 import string
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
+
 
 class OrderEnum(StatusEnum):
     GIAOHANGTHANHCONG = 1
@@ -23,6 +24,7 @@ class BaseModel(db.Model):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+
 class Publisher(BaseModel):
     __tablename__ = 'publishers'
     name = db.Column(db.String(255), nullable=False)
@@ -30,6 +32,8 @@ class Publisher(BaseModel):
 
     def __str__(self):
         return self.name
+
+
 class Role(BaseModel):
     __tablename__ = 'role'
     name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
@@ -39,12 +43,14 @@ class Role(BaseModel):
                                backref=backref('roles', lazy=True))
     users = relationship('User', backref='role', lazy=True)
 
+
 favourite_books = db.Table(
     'user_has_favourite_books',
     db.Column('id', Integer, primary_key=True, autoincrement=True),
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
     db.Column('book_id', db.Integer, db.ForeignKey('book.id'))
 )
+
 
 class Address(BaseModel):
     __tablename__ = 'address'
@@ -55,7 +61,8 @@ class Address(BaseModel):
 
     users = relationship("User", backref='Address', lazy=True)
 
-class User(BaseModel,UserMixin):
+
+class User(BaseModel, UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
@@ -63,7 +70,7 @@ class User(BaseModel,UserMixin):
     password = Column(String(100), nullable=False)
     email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     phone = Column(String(11, 'utf8mb4_unicode_ci'))
-    birth = Column(DATE,nullable=True)
+    birth = Column(DATE, nullable=True)
     gender = Column(Boolean, default=True)  # 1:nam 0:Nữ
     avatar_file = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
@@ -93,11 +100,12 @@ class Order(BaseModel):
     received_money = Column(Integer, nullable=True)
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
-    status = Column(Enum(OrderEnum),nullable=False )
-    payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False,default=1)
+    status = Column(Enum(OrderEnum), nullable=False)
+    payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False, default=1)
 
     books = relationship('OrderDetail', backref='order')
-    banking_information = relationship('BankingInformation', backref='order', lazy=True, uselist=False) # 1-1
+    banking_information = relationship('BankingInformation', backref='order', lazy=True, uselist=False)  # 1-1
+
 
 class BankingInformation(BaseModel):
     __tablename__ = 'banking_information'
@@ -108,11 +116,11 @@ class BankingInformation(BaseModel):
     bank_code = Column(String(20, 'utf8mb4_unicode_ci'), nullable=False)
     secure_hash = Column(String(256), nullable=False)
 
+
 class Author(BaseModel):
     __tablename__ = 'author'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
-
 
 
 class Category(BaseModel):
@@ -152,6 +160,7 @@ class Book(BaseModel):
     users = db.relationship('User', secondary=favourite_books, back_populates='favourite_books')
     year_publishing = db.Column(db.Integer, nullable=False)
     publisher_id = db.Column(db.Integer, db.ForeignKey('publishers.id'), nullable=False)
+
 
 author_book = db.Table(
     'author_book',
@@ -265,7 +274,7 @@ class OrderDetail(BaseModel):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        #đọc data từ file json
+        # đọc data từ file json
         with open('../app/static/data_import/book_data.json', 'rb') as f:
             data = json.load(f)
             for book in data:
@@ -276,7 +285,7 @@ if __name__ == '__main__':
                 # sold_quantity = random.randint(10, 200)
                 sell_price = int(standard_price * 1.25)
                 discount = random.choice([0, 20])
-                year_publishing=book['year_publishing']
+                year_publishing = book['year_publishing']
 
                 categories = []
                 for category_name in book['category']:
@@ -291,8 +300,8 @@ if __name__ == '__main__':
                 authors = []
                 for author_name in book['author']:
                     author_name = str(author_name).strip()
-                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("",author_name)
-                    db_author = Author.query.filter_by(last_name=last_name, first_name = first_name).first()
+                    last_name, first_name = author_name.split(' ', 1) if ' ' in author_name else ("", author_name)
+                    db_author = Author.query.filter_by(last_name=last_name, first_name=first_name).first()
                     if not db_author:
                         db_author = Author(first_name=first_name, last_name=last_name)
                         db.session.add(db_author)
@@ -306,13 +315,13 @@ if __name__ == '__main__':
                     db_publisher = Publisher(name=publisher_name)
                     db.session.add(db_publisher)
                     db.session.flush()  # Đẩy vào DB để lấy ID ngay lập tức
-                new_book = Book(name= name,
+                new_book = Book(name=name,
                                 description=description,
                                 image=image,
                                 standard_price=standard_price,
                                 unit_price=sell_price,
                                 available_quantity=random.randint(100, 300),
-                                discount= discount,
+                                discount=discount,
                                 is_enable=True,
                                 publisher_id=db_publisher.id,
                                 year_publishing=year_publishing,
@@ -327,7 +336,7 @@ if __name__ == '__main__':
             db.session.commit()
         # END read data from json
 
-        #Cap nhật ảnh cho category
+        # Cap nhật ảnh cho category
         json_file_path = "path/to/your/json_file.json"
 
         # Đọc file JSON
@@ -349,7 +358,7 @@ if __name__ == '__main__':
         customer_role = Role(name="Customer", description="Role for registered customers")
         sales_role = Role(name="Sales", description="Role for sales staff")
         storekeeper = Role(name="Storekeeper", description="Role for storekeeper staff")
-        db.session.add_all([admin_role,customer_role,sales_role,storekeeper])
+        db.session.add_all([admin_role, customer_role, sales_role, storekeeper])
         db.session.commit()
 
         test_admin_role = Role.query.filter_by(name="Admin").first()
@@ -408,19 +417,17 @@ if __name__ == '__main__':
         db.session.add_all([in_cash, internet_banking])
         db.session.commit()
 
-
-
         first_names = [
             'Harry', 'Amelia', 'Oliver', 'Jack', 'Isabella', 'Charlie', 'Sophie', 'Mia',
             'Jacob', 'Thomas', 'Emily', 'Lily', 'Ava', 'Isla', 'Alfie', 'Olivia', 'Jessica',
             'Riley', 'William', 'James', 'Geoffrey', 'Lisa', 'Benjamin', 'Stacey', 'Lucy'
         ]
+
         last_names = [
             'Brown', 'Smith', 'Patel', 'Jones', 'Williams', 'Johnson', 'Taylor', 'Thomas',
             'Roberts', 'Khan', 'Lewis', 'Jackson', 'Clarke', 'James', 'Phillips', 'Wilson',
             'Ali', 'Mason', 'Mitchell', 'Rose', 'Davis', 'Davies', 'Rodriguez', 'Cox', 'Alexander'
         ]
-
 
         def random_birthday(start_year=1980, end_year=2005):
             start_date = datetime(start_year, 1, 1)
@@ -428,12 +435,16 @@ if __name__ == '__main__':
             delta = end_date - start_date
             random_days = random.randint(0, delta.days)
             return (start_date + timedelta(days=random_days)).strftime('%Y-%m-%d')
+
+
+
+
         for i in range(len(first_names)):
             tmp_email = first_names[i].lower() + "." + last_names[i].lower() + "@example.com"
             # tmp_pass = ''.join(random.choice(string.ascii_lowercase + string.digits) for i in range(10))
             phone = "0"
             random_birth = random_birthday()
-            temp_role=Role.query.filter_by(name="Customer").first()
+            temp_role = Role.query.filter_by(name="Customer").first()
             for k in range(0, 9):
                 phone += str(random.randint(6, 9))
 
@@ -453,8 +464,7 @@ if __name__ == '__main__':
             db.session.add(temp_user)
             db.session.commit()
 
-
-            #QUI ĐỊNH
+            # QUI ĐỊNH
             rules = [
                 {"key": "time_to_cancel_order", "value": "48",
                  "description": "Time in hours before an unpaid online order is canceled."},
@@ -478,4 +488,3 @@ if __name__ == '__main__':
                 db.session.add(new_rule)
 
             db.session.commit()
-

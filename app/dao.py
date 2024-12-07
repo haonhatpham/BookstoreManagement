@@ -1,7 +1,10 @@
 from flask import jsonify
 from flask_login import current_user
-from app.models import Book,Category,User,book_category,Role,Publisher,favourite_books,Configuration,PaymentMethod,Order,OrderEnum,OrderDetail,BankingInformation,Address
-from datetime import datetime,timedelta
+from sqlalchemy.testing.suite.test_reflection import users
+
+from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
+    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address
+from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
@@ -27,7 +30,7 @@ def load_feature_book():
 
 
 # lay sach theo id
-def load_book(book_id=None,latest_books=None):
+def load_book(book_id=None, latest_books=None):
     if book_id:
         return Book.query.filter(Book.id == book_id)
     if latest_books:
@@ -69,7 +72,6 @@ def get_category(cate_id=None, book_id=None):
         return Category.query.all()
 
 
-
 def count_products(category_id=None, checked_publishers=None, price_ranges=None):
     # Khởi tạo query
     query = Book.query
@@ -93,6 +95,24 @@ def count_products(category_id=None, checked_publishers=None, price_ranges=None)
                 query = query.filter(Book.unit_price.between(min_price, max_price))
 
     return query.count()
+
+
+def existing_user(username):
+    return User.query.filter_by(username=username).first()
+
+
+def add_address(city, district, ward, street):
+    address = Address(
+        city=city.strip(),
+        district=district.strip(),
+        ward=ward.strip(),
+        details=street.strip()
+    )
+    db.session.add(address)
+    db.session.commit()
+    # trả về id để khi gọi hàm ngoài index.py, id sẽ được thêm vào User.address_id
+    return address.id
+
 
 # Thêm user ở Client
 def add_user(name, username, password, email, phone, birth, gender, avatar, address_id):
@@ -127,6 +147,7 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
     db.session.add(u)
     db.session.commit()
 
+
 # chứng thực tài khoản khi đăng nhập
 def auth_user(username, password):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
@@ -139,10 +160,12 @@ def auth_user(username, password):
 def get_user_by_id(id):
     return User.query.get(id)
 
+
 # Lấy id các nhà xuất bản sách theo tên
 def get_publisher_ids_by_names(names):
     publishers = Publisher.query.filter(Publisher.name.in_(names)).all()
     return [publisher.id for publisher in publishers]
+
 
 def get_publisher_by_book_id(book_id):
     publisher = (
@@ -154,6 +177,7 @@ def get_publisher_by_book_id(book_id):
     )
     return publisher
 
+
 def load_user_address(user_id):
     return (
         Address.query
@@ -161,6 +185,7 @@ def load_user_address(user_id):
         .filter(User.id == user_id)
         .first()
     )
+
 
 # Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
 def get_products_by_filters(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
@@ -212,6 +237,21 @@ def get_publishers_by_category(category_id):
         .all()
     )
     return publishers
+
+def get_sold_quantity(book_id):
+    book_sold = (OrderDetail.query
+     .filter(OrderDetail.book_id==book_id)
+     .all()
+     )
+    sold_quantity = 0
+    for i in range(len(book_sold)):
+        sold_quantity += book_sold[i].quantity
+    return sold_quantity
+
+
+    # book_available = (Book.query
+    #                   .filter(Book.id==book_id))
+
 
 
 def add_to_favourites(user_id, book_id):
@@ -274,6 +314,7 @@ def save_banking_information(order_id, bank_transaction_number, vnpay_transactio
     db.session.commit()
     return infor
 
+
 def order_delivered(order_id, delivered_date=datetime.now()):
     order = get_order_by_id(order_id)
     if order is None:
@@ -281,6 +322,7 @@ def order_delivered(order_id, delivered_date=datetime.now()):
     order.delivered_date = delivered_date
     save_order(order)
     return 0
+
 
 def create_order(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
     configuration = get_configuration()
@@ -384,3 +426,51 @@ if __name__ == "__main__":
             order_paid_incash(order.total_payment, order.id,
                               order.initiated_date + datetime.timedelta(hours=rand_num))
             order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))
+
+        # Address
+        cities = [
+            'Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 'Can Tho',
+            'Hue', 'Nha Trang', 'Vung Tau', 'Da Lat', 'Quy Nhon',
+            'Long Xuyen', 'Rach Gia', 'Thai Nguyen', 'Thanh Hoa', 'Vinh',
+            'Dong Hoi', 'Ha Long', 'Cam Ranh', 'Phan Rang', 'Phan Thiet',
+            'Pleiku', 'Buon Ma Thuot', 'Kon Tum', 'My Tho', 'Soc Trang'
+        ]
+
+        districts = [
+            'Ba Dinh', 'Thanh Xuan', 'Cau Giay', 'Binh Thanh', 'Tan Binh',
+            'Hai Chau', 'Son Tra', 'Lien Chieu', 'Le Chan', 'Ngo Quyen',
+            'Ninh Kieu', 'Cai Rang', 'Thuan An', 'Di An', 'Tan Uyen',
+            'Xuan Phu', 'Phu Hoi', 'Hai Ba Trung', 'Dong Da', 'Hoan Kiem',
+            'Thach That', 'Soc Son', 'Hoai Duc', 'Thanh Tri', 'Ha Dong'
+        ]
+
+        wards = [
+            'Ngoc Ha', 'Khuong Dinh', 'Dich Vong', 'Ward 12', 'Ward 6',
+            'Thuan Phuoc', 'An Hai Bac', 'Man Thai', 'Tran Nguyen Han', 'Ngo Quyen',
+            'Hung Loi', 'An Cu', 'Binh Hoa', 'Tan Dong Hiep', 'Phu My',
+            'Thuy Xuan', 'Phu Cat', 'Hai Tan', 'Trung Hoa', 'Quang An',
+            'Tay Ho', 'Mai Dich', 'Yen So', 'Van Quan', 'Mo Lao'
+        ]
+
+        details = [
+            '123 Nguyen Trai Street', '456 Tran Hung Dao Street', '789 Le Loi Avenue',
+            '12 Phan Dinh Phung Street', '34 Vo Thi Sau Street',
+            '56 Bach Dang Street', '78 Hai Ba Trung Street', '90 Ngo Quyen Street',
+            '23 Hoang Hoa Tham Street', '45 Ly Thai To Street',
+            '67 Pasteur Street', '89 Dien Bien Phu Street', '101 Vo Van Tan Street',
+            '222 Ly Chinh Thang Street', '333 Cach Mang Thang Tam Street',
+            '444 Truong Dinh Street', '555 Le Hong Phong Street', '666 Pham Van Dong Street',
+            '777 Nguyen Van Linh Street', '888 Ton Duc Thang Street',
+            '999 Bui Thi Xuan Street', '1010 Huynh Tan Phat Street', '1111 Truong Sa Street',
+            '1212 Hoang Dieu Street', '1313 Tran Phu Street'
+        ]
+
+        address_ids = []
+        for a in range(len(cities)):
+            address = add_address(cities[a], districts[a], wards[a], details[a])
+            address_ids.append(address)
+        users = User.query.all()
+        for u in users:
+            u.address_id = random.choice(address_ids)
+
+        db.session.commit()

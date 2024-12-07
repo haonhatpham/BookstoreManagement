@@ -119,7 +119,8 @@ def details():
 
     # Lấy tên NXB
     publisher = dao.get_publisher_by_book_id(book_id)
-
+    # lấy số lượng đã bán
+    sold_quantity = dao.get_sold_quantity(book_id)
     # Xử lý thêm vào danh sách yêu thích
     if request.method == 'POST':
         if 'user_id' not in session:
@@ -139,7 +140,8 @@ def details():
         book=book,
         breadcrumbs=breadcrumbs,
         publisher=publisher,
-        # book_sold_quantity=book_sold_quantity
+        sold_quantity=sold_quantity
+
     )
 
 @login_required
