@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask_login import current_user
+from datetime import datetime,timedelta
 
-from app.models import Category, Book, User, book_category, Role, Publisher, favourite_books, Address
 from app import app, db
 import hashlib
 import cloudinary.uploader
@@ -26,9 +26,11 @@ def load_feature_book():
 
 
 # lay sach theo id
-def load_book(book_id=None):
+
     if book_id:
         return Book.query.filter(Book.id == book_id)
+    if latest_books:
+        return Book.query.order_by(desc(Book.id))
     return Book.query.all()
 
 
@@ -66,20 +68,6 @@ def get_category(cate_id=None, book_id=None):
         return Category.query.all()
 
 
-#
-def load_new_products(kw=None, cate_id=None, page=1):
-    query = Book.query.order_by(desc(Book.id))
-    if kw:
-        query = query.filter(Book.name.contains(kw))
-    if cate_id:
-        query = query.join(book_category, book_category.c.book_id == Book.id) \
-            .filter(book_category.c.category_id == cate_id)
-    page_size = app.config["PAGE_SIZE"]
-    start = (page - 1) * page_size
-    query = query.slice(start, start + page_size)
-
-    return query.all()
-
 
 def count_products(category_id=None, checked_publishers=None, price_ranges=None):
     # Khởi tạo query
@@ -104,22 +92,6 @@ def count_products(category_id=None, checked_publishers=None, price_ranges=None)
                 query = query.filter(Book.unit_price.between(min_price, max_price))
 
     return query.count()
-
-def existing_user(username):
-    return  User.query.filter_by(username=username).first()
-
-
-def add_address(city, district, ward, street):
-    address = Address(
-        city=city.strip(),
-        district=district.strip(),
-        ward=ward.strip(),
-        details =street.strip()
-    )
-    db.session.add(address)
-    db.session.commit()
-    # trả về id để khi gọi hàm ngoài index.py, id sẽ được thêm vào User.address_id
-    return address.id
 
 # Thêm user ở Client
 def add_user(name, username, password, email, phone, birth, gender, avatar, address_id):
@@ -165,7 +137,6 @@ def auth_user(username, password):
 # Lấy user theo id
 def get_user_by_id(id):
     return User.query.get(id)
-
 
 # Lấy id các nhà xuất bản sách theo tên
 def get_publisher_ids_by_names(names):
@@ -243,22 +214,3 @@ def delete_from_favourites(user_id, book_id):
         db.session.commit()
         return True
     return False
-
-
-def get_publisher_by_book_id(book_id):
-    publisher = (
-        db.session.query(Publisher)
-        .join(Book, Publisher.id == Book.publisher_id)
-        .filter(book_id == Book.id)
-        .distinct()
-        .first()
-    )
-    return publisher
-
-def load_user_address(user_id):
-    return (
-        Address.query
-        .join(User, Address.id == User.address_id)
-        .filter(User.id == user_id)
-        .first()
-    )
