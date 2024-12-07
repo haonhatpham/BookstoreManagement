@@ -67,16 +67,18 @@
                 <h2 class="title">{{book.name}}</h2>
 
                 <div class="rating-wrap my-3">
-            <span class="rating-stars me-2">
-              <i class="bi bi-star-fill active"></i>
-              <i class="bi bi-star-fill active"></i>
-              <i class="bi bi-star-fill active"></i>
-              <i class="bi bi-star-fill active"></i>
-              <i class="bi bi-star-fill"></i>
-            </span>
-                    <small class="label-rating text-muted me-2">20 đánh giá</small>
-                    <small class="label-rating text-success"><i class="bi bi-bag-check-fill"></i> <!--    {{book.sold_quantity}} -->
-                    đã mua</small>
+                    <span class="rating-stars me-2">
+                        {% for i in range(1, 6) %}
+                            {% if i <= avg_rating %}
+                                <i class="bi bi-star-fill active"></i>
+                            {% else %}
+                                <i class="bi bi-star-fill"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    <small class="label-rating text-muted me-2">{{reviews_numbers}} đánh giá</small>
+                    <small class="label-rating text-success"><i class="bi bi-bag-check-fill"></i>{{sold_quantity}} đã
+                        mua</small>
                 </div>
                 <div class="mb-4">
                     <span class="price h4">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
@@ -93,9 +95,9 @@
                     <dt class="col-xl-4 col-sm-5 col-6">Tình trạng</dt>
                     <dd class="col-xl-8 col-sm-7 col-6">
                         {% if book_activated == True %}
-                            Còn hàng
+                        Còn hàng
                         {% else %}
-                            Hết hàng
+                        Hết hàng
                         {%endif%}
                     </dd>
 
@@ -106,7 +108,8 @@
                 </dl>
 
                 <div>
-                    <a href="#" class="btn btn-danger submit" id="favourite-form"  data-id="{{ book.id }}" ><i class="ri-heart-line"></i></a>
+                    <a href="#" class="btn btn-danger submit" id="favourite-form" data-id="{{ book.id }}"><i
+                            class="ri-heart-line"></i></a>
                     <a href="#" class="btn btn-primary">Mua ngay</a>
                     <a href="#" class="btn btn-light ms-2">Thêm vào giỏ hàng</a>
                 </div>
@@ -136,54 +139,35 @@
             <div class="col">
                 <h3 class="pb-2">Đánh giá sản phẩm</h3>
                 <div class="rattings-wrapper mb-5">
+                    {%if reviews == []%}
+                    <h5 class="text-center" style="background-color: white; ">Chưa có đánh giá nào!</h5>
+                    {%else%}
+                    {%for r in reviews %}
                     <div class="sin-rattings mb-4">
                         <div class="star-author-all mb-2 clearfix">
                             <div class="ratting-author float-start">
-                                <h5 class="float-start me-3">Lê Thị B</h5>
-                                <span>20/08/2020</span>
+                                <h5 class="float-start me-3">{{r.last_name + ' ' + r.first_name}}</h5>
+                                <span>{{r.created_at}}</span>
                             </div>
                             <div class="ratting-star float-end">
-                  <span class="rating-stars me-2">
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill"></i>
-                  </span>
-                                <span>(4)</span>
+                                      <span class="rating-stars me-2">
+                                        {% for i in range(1, 6) %}
+                                            {% if i <= r.rating %}
+                                                <i class="bi bi-star-fill active"></i>
+                                            {% else %}
+                                                <i class="bi bi-star-fill"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                      </span>
+                                <span>({{r.rating}})</span>
                             </div>
                         </div>
                         <p>
-                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                            incididunt ut labore et dolore magna aliqua. Utenim ad minim veniam, quis nost rud
-                            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                            incididunt ut labore et dolore magna aliqua. Utenim ad minim veniam, quis nost.
+                            {{r.comment}}
                         </p>
                     </div>
-                    <div class="sin-rattings mb-4">
-                        <div class="star-author-all mb-2 clearfix">
-                            <div class="ratting-author float-start">
-                                <h5 class="float-start me-3">Nguyễn Văn C</h5>
-                                <span>19/08/2020</span>
-                            </div>
-                            <div class="ratting-star float-end">
-                  <span class="rating-stars me-2">
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                    <i class="bi bi-star-fill active"></i>
-                  </span>
-                                <span>(5)</span>
-                            </div>
-                        </div>
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                            incididunt ut labore et dolore magna aliqua. Utenim ad minim veniam, quis nost rud
-                            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                        </p>
-                    </div>
+                    {%endfor%}
+                    {%endif%}
                 </div>
                 <h3 class="pb-2">Thêm đánh giá</h3>
                 <div class="ratting-form-wrapper">
@@ -191,7 +175,7 @@
                         <form action="">
                             <div class="row">
                                 <div class="col-md-3 mb-3">
-                                    <select class="form-select">
+                                    <select class="form-select" name="rating" id="rating">
                                         <option disabled selected>Cho sao</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -203,10 +187,10 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col">
-                                    <textarea class="form-control" placeholder="Nội dung đánh giá" rows="3"></textarea>
+                                    <textarea class="form-control" placeholder="Nội dung đánh giá" id="comment" rows="3" name="comment"></textarea>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                            <button type="submit" class="btn btn-primary" id="post-comment">Gửi đánh giá</button>
                         </form>
                     </div>
                 </div>
@@ -235,9 +219,12 @@
                         <figcaption class="info-wrap mt-2">
                             <a href="/details?book_id={{rb.id}}" class="title">{{ rb.name }}</a>
                             <div class="">
-                                <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(rb.unit_price) }}₫</span>
+                                <span class="price mt-1 fw-bold">
+                                    {{ "{:,.0f}".format(rb.unit_price - (rb.unit_price * rb.discount) / 100)  }}₫
+
+                                </span>
                                 {% if rb.discount != 0 %}
-                                <span class="ms-2 text-muted text-decoration-line-through">{{ "{:,.0f}".format(rb.unit_price - (rb.unit_price * rb.discount) / 100)  }}₫</span>
+                                <span class="ms-2 text-muted text-decoration-line-through">{{  "{:,.0f}".format(rb.unit_price) }}₫</span>
                                 <span class="ms-2 badge bg-info">-20%</span>
                                 {% endif %}
                             </div>
@@ -290,5 +277,53 @@
             console.error("Error:", error);
         });
     });
+
+    document.querySelector("#post-comment").addEventListener("click", function (event) {
+    event.preventDefault();
+
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookId = urlParams.get("book_id"); // Trích xuất giá trị của 'book_id'
+
+    // Lấy dữ liệu từ DOM
+    const comment = document.querySelector("#comment").value;
+    const rating = document.querySelector("#rating").value;
+
+    // Kiểm tra dữ liệu đầu vào
+    if (!bookId || !comment || !rating) {
+        alert("Vui lòng điền đầy đủ thông tin!");
+        return;
+    }
+
+    // Gửi request POST với fetch
+    fetch("/post_comment", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            book_id: bookId,
+            comment: comment,
+            rating: rating,
+        }),
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Lỗi từ máy chủ: " + response.statusText);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.error) {
+                alert(data.error); // Thông báo lỗi từ server
+            } else {
+                alert(data.message); // Thông báo thành công
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            alert("Đã xảy ra lỗi trong quá trình gửi bình luận.");
+        });
+});
 </script>
 {% endblock %}
