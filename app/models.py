@@ -76,7 +76,7 @@ class User(BaseModel, UserMixin):
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
 
     role_id = Column(ForeignKey(Role.id), nullable=False, index=True)
-    address_id = Column(ForeignKey(Address.id), index=True)
+    address_id = Column(ForeignKey(Address.id), index=True,nullable=True)
 
     customer_orders = relationship("Order", backref="customer", lazy=True, foreign_keys='Order.customer_id')  # 1-n
     employee_orders = relationship("Order", backref="employee", lazy=True, foreign_keys='Order.employee_id')  # 1-n
@@ -282,7 +282,6 @@ if __name__ == '__main__':
                 description = str(book['description']).strip()
                 image = str(book['image']).strip()
                 standard_price = random.randint(20, 200) * 1000
-                # sold_quantity = random.randint(10, 200)
                 sell_price = int(standard_price * 1.25)
                 discount = random.choice([0, 20])
                 year_publishing = book['year_publishing']

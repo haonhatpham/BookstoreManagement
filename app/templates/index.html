@@ -131,12 +131,11 @@
                     <figcaption class="info-wrap mt-2">
                         <a href="/details?book_id={{b.id}}" class="title">{{ b.name }} </a>
                         <div class="">
-                            <span class="price mt-1 fw-bold">
-                                {{ "{:,.0f}".format(b.unit_price - (b.unit_price * b.discount) / 100)  }}₫
-                            </span>
+                            <span class="price mt-1 fw-bold">{{ "{:,.0f}".format(b.unit_price - (b.unit_price * b.discount) / 100)  }}₫</span>
                             {% if b.discount != 0 %}
                             <span class="ms-2 text-muted text-decoration-line-through">{{  "{:,.0f}".format(b.unit_price) }}₫</span>
-                            <span class="ms-2 badge bg-info">-20%</span>
+                            <span class="ms-2 badge bg-info">-{{ b.discount }}%</span>
+
                             {% endif %}
                         </div>
                     </figcaption>
