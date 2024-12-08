@@ -162,7 +162,7 @@ def details():
 
 
 
-=======
+
 @app.route('/post_comment', methods=['POST'])
 @login_required
 def post_comment():
@@ -237,18 +237,6 @@ def change_password():
 def manage_info():
     return render_template('manage_info.html')
 
-
-@app.route("/login-admin", methods=['post'])
-def login_admin_process():
-    pass
-    # username = request.form.get('username')
-    # password = request.form.get('password')
-    #
-    # u = dao.auth_user(username=username, password=password, role=UserRole.ADMIN)
-    # if u:
-    #     login_user(u)
-    #
-    # return redirect('/admin')
 
 
 @login.user_loader
@@ -381,6 +369,19 @@ def order():
     return render_template('order.html')
 
 
+
+@app.route("/login-admin", methods=['post'])
+def login_admin_process():
+
+    username = request.form.get('username')
+    password = request.form.get('password')
+    user=dao.auth_user(username=username,password=password,role="Admin")
+    if user:
+        login_user(user)
+    return redirect('/admin')
+
+
 if __name__ == '__main__':
     with app.app_context():
+        from app import admin
         app.run(debug=True)
