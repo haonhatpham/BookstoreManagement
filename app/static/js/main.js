@@ -77,35 +77,35 @@ let swiperTestimonial = new Swiper('.testimonial__swiper', {
   },
 })
 
-/*=============== SHOW SCROLL UP ===============*/ 
-//const scrollUp = () =>{
-//	const scrollUp = document.getElementById('scroll-up')
-//    // When the scroll is higher than 350 viewport height, add the show-scroll class to the a tag with the scrollup class
-//	this.scrollY >= 350 ? scrollUp.classList.add('show-scroll')
-//						: scrollUp.classList.remove('show-scroll')
-//}
-//window.addEventListener('scroll', scrollUp)
+/*=============== SHOW SCROLL UP ===============*/
+const scrollUp = () =>{
+	const scrollUp = document.getElementById('scroll-up')
+   // When the scroll is higher than 350 viewport height, add the show-scroll class to the a tag with the scrollup class
+	this.scrollY >= 350 ? scrollUp.classList.add('show-scroll')
+						: scrollUp.classList.remove('show-scroll')
+}
+window.addEventListener('scroll', scrollUp)
 
-///*=============== SCROLL SECTIONS ACTIVE LINK ===============*/
-//const sections = document.querySelectorAll('section[id]')
-//
-//const scrollActive = () =>{
-//  const scrollDown = window.scrollY
-//
-//	sections.forEach(current =>{
-//		const sectionHeight = current.offsetHeight,
-//			  sectionTop = current.offsetTop - 58,
-//			  sectionId = current.getAttribute('id'),
-//			  sectionsClass = document.querySelector('.nav__menu a[href*=' + sectionId + ']')
-//
-//		if(scrollDown > sectionTop && scrollDown <= sectionTop + sectionHeight){
-//			sectionsClass.classList.add('active-link')
-//		}else{
-//			sectionsClass.classList.remove('active-link')
-//		}
-//	})
-//}
-//window.addEventListener('scroll', scrollActive)
+/*=============== SCROLL SECTIONS ACTIVE LINK ===============*/
+const sections = document.querySelectorAll('section[id]')
+
+const scrollActive = () =>{
+  const scrollDown = window.scrollY
+
+	sections.forEach(current =>{
+		const sectionHeight = current.offsetHeight,
+			  sectionTop = current.offsetTop - 58,
+			  sectionId = current.getAttribute('id'),
+			  sectionsClass = document.querySelector('.nav__menu a[href*=' + sectionId + ']')
+
+		if(scrollDown > sectionTop && scrollDown <= sectionTop + sectionHeight){
+			sectionsClass.classList.add('active-link')
+		}else{
+			sectionsClass.classList.remove('active-link')
+		}
+	})
+}
+window.addEventListener('scroll', scrollActive)
 
 /*=============== DARK LIGHT THEME ===============*/ 
 const themeButton = document.getElementById('theme-button')
@@ -138,20 +138,20 @@ themeButton.addEventListener('click', () => {
 })
 
 /*=============== SCROLL REVEAL ANIMATION ===============*/
-//const sr = ScrollReveal({
-//  origin: 'top',
-//  distance: '60px',
-//  duration: 2500,
-//  delay: 400,
-//  // reset: true, // Animations repeat
-//})
-//
-//sr.reveal(`.home__data, .featured__container, .new__container,
-//           .join__data, .testimonial__container, .footer`)
-//sr.reveal(`.home__images`, {delay: 600})
-//sr.reveal(`.services__card`, {interval: 100})
-//sr.reveal(`.discount__data`, {origin: 'left'})
-//sr.reveal(`.discount__images`, {origin: 'right'})
+const sr = ScrollReveal({
+  origin: 'top',
+  distance: '60px',
+  duration: 2500,
+  delay: 400,
+  // reset: true, // Animations repeat
+})
+
+sr.reveal(`.home__data, .featured__container, .new__container,
+           .join__data, .testimonial__container, .footer`)
+sr.reveal(`.home__images`, {delay: 600})
+sr.reveal(`.services__card`, {interval: 100})
+sr.reveal(`.discount__data`, {origin: 'left'})
+sr.reveal(`.discount__images`, {origin: 'right'})
 /*=============== zaasdad ===============*/
 //document.addEventListener('DOMContentLoaded', function () {
 //     if (document.referrer && !document.referrer.includes(window.location.hostname)) {
@@ -195,17 +195,19 @@ themeButton.addEventListener('click', () => {
     const passwordInput = document.getElementById("inputPassword");
     const showPasswordToggle = document.getElementById("showPasswordToggle");
     const eyeIcon = document.getElementById("eyeIcon");
+    if (passwordInput && showPasswordToggle && eyeIcon) {
 
-    // Thêm sự kiện khi nhấn vào icon con mắt
-    showPasswordToggle.addEventListener("click", function () {
-        // Kiểm tra trạng thái hiện tại của input type
-        if (passwordInput.type === "password") {
-            passwordInput.type = "text";  // Chuyển sang dạng text để người dùng nhìn thấy mật khẩu
-            eyeIcon.classList.remove("ri-eye-off-line");  // Thay đổi biểu tượng con mắt
-            eyeIcon.classList.add("ri-eye-line");  // Đổi sang biểu tượng "mắt bị che"
-        } else {
-            passwordInput.type = "password";  // Trở lại dạng password
-            eyeIcon.classList.remove("ri-eye-line");
-            eyeIcon.classList.add("ri-eye-off-line");
-        }
-    });
+        // Thêm sự kiện khi nhấn vào icon con mắt
+        showPasswordToggle.addEventListener("click", function () {
+            // Kiểm tra trạng thái hiện tại của input type
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";  // Chuyển sang dạng text để người dùng nhìn thấy mật khẩu
+                eyeIcon.classList.remove("ri-eye-off-line");  // Thay đổi biểu tượng con mắt
+                eyeIcon.classList.add("ri-eye-line");  // Đổi sang biểu tượng "mắt bị che"
+            } else {
+                passwordInput.type = "password";  // Trở lại dạng password
+                eyeIcon.classList.remove("ri-eye-line");
+                eyeIcon.classList.add("ri-eye-off-line");
+            }
+        });
+    }

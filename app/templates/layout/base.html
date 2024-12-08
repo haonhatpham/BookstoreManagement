@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang chủ</title>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
                 integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
                 crossorigin="anonymous"></script>
@@ -24,8 +23,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"/>
     <!--=============== BOOTSTRAP ICONS ===============-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+     <!-- Thêm CSS của Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
 
-
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scrollreveal.min.js') }}"></script>
 
 </head>
 <body>
@@ -44,11 +46,31 @@
 {% include 'layout/footer.html' %}
 {% endblock %}
 
+ <!--========== SCROLL UP ==========-->
+      <a href="#" class="scrollup" id="scroll-up">
+         <i class="ri-arrow-up-line"></i>
+      </a>
+
  <!--=============== SWIPER JS ===============-->
     <script src="{{ url_for('static', filename='js/swiper-bundle.min.js') }}"></script>
 
     <!--=============== MAIN JS ===============-->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        <!-- Thêm JS của Toastr -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  <!-- Đảm bảo jQuery đã được tải trước -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+    <script>
+            // Cấu hình Toastr
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": true,
+                "progressBar": true,
+                "positionClass": "toast-bottom-left", // Vị trí ở góc trái dưới
+                "preventDuplicates": true,
+                "onclick": null
+            };
+        </script>
 
 </body>
 </html>

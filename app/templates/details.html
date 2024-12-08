@@ -75,12 +75,15 @@
               <i class="bi bi-star-fill"></i>
             </span>
                     <small class="label-rating text-muted me-2">20 đánh giá</small>
-                    <small class="label-rating text-success"><i class="bi bi-bag-check-fill"></i> <!--    {{book.sold_quantity}} -->
+                    <small class="label-rating text-success"><i class="bi bi-bag-check-fill"></i>
                     đã mua</small>
                 </div>
                 <div class="mb-4">
                     <span class="price h4">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
+                    {% if book.discount != 0 %}
                     <span class="ms-2 text-muted text-decoration-line-through">{{  "{:,.0f}".format(book.unit_price) }}₫</span>
+                    <span class="ms-2 badge bg-info">-{{ book.discount }}%</span>
+                    {% endif %}
                 </div>
 
                 <dl class="row mb-4">
@@ -101,14 +104,14 @@
 
                     <dt class="col-xl-4 col-sm-5 col-6">Số lượng</dt>
                     <dd class="col-xl-8 col-sm-7 col-6">
-                        <input type="number" class="form-control w-50" value="1" min="1" max="1000" step="1"/>
+                        <input  type="number" id="quantity" class="form-control w-50" value="1" min="1" max="1000" step="1"/>
                     </dd>
                 </dl>
 
                 <div>
                     <a href="#" class="btn btn-danger submit" id="favourite-form"  data-id="{{ book.id }}" ><i class="ri-heart-line"></i></a>
-                    <a href="#" class="btn btn-primary">Mua ngay</a>
-                    <a href="#" class="btn btn-light ms-2">Thêm vào giỏ hàng</a>
+                    <a href="javascript:;" onclick="buyNow({{ book.id }}, '{{ book.image }}', '{{ book.name }}', {{ book.unit_price }})" class="btn btn-primary">Mua ngay</a>
+                    <a href="javascript:;" onclick="addToCart({{ book.id }},'{{ book.image }}','{{ book.name }}',{{ book.unit_price }})" class="btn btn-light ms-2">Thêm vào giỏ hàng</a>
                 </div>
 
             </main>

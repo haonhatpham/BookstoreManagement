@@ -13,7 +13,7 @@
                     </a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                    <a class="nav__item dropdown-toggle" href="#" id="navbarDropdown" role="button"
                        data-bs-toggle="dropdown"
                        aria-expanded="false">
                         <strong><i class="bi bi-list"></i> Danh mục sản phẩm</strong>
@@ -83,8 +83,11 @@
             <i class="ri-moon-line change-theme" id="theme-button"></i>
 
             <!-- Cart button -->
-             <a href="/cart" class="">
+             <a href="/cart" class="nav__item text-body position-relative">
                 <i class="ri-shopping-cart-line" id="cart-button"></i>
+                 <span id="total-cart-items-quantity" class="position-absolute bottom-50 mt-2 badge rounded-pill bg-primary cart-counter">
+                    {{ cart.total_quantity }}
+                 </span>
             </a>
 
         </div>

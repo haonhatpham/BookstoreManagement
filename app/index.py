@@ -1,6 +1,6 @@
 import math
-from app import app, login, dao
-from flask import render_template, request, redirect,session, jsonify
+from app import app, login, dao, utils
+from flask import render_template, request, redirect, session, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
 
@@ -23,6 +23,7 @@ def index():
                            category_ids=category_ids,
                            categories=cates,
                            )
+
 
 @app.route("/register", methods=['get', 'post'])
 def register_process():
@@ -58,7 +59,7 @@ def register_process():
             avatar = request.files.get('avatar')
             data['gender'] = gender
 
-            dao.add_user(address_id=address_id,avatar=avatar, **data)
+            dao.add_user(address_id=address_id, avatar=avatar, **data)
 
             return redirect('/login')
 
@@ -74,18 +75,17 @@ def login_process():
         u = dao.auth_user(username=username, password=password)
         if u:
             session['user_id'] = u.id
-            print(u.id)
             login_user(user=u)
-            print('thanh cong')
-            return redirect('/')
-        else:
-            print("ko thanh cong")
+            n=request.args.get('next')
+            return redirect(n if n else '/')
     return render_template('login.html')
+
 
 @app.route("/logout")
 def logout_process():
     logout_user()
     return redirect('/')
+
 
 @app.route('/details', methods=['GET', 'POST'])
 def details():
@@ -142,6 +142,7 @@ def details():
         # book_sold_quantity=book_sold_quantity
     )
 
+
 @login_required
 @app.route('/account')
 def account():
@@ -151,12 +152,11 @@ def account():
                            address=address
                            )
 
-@app.route('/favourite', methods=['GET','POST'])
+@app.route('/favourite', methods=['GET', 'POST'])
 def favourite():
     favourite_books = current_user.favourite_books
     # print('this', favourite_books)
     return render_template('favourite.html', favourite_books=favourite_books)
-
 
 
 @app.route('/delete_favourite', methods=['POST'])
@@ -183,9 +183,11 @@ def delete_favourite():
     except ValueError:
         return jsonify({'error': 'ID sách không hợp lệ.'}), 400
 
+
 @app.route('/change_password')
 def change_password():
     return render_template('change_password.html')
+
 
 @app.route('/manage_info')
 def manage_info():
@@ -205,7 +207,6 @@ def login_admin_process():
     # return redirect('/admin')
 
 
-
 @login.user_loader
 def load_user(user_id):
     return dao.get_user_by_id(user_id)
@@ -215,65 +216,127 @@ def load_user(user_id):
 def cart():
     return render_template('cart.html')
 
+
+@app.route('/api/cart', methods=['POST'])
+def add_to_cart():
+    data = request.json
+    id = str(data["id"])
+    key = app.config['CART_KEY']
+    cart = session[key] if key in session else {}
+    quantity = int(data.get("quantity", 1))  # Nếu không có "quantity" trong dữ liệu thì mặc định là 1
+
+    if id in cart:
+        cart[id]['quantity'] += quantity
+        message = f"Đã thêm thành công {quantity} sản phẩm {cart[id]['name']} vào giỏ hàng!"
+    else:
+        name = data['name']
+        image = data['image']
+        unit_price = data['unit_price']
+
+        cart[id] = {
+            "id": id,
+            "image": image,
+            "name": name,
+            "unit_price": unit_price,
+            "quantity": quantity
+        }
+        message = f"Đã thêm thành công {quantity} sản phẩm {name} vào giỏ hàng!"
+    session[key] = cart
+    return jsonify({'message':message,
+                    'cart_stats':utils.cart_stats(cart=cart)})
+
+@app.route('/api/cart/<book_id>', methods=['put'])
+def update_cart(book_id):
+    key = app.config['CART_KEY']
+    cart = session.get(key)
+
+    if cart and book_id in cart:
+        cart[book_id]['quantity'] = int(request.json['quantity'])
+
+    session[key] = cart
+    return jsonify(utils.cart_stats(cart=cart))
+
+@app.route('/api/cart/<book_id>', methods=['delete'])
+def delete_cart(book_id):
+    key = app.config['CART_KEY']
+    cart = session.get(key)
+
+    if cart and book_id in cart:
+        message = f"Đã xóa sản phẩm {cart[book_id]['name']} khỏi giỏ hàng thành công!"
+        del cart[book_id]
+
+    session[key] = cart
+    return jsonify({'message': message,
+                    'cart_stats': utils.cart_stats(cart=cart)})
+
+@app.context_processor
+def common_attr():
+    categories=dao.get_category()
+    return {
+        'categories':categories,
+        'cart': utils.cart_stats(session.get(app.config['CART_KEY']))
+    }
+
 @app.route('/category', methods=['GET'])
 def category():
-        page = request.args.get('page', 1)
-        page_size = app.config["PAGE_SIZE"]
-        all_price_ranges = ['0-50000', '50000-200000', '200000-infinity']
-        ORDER_BY_OPTIONS = [
-            {'value': 'totalBuy-DESC', 'label': 'Bán chạy nhất'},
-            {'value': 'created_at-DESC', 'label': 'Mới nhất'},
-            {'value': 'unit_price-ASC', 'label': 'Giá thấp nhất'}
-        ]
+    page = request.args.get('page', 1)
+    page_size = app.config["PAGE_SIZE"]
+    all_price_ranges = ['0-50000', '50000-200000', '200000-infinity']
+    ORDER_BY_OPTIONS = [
+        {'value': 'totalBuy-DESC', 'label': 'Bán chạy nhất'},
+        {'value': 'created_at-DESC', 'label': 'Mới nhất'},
+        {'value': 'unit_price-ASC', 'label': 'Giá thấp nhất'}
+    ]
 
-        # Lấy id category từ query params
-        cate_id = request.args.get('category_id')
+    # Lấy id category từ query params
+    cate_id = request.args.get('category_id')
 
-        # Lấy thông tin category từ database
-        cate= dao.get_category(cate_id)
+    # Lấy thông tin category từ database
+    cate = dao.get_category(cate_id)
 
-        # Lấy các tiêu chí lọc từ request
-        checked_publishers = request.args.getlist('checkedPublishers')
-        price_ranges = request.args.getlist('priceRanges')
-        order_param = request.args.get('order', 'unit_price-ASC')
-        order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
+    # Lấy các tiêu chí lọc từ request
+    checked_publishers = request.args.getlist('checkedPublishers')
+    price_ranges = request.args.getlist('priceRanges')
+    order_param = request.args.get('order', 'unit_price-ASC')
+    order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
 
-        # Đếm tổng số sản phẩm với các tiêu chí lọc
-        total_products = dao.count_products(category_id=cate_id,
-                                         checked_publishers=checked_publishers,
+    # Đếm tổng số sản phẩm với các tiêu chí lọc
+    total_products = dao.count_products(category_id=cate_id,
+                                        checked_publishers=checked_publishers,
                                         price_ranges=price_ranges)
 
-        books=dao.get_products_by_filters(category_id=cate_id,
-                                          checked_publishers=checked_publishers,
-                                          price_ranges=price_ranges,
+    books = dao.get_products_by_filters(category_id=cate_id,
+                                        checked_publishers=checked_publishers,
+                                        price_ranges=price_ranges,
                                         order_by=order_by,
-                                          order_dir=order_dir,
-                                          page=int(page)
-                                          )
+                                        order_dir=order_dir,
+                                        page=int(page)
+                                        )
 
-        publishers = dao.get_publishers_by_category(cate_id)
-        print(books)
+    publishers = dao.get_publishers_by_category(cate_id)
 
-        # Render template với dữ liệu
-        return render_template(
-            'category.html',
-            category=cate,
-            total_products=total_products,
-            pages=math.ceil(total_products / page_size),
-            products=books,
-            publishers=publishers,
-            checked_publishers=checked_publishers,
-            price_ranges=price_ranges,
-            order=order_param,
-            all_price_ranges=all_price_ranges,
-            ORDER_BY_OPTIONS=ORDER_BY_OPTIONS,
-            current_page=int(page),
-        )
+    # Render template với dữ liệu
+    return render_template(
+        'category.html',
+        category=cate,
+        total_products=total_products,
+        pages=math.ceil(total_products / page_size),
+        products=books,
+        publishers=publishers,
+        checked_publishers=checked_publishers,
+        price_ranges=price_ranges,
+        order=order_param,
+        all_price_ranges=all_price_ranges,
+        ORDER_BY_OPTIONS=ORDER_BY_OPTIONS,
+        current_page=int(page),
+    )
+
 
 @app.route('/order')
 def order():
     return render_template('order.html')
 
+
 if __name__ == '__main__':
     with app.app_context():
-      app.run(debug=True)
+        app.run(debug=True)
