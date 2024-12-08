@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
-from sqlalchemy import desc, engine, or_
+from sqlalchemy import desc, engine, or_,func
 from sqlalchemy.orm import session, sessionmaker
 import random
 
@@ -157,13 +157,24 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
     db.session.commit()
 
 
-# chứng thực tài khoản khi đăng nhập
-def auth_user(username, password):
+# # chứng thực tài khoản khi đăng nhập
+# def auth_user(username, password):
+#     password = hashlib.md5(password.encode('utf-8')).hexdigest()
+#
+#     return User.query.filter(User.username.__eq__(username.strip()),
+#                              User.password.__eq__(password)).first()
+
+def auth_user(username, password,role=None):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
 
-    return User.query.filter(User.username.__eq__(username.strip()),
-                             User.password.__eq__(password)).first()
+    u = User.query.filter(
+        User.username == username.strip(),
+        User.password == password
+    )
+    if role:  # Nếu có yêu cầu kiểm tra vai trò
+        u = u.join(Role).filter(Role.name == role)
 
+    return u.first()
 
 # Lấy user theo id
 def get_user_by_id(id):
@@ -408,6 +419,22 @@ def load_review(book_id):
             .all()
             )
 
+
+def count_product_by_cate():
+    return db.session.query(Category.id, Category.name, func.count(Book.id)) \
+        .join(book_category, book_category.c.category_id == Category.id,isouter=True) \
+        .join(Book, book_category.c.book_id == Book.id) \
+        .group_by(Category.id).all()
+
+
+
+def stats_revenue(kw=None):
+    query=db.session.query(Book.id,Book.name,func.sum(OrderDetail.quantity*OrderDetail.unit_price))\
+        .join(OrderDetail,OrderDetail.book_id.__eq__(Book.id))
+    if kw:
+        query =query.filter(Book.name.contains(kw))
+
+    return query.group_by(Book.id).order_by(Book.id).all()
 
 if __name__ == "__main__":
     with app.app_context():
