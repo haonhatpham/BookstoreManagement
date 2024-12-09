@@ -17,23 +17,26 @@
                         {% if favourite_books == [] %}
                             <h2 class="text-center">Không có sản phẩm yêu thích!</h2>
                         {% else %}
-                        <div class="row g-3">
+                        <div class="row g-3" id="favourites-container">
                                 {%for book in favourite_books%}
-                                    <div class="col-lg-6">
+                                    <div class="col-lg-6" id="book-{{ book.id }}">
                                     <figure class="d-flex align-items-center m-0">
                                         <div class="aside"><img src="{{book.image}}" width="80" height="80"></div>
                                         <figcaption class="ps-3">
-                                            <a href="#">{{book.name}}</a>
+                                            <a href="/details?book_id={{book.id}}">{{book.name}}</a>
                                             <p class="mb-2">
                                                 <span class="price">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
                                                 <span class="ms-2 text-muted text-decoration-line-through">
                                                         {{  "{:,.0f}".format(book.unit_price) }}₫
 
-                                                    </span>
+                                                </span>
                                             </p>
-                                            <button type="button" class="btn btn-primary btn-sm">
-                                                Thêm vào giỏ hàng
-                                            </button>
+
+                                                    <span>
+                                                        <input style="display: none;" type="number" id="quantity" class="form-control w-50" value="1" min="1" max="1000" step="1"/>
+                                                        <a href="javascript:;" onclick="addToCart({{ book.id }},'{{ book.image }}','{{ book.name }}',{{ book.unit_price }})" class="btn btn-light ms-2">Thêm vào giỏ hàng</a>
+                                                    </span>
+
                                             <button type="button" class="btn btn-danger btn-sm ms-1" data-toggle="tooltip"
                                                     title="Xóa khỏi danh sách yêu thích"
                                                     onclick="deleteFavourite({{book.id}})">
@@ -53,35 +56,4 @@
         </div> <!-- row.// -->
     </div> <!-- container.// -->
 </section> <!-- section-content.// -->
-<script>
-    function deleteFavourite(bookId) {
-    fetch('/delete_favourite', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `book_id=${bookId}`
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-            console.log(response)
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Server response:', data);
-        if (data.message) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert(data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
-</script>
 {%endblock%}
