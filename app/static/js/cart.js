@@ -1,6 +1,7 @@
 function addToCart(id,image,name,unit_price){
     //axios fetch
     const quantity = document.getElementById('quantity').value;  // Lấy số lượng từ input
+
     fetch('/api/cart',{
         method: "post",
         body: JSON.stringify({
