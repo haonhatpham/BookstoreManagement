@@ -115,7 +115,6 @@
                     <a href="#" class="btn btn-danger submit" id="favourite-form"  data-id="{{ book.id }}" ><i class="ri-heart-line"></i></a>
                     <a href="javascript:;" onclick="buyNow({{ book.id }}, '{{ book.image }}', '{{ book.name }}', {{ book.unit_price }})" class="btn btn-primary">Mua ngay</a>
                     <a href="javascript:;" onclick="addToCart({{ book.id }},'{{ book.image }}','{{ book.name }}',{{ book.unit_price }})" class="btn btn-light ms-2">Thêm vào giỏ hàng</a>
-
                 </div>
 
             </main>
@@ -142,7 +141,7 @@
         <div class="row">
             <div class="col">
                 <h3 class="pb-2">Đánh giá sản phẩm</h3>
-                <div class="rattings-wrapper mb-5">
+                <div class="rattings-wrapper mb-5" id="comments-container">
                     {%if reviews == []%}
                     <h5 class="text-center" style="background-color: white; ">Chưa có đánh giá nào!</h5>
                     {%else%}
@@ -257,77 +256,4 @@
         </div>
     </div>
 </section>
-<script>
-    document.querySelector("#favourite-form").addEventListener("click", function (event) {
-        event.preventDefault(); // Ngăn không reload trang
-
-        const bookId = this.getAttribute("data-id"); // Lấy book_id từ nút
-
-        fetch("/details?book_id=" + bookId, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.error) {
-                alert(data.error); // Thông báo lỗi
-            } else {
-                alert(data.message); // Thông báo thành công
-            }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
-    });
-
-    document.querySelector("#post-comment").addEventListener("click", function (event) {
-    event.preventDefault();
-
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const bookId = urlParams.get("book_id"); // Trích xuất giá trị của 'book_id'
-
-    // Lấy dữ liệu từ DOM
-    const comment = document.querySelector("#comment").value;
-    const rating = document.querySelector("#rating").value;
-
-    // Kiểm tra dữ liệu đầu vào
-    if (!bookId || !comment || !rating) {
-        alert("Vui lòng điền đầy đủ thông tin!");
-        return;
-    }
-
-    // Gửi request POST với fetch
-    fetch("/post_comment", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            book_id: bookId,
-            comment: comment,
-            rating: rating,
-        }),
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Lỗi từ máy chủ: " + response.statusText);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.error) {
-                alert(data.error); // Thông báo lỗi từ server
-            } else {
-                alert(data.message); // Thông báo thành công
-            }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            alert("Đã xảy ra lỗi trong quá trình gửi bình luận.");
-        });
-});
-</script>
 {% endblock %}

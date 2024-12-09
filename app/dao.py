@@ -416,7 +416,9 @@ def load_review(book_id):
             .join(Review, User.id == Review.user_id)
             .with_entities(User.first_name, User.last_name, Review.created_at, Review.comment, Review.rating)
             .filter(Review.book_id == book_id)
+            .order_by(Review.created_at.desc())
             .all()
+
             )
 
 

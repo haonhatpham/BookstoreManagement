@@ -163,7 +163,7 @@ def details():
 
 
 
-@app.route('/post_comment', methods=['POST'])
+@app.route('/post_comment', methods=['POST', 'GET'])
 @login_required
 def post_comment():
     data = request.json
@@ -177,6 +177,7 @@ def post_comment():
     if not current_user:
         return jsonify({'error': 'Hãy đăng nhập để gửi bình luận. '}), 400
     try:
+        book_id = int(data.get('book_id'))
         review = dao.add_review(current_user.id, book_id, comment, rating )
 
         if review:
@@ -188,6 +189,21 @@ def post_comment():
         return jsonify({'error': 'ID sách không hợp lệ.'}), 400
 
 
+@app.route('/get_comments/<int:book_id>')
+def get_comments(book_id):
+
+    reviews = dao.load_review(book_id)
+
+    comments_list = [{
+        'user_name': f"{review.first_name} {review.last_name}",
+        'comment': review.comment,
+        'created_at': review.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+        'rating': review.rating
+    } for review in reviews]
+
+    return jsonify(comments_list)
+
+
 @login_required
 @app.route('/account')
 def account():
@@ -196,11 +212,27 @@ def account():
                            current_user=current_user,
                            address=address
                            )
-
+@login_required
 @app.route('/favourite', methods=['GET', 'POST'])
 def favourite():
     favourite_books = current_user.favourite_books
     return render_template('favourite.html', favourite_books=favourite_books)
+
+@login_required
+@app.route('/get_favourites_json', methods=['GET', 'POST'])
+def get_favourites_json():
+    try:
+        favourites = current_user.favourite_books
+        favourite_books = [{
+            'id': book.id,
+            'name': book.name,
+            'image': book.image,
+            'price': book.unit_price - (book.unit_price * book.discount / 100),
+            'unit_price': book.unit_price,
+        } for book in favourites]
+        return jsonify({'favourite_books': favourite_books}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/delete_favourite', methods=['POST'])
@@ -215,7 +247,7 @@ def delete_favourite():
 
     try:
         # Chuyển đổi book_id sang kiểu int nếu cần
-
+        # book_id = int(book_id)
         # Xóa sách khỏi danh sách yêu thích (thêm logic xử lý trong DAO)
         result = dao.delete_from_favourites(current_user.id, book_id)
 
