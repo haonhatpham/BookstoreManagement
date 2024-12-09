@@ -220,7 +220,7 @@ def favourite():
 
 @login_required
 @app.route('/get_favourites_json', methods=['GET', 'POST'])
-def get_favourite_json():
+def get_favourites_json():
     try:
         favourites = current_user.favourite_books
         favourite_books = [{
