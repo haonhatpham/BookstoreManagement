@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
-
+from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
     PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review
 from datetime import datetime, timedelta
@@ -21,13 +21,26 @@ def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
 
-
 # load sách tieu bieu ở home
 def load_feature_book():
-    # feature_book = Book.query.offset(4).limit(6).all()
-    # return feature_book
-    pass  # sách tiêu biểu sẽ xử lí theo số lượng có mặt của sách đó trong đơn hàng nên sẽ xử lí sau
+    query = (
+        Book.query
+        .join(OrderDetail, OrderDetail.book_id == Book.id)  # JOIN giữa bảng Book và OrderDetail
+        .with_entities(
+            Book.id,
+            Book.name,
+            Book.unit_price,
+            Book.discount,
+            Book.image,
+            func.count(OrderDetail.id)  # Tính số lượng xuất hiện của sách
+        )
+        .group_by(Book.id, Book.name, Book.unit_price, Book.discount)  # Nhóm theo các trường
+        .order_by(func.count(OrderDetail.id).desc())  # Sắp xếp theo số lượng đã bán (giảm dần)
+        .limit(10)  # Lấy top 10 sách tiêu biểu
+    )
 
+    # Trả về kết quả của truy vấn
+    return query.all()
 
 # lay sach theo id
 def load_book(book_id=None, latest_books=None):
@@ -70,32 +83,6 @@ def get_category(cate_id=None, book_id=None):
     else:
         # Trả về toàn bộ category
         return Category.query.all()
-
-
-def count_products(category_id=None, checked_publishers=None, price_ranges=None):
-    # Khởi tạo query
-    query = Book.query
-
-    # Nếu có category_id, join với bảng phụ để lọc sách thuộc danh mục này
-    if category_id:
-        query = query.join(book_category, book_category.c.book_id == Book.id) \
-            .filter(book_category.c.category_id == category_id)
-    # Lọc theo nhà xuất bản
-    if checked_publishers:
-        publisher_ids = get_publisher_ids_by_names(checked_publishers)
-        query = query.filter(Book.publisher_id.in_(publisher_ids))
-
-    # Lọc theo khoảng giá
-    if price_ranges:
-        for price_range in price_ranges:
-            min_price, max_price = price_range.split('-')
-            if max_price == "infinity":
-                query = query.filter(Book.unit_price >= min_price)
-            else:
-                query = query.filter(Book.unit_price.between(min_price, max_price))
-
-    return query.count()
-
 
 def existing_user(username):
     return User.query.filter_by(username=username).first()
@@ -186,11 +173,28 @@ def get_publisher_by_book_id(book_id):
     )
     return publisher
 
+def count_books(book_objects=None):
+    if book_objects:
+        # Trường hợp có danh sách các đối tượng sách
+        return len(book_objects)
+    else:
+        # Trường hợp không có danh sách, trả về tổng số sách trong cơ sở dữ liệu
+        return Book.query.count()
 
 # Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
-def get_products_by_filters(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
+def filter_books(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
     books = Book.query
     from sqlalchemy.sql import text
+
+    # Subquery tính tổng số lượng bán được (totalBuy)
+    total_buy_subquery = db.session.query(OrderDetail
+        .book_id.label('book_id'),
+        func.sum(OrderDetail.quantity).label('totalBuy')
+    ).group_by(OrderDetail.book_id).subquery()
+
+    # Join subquery với bảng Book
+    books = books.outerjoin(total_buy_subquery, Book.id == total_buy_subquery.c.book_id)
+
 
     if category_id:
         books = books.join(book_category, book_category.c.book_id == Book.id) \
@@ -213,10 +217,15 @@ def get_products_by_filters(category_id, checked_publishers, price_ranges, order
                 price_conditions.append(Book.unit_price.between(float(min_price), float(max_price)))
 
         books = books.filter(or_(*price_conditions))
-        print(books)
+
     # Sắp xếp theo order_by và order_dir
-    if hasattr(Book, order_by):
-        books = books.order_by(getattr(Book, order_by).desc() if order_dir == 'DESC' else getattr(Book, order_by))
+    if order_by == 'totalBuy':  # Trường hợp sắp xếp theo totalBuy
+        books = books.order_by(total_buy_subquery.c.totalBuy.desc() if order_dir == 'DESC' else total_buy_subquery.c.totalBuy)
+    elif hasattr(Book, order_by):
+        books = books.order_by(
+            getattr(Book, order_by).desc() if order_dir == 'DESC' else getattr(Book, order_by),
+            Book.id.desc() if order_dir == 'DESC' else Book.id
+        )
     else:
         raise ValueError(f"Invalid order_by column: {order_by}")
 

@@ -4,7 +4,6 @@ from flask import render_template, request, redirect, session, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
 
-
 @app.route("/")
 def index():
     page = request.args.get('page', 1)
@@ -12,9 +11,10 @@ def index():
     kw = request.args.get('kw')
     prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
-    feature_books = dao.load_book()
+    feature_books = dao.load_feature_book()
+    print(feature_books)
     cates = dao.get_category()
-    total = dao.count_products()
+    total = dao.count_books()
     category_ids = dao.load_category_ids()
     return render_template("index.html",
                            banner=banner,
@@ -160,9 +160,6 @@ def details():
 
     )
 
-
-
-=======
 @app.route('/post_comment', methods=['POST'])
 @login_required
 def post_comment():
@@ -344,19 +341,15 @@ def category():
     order_param = request.args.get('order', 'unit_price-ASC')
     order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
 
-    # Đếm tổng số sản phẩm với các tiêu chí lọc
-    total_products = dao.count_products(category_id=cate_id,
-                                        checked_publishers=checked_publishers,
-                                        price_ranges=price_ranges)
-
-    books = dao.get_products_by_filters(category_id=cate_id,
-                                        checked_publishers=checked_publishers,
-                                        price_ranges=price_ranges,
-                                        order_by=order_by,
-                                        order_dir=order_dir,
-                                        page=int(page)
-                                        )
-
+    books = dao.filter_books(category_id=cate_id,
+                            checked_publishers=checked_publishers,
+                            price_ranges=price_ranges,
+                            order_by=order_by,
+                            order_dir=order_dir,
+                            page=int(page)
+                             )
+    print(books)
+    total_products=dao.count_books(books)
     publishers = dao.get_publishers_by_category(cate_id)
 
     # Render template với dữ liệu
