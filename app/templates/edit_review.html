@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <!-- Include meta information, such as title, stylesheets, etc. -->
+  <title>Sửa đánh giá #{{ product_review.id }}</title>
+</head>
+
+<body>
+  <!-- Include header -->
+  {% include '_header.html' %}
+
+  <section class="section-content">
+    <div class="container">
+      <header class="section-heading py-4">
+        <h3 class="section-title">Sửa đánh giá #{{ product_review.id }}</h3>
+      </header> <!-- section-heading.// -->
+
+      <main class="row mb-5">
+        <p>
+          Đánh giá của <strong>{{ product_review.user.fullname }}</strong> tại
+          <strong>
+            <a href="{{ url_for('product', id=product_review.product.id) }}#review" target="_blank">
+              {{ product_review.product.name }}
+            </a>
+          </strong>
+          lúc {{ product_review.created_at.strftime('%H:%M:%S %d/%m/%Y') }}
+        </p>
+        <form class="col-lg-6" method="POST" action="{{ url_for('edit_product_review') }}">
+          {% if success_message %}
+            <div class="alert alert-success mb-3" role="alert">
+              {{ success_message }}
+            </div>
+          {% endif %}
+          {% if error_message %}
+            <div class="alert alert-danger mb-3" role="alert">
+              {{ error_message }}
+            </div>
+          {% endif %}
+          <div class="mb-3">
+            <label for="productReview-ratingScore" class="form-label">Cho sao <span class="text-danger">*</span></label>
+            <select class="form-select {% if violations.rating_score_violations %}is-invalid{% elif product_review.rating_score %}is-valid{% endif %}"
+                    id="productReview-ratingScore"
+                    name="rating_score"
+                    required>
+              <option disabled {% if not product_review.rating_score %}selected{% endif %}>
+                Cho sao
+              </option>
+              {% for i in range(1, 6) %}
+                <option value="{{ i }}" {% if product_review.rating_score == i %}selected{% endif %}>
+                  {{ i }}
+                </option>
+              {% endfor %}
+            </select>
+            {% if violations.rating_score_violations %}
+              <div class="invalid-feedback">
+                <ul class="list-unstyled mb-0">
+                  {% for violation in violations.rating_score_violations %}
+                    <li>{{ violation }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="productReview-content" class="form-label">Nội dung <span class="text-danger">*</span></label>
+            <textarea class="form-control {% if violations.content_violations %}is-invalid{% elif product_review.content %}is-valid{% endif %}"
+                      id="productReview-content"
+                      name="content"
+                      placeholder="Nội dung đánh giá"
+                      rows="5">{{ product_review.content }}</textarea>
+            {% if violations.content_violations %}
+              <div class="invalid-feedback">
+                <ul class="list-unstyled mb-0">
+                  {% for violation in violations.content_violations %}
+                    <li>{{ violation }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+          <input type="hidden" name="id" value="{{ product_review.id }}">
+          <button type="submit" class="btn btn-primary me-2 mb-3">
+            Sửa
+          </button>
+          <button type="reset"
+                  class="btn btn-warning me-2 mb-3"
+                  onclick="return confirm('Bạn có muốn để giá trị mặc định?')">
+            Mặc định
+          </button>
+          <a class="btn btn-danger mb-3"
+             href="{{ url_for('product', id=product_review.product.id) }}#review"
+             role="button"
+             onclick="return confirm('Bạn có muốn hủy?')">
+            Hủy
+          </a>
+        </form>
+      </main>
+    </div> <!-- container.// -->
+  </section> <!-- section-content.// -->
+
+  <!-- Include footer -->
+  {% include '_footer.html' %}
+</body>
+
+</html>
