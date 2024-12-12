@@ -63,7 +63,7 @@
 
                     <div class="card-body border-top">
                         {% if current_user.is_authenticated %}
-                        <a href="#" class="btn btn-primary float-end">Đặt hàng</a>
+                        <input type="button" class="btn btn-primary float-end" onclick="pay()"  value="Thanh toán">
                         {% else %}
                         <p class="float-end">Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán</p>
                         {% endif %}

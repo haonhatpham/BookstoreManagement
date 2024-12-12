@@ -1,13 +1,14 @@
 from flask import redirect, request, url_for, render_template
 from flask_admin.helpers import get_url
 from markupsafe import Markup
-from app import app, db, dao
+from app import app, db, dao,utils
 from flask_login import login_user, logout_user
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from app.models import Book, Review, Order, Voucher, Permission, Category, User
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, login_user
 from app.models import Role
+import calendar
 
 
 def _image_formatter(view, context, model, name):
@@ -54,8 +55,12 @@ class LogoutView(AuthenticatedBaseView):
 class StatsView(AuthenticatedBaseView):
     @expose("/")
     def index(self):
-        stats = dao.stats_revenue(kw=request.args.get('kw'))
-        return self.render('admin/stats.html')
+        labels = []
+        for i in range(1, 13):
+            labels.append(calendar.month_name[i])
+        data = utils.statistic_revenue()
+
+        return self.render('admin/chart.html', data=data, labels=labels)
 
 class LapHoaDon(AuthenticatedBaseView):
     @expose("/")

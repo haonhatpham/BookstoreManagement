@@ -4,6 +4,9 @@ from app import app, login, dao, utils
 from flask import render_template, request, redirect, session, jsonify, url_for
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
+from app.vnpay.form import PaymentForm
+from app.vnpay.vnpay import Vnpay
+
 
 @app.route("/")
 def index():
@@ -13,7 +16,6 @@ def index():
     prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
     feature_books = dao.load_feature_book()
-    print(feature_books)
     cates = dao.get_category()
     total = dao.count_books()
     category_ids = dao.load_category_ids()
@@ -158,7 +160,6 @@ def details():
         reviews=reviews,
         reviews_numbers=reviews_numbers,
         avg_rating=avg_rating
-
     )
 
 
@@ -374,6 +375,20 @@ def delete_cart(book_id):
     return jsonify({'message': message,
                     'cart_stats': utils.cart_stats(cart=cart)})
 
+
+@app.route('/api/pay')
+@login_required
+def pay():
+    key = app.config['CART_KEY']
+    cart = session.get(key)
+    try:
+        dao.save_order(cart)
+    except:
+        return jsonify({'status': 500})
+    else:
+        del session[key]
+    return jsonify({'status': 200})
+
 @app.context_processor
 def common_attr():
     categories=dao.get_category()
@@ -441,7 +456,6 @@ def order():
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
-
     username = request.form.get('username')
     password = request.form.get('password')
     user=dao.auth_user(username=username,password=password,role="Admin")
@@ -449,6 +463,106 @@ def login_admin_process():
         login_user(user)
     return redirect('/admin')
 
+# @app.route('/orders/process_vnpay', methods=['POST'])
+# def process_vnpay():
+#     form = PaymentForm(request.form)
+#     if form.validate_on_submit():
+#         vnp = Vnpay()
+#         vnp.requestData = {
+#             'vnp_Version': '2.1.0',
+#             'vnp_Command': 'pay',
+#             'vnp_TmnCode': app.config["VNPAY_TMN_CODE"],
+#             'vnp_Amount': form.amount.data * 100,  # Số tiền phải *100
+#             'vnp_CurrCode': 'VND',
+#             'vnp_TxnRef': form.order_id.data,
+#             'vnp_OrderInfo': form.order_desc.data,
+#             'vnp_OrderType': form.order_type.data,
+#             'vnp_Locale': form.language.data,
+#             'vnp_BankCode': form.bank_code.data,
+#             'vnp_ReturnUrl': app.config["VNPAY_PAYMENT_URL"]
+#         }
+#
+#         payment_url = vnp.get_payment_url(app.config["VNPAY_PAYMENT_URL"], app.config["VNPAY_HASH_SECRET_KEY"])
+#         return redirect(payment_url)
+#     else:
+#         return "Invalid Form Data", 400
+
+@app.route('/payment_return', methods=['GET'])
+def payment_return():
+    vnp = Vnpay()
+    vnp.responseData = request.args.to_dict()  # Lấy dữ liệu từ URL callback của VNPay
+
+    # Kiểm tra tính hợp lệ của dữ liệu trả về
+    if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
+        response_code = vnp.responseData.get('vnp_ResponseCode')
+        if response_code == '00':  # Giao dịch thành công
+            dao.order_paid_by_vnpay(
+                order_id=vnp.responseData.get('vnp_TxnRef'),
+                bank_transaction_number=vnp.responseData.get('vnp_TransactionNo'),
+                vnpay_transaction_number=vnp.responseData.get('vnp_TransactionNo'),
+                bank_code=vnp.responseData.get('vnp_BankCode'),
+                card_type=vnp.responseData.get('vnp_CardType'),
+                secure_hash=vnp.responseData.get('vnp_SecureHash'),
+                received_money=int(vnp.responseData.get('vnp_Amount')) // 100,
+                paid_date=vnp.responseData.get('vnp_PayDate')
+            )
+            return "Payment Success"
+        else:
+            return "Payment Failed"
+    else:
+        return "Invalid Response"
+
+@app.route('/api/pay', methods=['POST'])
+def api_pay():
+    try:
+        data = request.json
+        order_id = data.get('order_id', '123456')
+        amount = data.get('amount', 100000)
+        order_desc = data.get('order_desc', 'Thanh toán')
+        bank_code = data.get('bank_code', '')
+
+        vnp = Vnpay()
+        vnp.requestData = {
+            'vnp_Version': '2.1.0',
+            'vnp_Command': 'pay',
+            'vnp_TmnCode': app.config["VNPAY_TMN_CODE"],  # Kiểm tra mã TMN code
+            'vnp_Amount': amount * 100,  # Nhân 100 để đưa về VNĐ
+            'vnp_CurrCode': 'VND',
+            'vnp_TxnRef': order_id,      # Mã đơn hàng duy nhất
+            'vnp_OrderInfo': order_desc,
+            'vnp_OrderType': 'billpayment',
+            'vnp_Locale': 'vn',
+            'vnp_BankCode': bank_code,
+            'vnp_ReturnUrl': app.config["VNPAY_RETURN_URL"]  # URL trả về sau thanh toán
+        }
+
+        # Kiểm tra dữ liệu trước khi tạo URL
+        print("Request Data:", vnp.requestData)
+
+        payment_url = vnp.get_payment_url(
+            'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
+            app.config["VNPAY_HASH_SECRET_KEY"]
+        )
+
+        # Log URL thanh toán
+        print("Payment URL:", payment_url)
+
+        return jsonify({'status': 200, 'payment_url': payment_url})
+    except Exception as e:
+        return jsonify({'status': 500, 'message': str(e)})
+
+@app.route("/statistic", methods=['GET'])
+def statistic():
+    month = int(request.args.get("month"))
+    type = request.args.get("type")
+    data = None
+    if type == 'book':
+        data = utils.statistic_book_by_month(month)
+    if type == 'category':
+        data = utils.statistic_category_by_month(month)
+    if type == 'overall':
+        data = utils.statistic_revenue()
+    return data
 
 if __name__ == '__main__':
     with app.app_context():
