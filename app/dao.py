@@ -153,7 +153,6 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
 
 def auth_user(username, password,role=None):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
-
     u = User.query.filter(
         User.username == username.strip(),
         User.password == password
@@ -162,6 +161,17 @@ def auth_user(username, password,role=None):
         u = u.join(Role).filter(Role.name == role)
 
     return u.first()
+
+def change_password(new_password):
+    user = (User.query
+        .filter(User.id == current_user.id)
+        .first()
+    )
+    password = hashlib.md5(new_password.encode('utf-8')).hexdigest()
+    user.password = password
+
+    db.session.commit()
+    return user
 
 # Lấy user theo id
 def get_user_by_id(id):

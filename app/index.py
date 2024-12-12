@@ -1,3 +1,4 @@
+import hashlib
 import math
 
 from app import app, login, dao, utils
@@ -301,11 +302,30 @@ def delete_favourite():
     except ValueError:
         return jsonify({'error': 'ID sách không hợp lệ.'}), 400
 
-
 @app.route('/change_password')
+@login_required
 def change_password():
     return render_template('change_password.html')
 
+@app.route('/api/change_passwd', methods = ['POST'])
+@login_required
+def change_passwd():
+
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+
+    if not current_password or not new_password:
+        return jsonify({'error': 'Vui lòng nhập đầy đủ thông tin!'}), 400
+
+    if not (hashlib.md5(current_password.encode('utf-8')).hexdigest() == current_user.password):
+        return jsonify({'error': 'Mật khẩu hiện tại không chính xác!'}), 403
+
+    try:
+        dao.change_password(new_password)
+        return jsonify({'message': 'Đổi mật khẩu thành công!'}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Có lỗi xảy ra, vui lòng thử lại!'}), 500
 
 @app.route('/manage_info')
 def manage_info():
