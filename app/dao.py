@@ -423,12 +423,23 @@ def add_review(user_id, book_id, comment, rating):
 def load_review(book_id):
     return (User.query
             .join(Review, User.id == Review.user_id)
-            .with_entities(User.first_name, User.last_name, Review.created_at, Review.comment, Review.rating)
+            .with_entities(User.first_name, User.last_name, Review.created_at, Review.comment, Review.rating, Review.user_id, Review.id)
             .filter(Review.book_id == book_id)
             .order_by(Review.created_at.desc())
             .all()
 
             )
+def edit_review(review_id, rating, comment):
+    review = Review.query.filter(Review.id == review_id).first()
+    review.rating = rating
+    review.comment = comment
+    db.session.commit()
+    return review
+
+def delete_review(review_id):
+    (Review.query.filter(Review.id == review_id).delete())
+    db.session.commit()
+
 
 
 def count_product_by_cate():

@@ -1,6 +1,7 @@
 import math
+
 from app import app, login, dao, utils
-from flask import render_template, request, redirect, session, jsonify
+from flask import render_template, request, redirect, session, jsonify, url_for
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
 
@@ -197,11 +198,52 @@ def get_comments(book_id):
         'user_name': f"{review.first_name} {review.last_name}",
         'comment': review.comment,
         'created_at': review.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-        'rating': review.rating
+        'rating': review.rating,
+        'user_id': review.user_id,
+        'id':review.id
     } for review in reviews]
 
-    return jsonify(comments_list)
+    response_data = {
+        'comments': comments_list,
+        'current_user_id': current_user.id
+    }
+    return jsonify(response_data)
 
+
+
+@app.route('/edit_review', methods=['POST'])
+def edit_review():
+
+    data = request.json
+
+    review_id = data.get('review_id')
+    comment = data.get('comment')
+    rating = data.get('rating')
+
+    if not review_id:
+        return jsonify({'error': 'Không có ID review được gửi.'}), 400
+    try:
+        review_id = int(data.get('review_id'))
+
+        review = dao.edit_review(review_id, rating, comment)
+        if review:
+            return jsonify({'message': 'Bình luận đã được gửi.'}), 200
+        else:
+            return jsonify({'error': 'Đã xảy ra lỗi.'}), 404
+
+    except ValueError:
+        return jsonify({'error': 'ID review không hợp lệ.'}), 400
+
+
+@app.route('/delete_review', methods=['POST', 'GET'])
+def delete_review():
+    review_id = request.args.get('review_id')
+
+    try:
+        dao.delete_review(review_id)
+        return jsonify({'success': True, 'message': 'Bình luận đã được xóa thành công.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @login_required
 @app.route('/account')
