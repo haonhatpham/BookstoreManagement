@@ -173,6 +173,41 @@ def change_password(new_password):
     db.session.commit()
     return user
 
+def manage_user_info(data):
+    try:
+        user = User.query.filter_by(username=data['username']).first()
+        user_address = Address.query.filter(Address.id == user.address_id).first()
+
+        if user:
+            # Cập nhật thông tin người dùng
+            user.name = data['name']
+            name_parts = data['name'].strip().split(" ", 1)
+            if len(name_parts) > 1:
+                user.first_name = name_parts[1]
+                user.last_name = name_parts[0]
+            else:
+                # Nếu không có dấu cách, mặc định đặt last_name là name và first_name rỗng
+                user.first_name = ''
+                user.last_name = name_parts[0]
+
+            user.email = data['email']
+            user.phone = data['phone_number']
+            user.gender = data['gender']
+            user_address.city = data['city']
+            user_address.district = data['district']
+            user_address.ward = data['ward']
+            user_address.details = data['street']
+
+            db.session.commit()
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        db.session.rollback()  # Rollback trong trường hợp có lỗi
+        print(f"Error updating user info: {e}")
+        return False
+
 # Lấy user theo id
 def get_user_by_id(id):
     return User.query.get(id)

@@ -328,9 +328,24 @@ def change_passwd():
         return jsonify({'error': 'Có lỗi xảy ra, vui lòng thử lại!'}), 500
 
 @app.route('/manage_info')
+@login_required
 def manage_info():
-    return render_template('manage_info.html')
+    address = dao.load_user_address(current_user.id)
+    return render_template('manage_info.html', current_user=current_user, address=address)
 
+@app.route('/manage_user_info', methods=['POST'])
+@login_required
+def manage_user_info():
+    # Lấy dữ liệu JSON từ yêu cầu
+    data = request.get_json()
+
+    # Gọi hàm cập nhật thông tin người dùng từ dao.py
+    success = dao.manage_user_info(data)
+    # Trả về phản hồi dưới dạng JSON
+    if success:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False})
 
 
 @login.user_loader
