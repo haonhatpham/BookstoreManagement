@@ -107,3 +107,36 @@ function buyNow(id, image, name, unit_price) {
         console.error("Lỗi khi mua ngay:", error);
     });
 }
+
+function pay() {
+    if (confirm("Bạn chắc chắn thanh toán?") === true) {
+        // Dữ liệu giả định gửi lên server
+        const data = {
+            order_id: "123456",         // Mã đơn hàng
+            amount: 100000,            // Số tiền (VNĐ)
+            order_desc: "Thanh toán đơn hàng",  // Mô tả đơn hàng
+            bank_code: ""              // Mã ngân hàng (nếu cần)
+        };
+
+        fetch('/api/pay', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 200) {
+                // Điều hướng tới URL thanh toán
+                window.location.href = data.payment_url;
+            } else {
+                alert("Có lỗi xảy ra: " + (data.message || "Không rõ nguyên nhân"));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Không thể kết nối tới server. Vui lòng thử lại sau!");
+        });
+    }
+}

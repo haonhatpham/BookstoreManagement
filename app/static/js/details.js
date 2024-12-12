@@ -1,27 +1,32 @@
 //    Thêm vào danh sách yêu thích
-    document.querySelector("#favourite-form").addEventListener("click", function (event) {
-        event.preventDefault(); // Ngăn không reload trang
+    document.addEventListener("DOMContentLoaded", function () {
+            const favouriteForm = document.querySelector("#favourite-form");
+            if (favouriteForm) {
+            favouriteForm.addEventListener("click", function (event) {
+                event.preventDefault(); // Ngăn không reload trang
 
-        const bookId = this.getAttribute("data-id"); // Lấy book_id từ nút
+                const bookId = this.getAttribute("data-id"); // Lấy book_id từ nút
 
-        fetch("/details?book_id=" + bookId, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.error) {
-                toastr.error(data.error); // Thông báo lỗi
-            } else {
-                toastr.success(data.message);; // Thông báo thành công
+                fetch("/details?book_id=" + bookId, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.error) {
+                        toastr.error(data.error); // Thông báo lỗi
+                    } else {
+                        toastr.success(data.message);; // Thông báo thành công
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+            });
             }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
-    });
+     });
 //  Gửi bình luận lên Server
     document.querySelector("#post-comment").addEventListener("click", function (event) {
     event.preventDefault();
