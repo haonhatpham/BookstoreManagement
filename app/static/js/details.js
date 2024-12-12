@@ -215,6 +215,7 @@ async function fetchComments() {
         commentsContainer.innerHTML = '';  // Xóa nội dung cũ để cập nhật dữ liệu mới
 
         const current_user_id = data['current_user_id'];
+        const current_user_role = data['current_user_role'];
 
         data['comments'].forEach(comment => {
             const newComment = document.createElement("div");
@@ -237,7 +238,7 @@ async function fetchComments() {
                 </div>
                 <p id='comment-text'>${comment.comment}</p>
             `;
-            if (comment.user_id == current_user_id) {
+            if (comment.user_id == current_user_id || current_user_role == 1) {
                 newComment.innerHTML += `
                     <div class="d-flex justify-content-end">
                         <button data-id="${comment.id}" data-book-id="${bookId}" class="btn btn-warning btn-sm me-2 btn-edit">Sửa</button>

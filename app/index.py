@@ -205,7 +205,8 @@ def get_comments(book_id):
 
     response_data = {
         'comments': comments_list,
-        'current_user_id': current_user.id
+        'current_user_id': current_user.id,
+        'current_user_role': current_user.role_id
     }
     return jsonify(response_data)
 
