@@ -1,5 +1,6 @@
 
 
+
 if (window.location.pathname === '/details') {
     //    Thêm vào danh sách yêu thích
     document.querySelector("#favourite-form").addEventListener("click", function (event) {
@@ -63,15 +64,6 @@ if (window.location.pathname === '/details') {
                     toastr.success(data.message); // Thông báo thành công
                     fetchComments();
 
-                    document.querySelector("#comment").value='';
-                    document.querySelector("#rating").value='';
-                }
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-                toastr.error("Đã xảy ra lỗi trong quá trình gửi bình luận.");
-            });
-    });
 
     // xóa bình luận
     document.addEventListener('DOMContentLoaded', () => {
