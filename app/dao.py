@@ -1,5 +1,3 @@
-import logging
-
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
@@ -10,7 +8,7 @@ from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
-from sqlalchemy import desc, engine, or_, func
+from sqlalchemy import desc, engine, or_,func
 from sqlalchemy.orm import session, sessionmaker
 import random
 
@@ -22,7 +20,6 @@ session = Session()
 def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
-
 
 # load sách tieu bieu ở home
 def load_feature_book():
@@ -155,7 +152,6 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
 
 def auth_user(username, password, role=None):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
-
     u = User.query.filter(
         User.username == username.strip(),
         User.password == password
@@ -488,7 +484,6 @@ def load_review(book_id):
             .filter(Review.book_id == book_id)
             .order_by(Review.created_at.desc())
             .all()
-
             )
 
 def edit_review(review_id, rating, comment):
@@ -534,6 +529,44 @@ def search(kw):
     except Exception as ex:
         logging.error(f"Error during search: {str(ex)}")
         return []
+
+def statistic_revenue():
+    return db.session.query(
+        func.extract("month", Order.paid_date).label("month"),  # Lấy tháng từ paid_date trong Order
+        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")  # Tính doanh thu
+    ) \
+    .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(func.extract("month", Order.paid_date)).all()
+def stat_category_by_month(month):
+    return db.session.query(
+        Category.name,
+        func.count(OrderDetail.book_id),
+        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")
+    ) \
+    .join(book_category, book_category.c.category_id == Category.id) \
+    .join(Book, book_category.c.book_id == Book.id) \
+    .join(OrderDetail, Book.id == OrderDetail.book_id) \
+    .join(Order, OrderDetail.order_id == Order.id) \
+    .group_by(Category.name) \
+    .filter(func.extract("month", Order.paid_date) == month) \
+    .order_by(desc("revenue")) \
+    .all()
+
+def stat_book_by_month(month):
+    category_list = func.group_concat(Category.name).label("categories")
+    return db.session.query(
+        Book.name,
+        category_list,
+        func.sum(OrderDetail.quantity).label("quantity")
+    ) \
+    .join(OrderDetail, Book.id == OrderDetail.book_id) \
+    .join(Order, OrderDetail.order_id == Order.id) \
+    .join(book_category, book_category.c.book_id == Book.id) \
+    .join(Category, book_category.c.category_id == Category.id) \
+    .group_by(Book.name) \
+    .filter(func.extract("month", Order.paid_date) == month) \
+    .order_by(desc("quantity")) \
+    .all()
+
 
 def statistic_revenue():
     return db.session.query(
