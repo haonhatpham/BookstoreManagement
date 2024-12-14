@@ -1,3 +1,4 @@
+import hashlib
 import math
 
 from app import app, login, dao, utils
@@ -16,6 +17,7 @@ def index():
     prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
     feature_books = dao.load_feature_book()
+    print(feature_books)
     cates = dao.get_category()
     total = dao.count_books()
     category_ids = dao.load_category_ids()
@@ -160,6 +162,7 @@ def details():
         reviews=reviews,
         reviews_numbers=reviews_numbers,
         avg_rating=avg_rating
+
     )
 
 
@@ -206,7 +209,8 @@ def get_comments(book_id):
 
     response_data = {
         'comments': comments_list,
-        'current_user_id': current_user.id
+        'current_user_id': current_user.id,
+        'current_user_role': current_user.role_id
     }
     return jsonify(response_data)
 
@@ -301,16 +305,50 @@ def delete_favourite():
     except ValueError:
         return jsonify({'error': 'ID sách không hợp lệ.'}), 400
 
-
 @app.route('/change_password')
+@login_required
 def change_password():
     return render_template('change_password.html')
 
+@app.route('/api/change_passwd', methods = ['POST'])
+@login_required
+def change_passwd():
+
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+
+    if not current_password or not new_password:
+        return jsonify({'error': 'Vui lòng nhập đầy đủ thông tin!'}), 400
+
+    if not (hashlib.md5(current_password.encode('utf-8')).hexdigest() == current_user.password):
+        return jsonify({'error': 'Mật khẩu hiện tại không chính xác!'}), 403
+
+    try:
+        dao.change_password(new_password)
+        return jsonify({'message': 'Đổi mật khẩu thành công!'}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Có lỗi xảy ra, vui lòng thử lại!'}), 500
 
 @app.route('/manage_info')
+@login_required
 def manage_info():
-    return render_template('manage_info.html')
+    address = dao.load_user_address(current_user.id)
+    return render_template('manage_info.html', current_user=current_user, address=address)
 
+@app.route('/manage_user_info', methods=['POST'])
+@login_required
+def manage_user_info():
+    # Lấy dữ liệu JSON từ yêu cầu
+    data = request.get_json()
+
+    # Gọi hàm cập nhật thông tin người dùng từ dao.py
+    success = dao.manage_user_info(data)
+    # Trả về phản hồi dưới dạng JSON
+    if success:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False})
 
 
 @login.user_loader
@@ -456,12 +494,38 @@ def order():
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
+
     username = request.form.get('username')
     password = request.form.get('password')
     user=dao.auth_user(username=username,password=password,role="Admin")
     if user:
         login_user(user)
     return redirect('/admin')
+
+@app.route("/search", methods=['GET'])
+def live_search():
+    query = request.args.get('q', '').strip().lower()
+    if query:
+        try:
+            results = dao.search(query)
+            books = [{"name": book.name, "price": book.standard_price, "id": book.id, "image": book.image} for book in results]
+            return jsonify({"success": True, "data": books})
+
+        except Exception as ex:
+            return jsonify({"success": False, "message": str(ex), "data": []}), 500
+    return jsonify({"success": False, "message": "Query is empty", "data": []})
+
+
+@app.route('/search_result')
+def search_result():
+
+    query = request.args.get('q', '').strip().lower()
+    print(query)
+    books = []
+    if query:
+        books = dao.search(query)
+        print(books)
+    return render_template('search_result.html', books=books)
 
 # @app.route('/orders/process_vnpay', methods=['POST'])
 # def process_vnpay():

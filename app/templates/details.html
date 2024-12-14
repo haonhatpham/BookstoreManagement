@@ -168,7 +168,7 @@
                         <p id="comment-text">
                             {{r.comment}}
                         </p>
-                        {% if r.user_id == current_user.id or user_is_admin %}
+                        {% if r.user_id == current_user.id or current_user.role_id == 1 %}
                         <div class="d-flex justify-content-end">
                             <button data-id="{{r.id}}" data-book-id="{{book.id}}" class="btn btn-warning btn-sm me-2 btn-edit">Sửa</button>
                             <button class="btn btn-danger btn-sm btn-delete" data-id="{{r.id}}" data-book-id="{{book.id}}">Xóa</button>

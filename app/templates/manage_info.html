@@ -21,36 +21,51 @@
                             <form>
                                 <div class="mb-3">
                                     <label for="inputUsername" class="form-label">Tên đăng nhập</label>
-                                    <input type="text" class="form-control" id="inputUsername">
+                                    <input type="text" class="form-control" id="inputUsername" value="{{current_user.username}}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="inputName" class="form-label">Họ tên</label>
-                                    <input type="text" class="form-control" id="inputName">
+                                    <input type="text" class="form-control" id="inputName" value="{{current_user.last_name}} {{current_user.first_name}}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="inputEmail" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="inputEmail">
+                                    <input type="email" class="form-control" id="inputEmail" value="{{current_user.email}}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="inputPhoneNumber" class="form-label">Số điện thoại</label>
-                                    <input type="number" class="form-control" id="inputPhoneNumber">
+                                    <input type="number" class="form-control" id="inputPhoneNumber" value="{{current_user.phone}}">
                                 </div>
                                 <div class="mb-3">
                                     <div class="form-check d-inline-block me-4">
                                         <input class="form-check-input" type="radio" name="radioGender"
-                                               id="radioGender1" checked>
+                                               id="radioGender1" {% if current_user.gender == True %}checked{% endif %}>
                                         <label class="form-check-label" for="radioGender1">Nam</label>
                                     </div>
                                     <div class="form-check d-inline-block">
                                         <input class="form-check-input" type="radio" name="radioGender"
-                                               id="radioGender2">
+                                                id="radioGender2" {% if current_user.gender == False %}checked{% endif %}>
                                         <label class="form-check-label" for="radioGender2">Nữ</label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="inputAddress" class="form-label">Địa chỉ</label>
-                                    <input type="text" class="form-control" id="inputAddress">
-                                </div>
+
+                    <div class="mb-3">
+                        <label for="inputCity" class="form-label">Tỉnh/Thành phố</label>
+                        <input type="text" class="form-control" id="inputCity" required name="city" value="{{address.city}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputDistrict" class="form-label">Quận/Huyện</label>
+                        <input type="text" class="form-control" id="inputDistrict" required name="district" value="{{address.district}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputWard" class="form-label">Xã/Phường/Thị trấn</label>
+                        <input type="text" class="form-control" id="inputWard" required name="ward" value="{{address.ward}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputDetailAddress" class="form-label">Tên đường, số nhà</label>
+                        <input type="text" class="form-control" id="inputDetailAddress" required name="street" value="{{address.details}}" >
+                    </div>
+                </div>
                                 <button type="submit" class="btn btn-primary w-100">Cập nhật thông tin mới</button>
                             </form>
                         </div>

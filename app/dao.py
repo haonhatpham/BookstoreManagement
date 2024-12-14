@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
-from sqlalchemy import desc, engine, or_, func
+from sqlalchemy import desc, engine, or_,func
 from sqlalchemy.orm import session, sessionmaker
 import random
 
@@ -20,7 +20,6 @@ session = Session()
 def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
-
 
 # load sách tieu bieu ở home
 def load_feature_book():
@@ -42,7 +41,6 @@ def load_feature_book():
 
     # Trả về kết quả của truy vấn
     return query.all()
-
 
 # lay sach theo id
 def load_book(book_id=None, latest_books=None):
@@ -85,7 +83,6 @@ def get_category(cate_id=None, book_id=None):
     else:
         # Trả về toàn bộ category
         return Category.query.all()
-
 
 def existing_user(username):
     return User.query.filter_by(username=username).first()
@@ -155,7 +152,6 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
 
 def auth_user(username, password, role=None):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
-
     u = User.query.filter(
         User.username == username.strip(),
         User.password == password
@@ -165,6 +161,51 @@ def auth_user(username, password, role=None):
 
     return u.first()
 
+def change_password(new_password):
+    user = (User.query
+        .filter(User.id == current_user.id)
+        .first()
+    )
+    password = hashlib.md5(new_password.encode('utf-8')).hexdigest()
+    user.password = password
+
+    db.session.commit()
+    return user
+
+def manage_user_info(data):
+    try:
+        user = User.query.filter_by(username=data['username']).first()
+        user_address = Address.query.filter(Address.id == user.address_id).first()
+
+        if user:
+            # Cập nhật thông tin người dùng
+            user.name = data['name']
+            name_parts = data['name'].strip().split(" ", 1)
+            if len(name_parts) > 1:
+                user.first_name = name_parts[1]
+                user.last_name = name_parts[0]
+            else:
+                # Nếu không có dấu cách, mặc định đặt last_name là name và first_name rỗng
+                user.first_name = ''
+                user.last_name = name_parts[0]
+
+            user.email = data['email']
+            user.phone = data['phone_number']
+            user.gender = data['gender']
+            user_address.city = data['city']
+            user_address.district = data['district']
+            user_address.ward = data['ward']
+            user_address.details = data['street']
+
+            db.session.commit()
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        db.session.rollback()  # Rollback trong trường hợp có lỗi
+        print(f"Error updating user info: {e}")
+        return False
 
 # Lấy user theo id
 def get_user_by_id(id):
@@ -187,7 +228,6 @@ def get_publisher_by_book_id(book_id):
     )
     return publisher
 
-
 def count_books(book_objects=None):
     if book_objects:
         # Trường hợp có danh sách các đối tượng sách
@@ -195,7 +235,6 @@ def count_books(book_objects=None):
     else:
         # Trường hợp không có danh sách, trả về tổng số sách trong cơ sở dữ liệu
         return Book.query.count()
-
 
 # Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
 def filter_books(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
@@ -210,6 +249,7 @@ def filter_books(category_id, checked_publishers, price_ranges, order_by, order_
 
     # Join subquery với bảng Book
     books = books.outerjoin(total_buy_subquery, Book.id == total_buy_subquery.c.book_id)
+
 
     if category_id:
         books = books.join(book_category, book_category.c.book_id == Book.id) \
@@ -440,12 +480,12 @@ def add_review(user_id, book_id, comment, rating):
 def load_review(book_id):
     return (User.query
             .join(Review, User.id == Review.user_id)
-            .with_entities(User.first_name, User.last_name, Review.created_at, Review.comment, Review.rating, Review.user_id, Review.id)
+            .with_entities(User.first_name, User.last_name, User.role_id, Review.created_at, Review.comment, Review.rating, Review.user_id, Review.id)
             .filter(Review.book_id == book_id)
             .order_by(Review.created_at.desc())
             .all()
-
             )
+
 def edit_review(review_id, rating, comment):
     review = Review.query.filter(Review.id == review_id).first()
     review.rating = rating
@@ -466,6 +506,7 @@ def count_product_by_cate():
         .group_by(Category.id).all()
 
 
+
 def stats_revenue(kw=None):
     query = db.session.query(Book.id, Book.name, func.sum(OrderDetail.quantity * OrderDetail.unit_price)) \
         .join(OrderDetail, OrderDetail.book_id.__eq__(Book.id))
@@ -473,6 +514,59 @@ def stats_revenue(kw=None):
         query = query.filter(Book.name.contains(kw))
 
     return query.group_by(Book.id).order_by(Book.id).all()
+
+def search(kw):
+    try:
+        if not kw or len(kw) < 3:
+            return []
+        query = (Book.query
+                 .filter(
+                    (Book.name.ilike(f'%{kw}%'))
+                 )
+                 .all()
+                 )
+        return query
+    except Exception as ex:
+        logging.error(f"Error during search: {str(ex)}")
+        return []
+
+def statistic_revenue():
+    return db.session.query(
+        func.extract("month", Order.paid_date).label("month"),  # Lấy tháng từ paid_date trong Order
+        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")  # Tính doanh thu
+    ) \
+    .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(func.extract("month", Order.paid_date)).all()
+def stat_category_by_month(month):
+    return db.session.query(
+        Category.name,
+        func.count(OrderDetail.book_id),
+        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")
+    ) \
+    .join(book_category, book_category.c.category_id == Category.id) \
+    .join(Book, book_category.c.book_id == Book.id) \
+    .join(OrderDetail, Book.id == OrderDetail.book_id) \
+    .join(Order, OrderDetail.order_id == Order.id) \
+    .group_by(Category.name) \
+    .filter(func.extract("month", Order.paid_date) == month) \
+    .order_by(desc("revenue")) \
+    .all()
+
+def stat_book_by_month(month):
+    category_list = func.group_concat(Category.name).label("categories")
+    return db.session.query(
+        Book.name,
+        category_list,
+        func.sum(OrderDetail.quantity).label("quantity")
+    ) \
+    .join(OrderDetail, Book.id == OrderDetail.book_id) \
+    .join(Order, OrderDetail.order_id == Order.id) \
+    .join(book_category, book_category.c.book_id == Book.id) \
+    .join(Category, book_category.c.category_id == Category.id) \
+    .group_by(Book.name) \
+    .filter(func.extract("month", Order.paid_date) == month) \
+    .order_by(desc("quantity")) \
+    .all()
+
 
 def statistic_revenue():
     return db.session.query(
