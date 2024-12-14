@@ -1,3 +1,5 @@
+import logging
+
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
@@ -503,8 +505,24 @@ def stats_revenue(kw=None):
 
     return query.group_by(Book.id).order_by(Book.id).all()
 
+def search(kw):
+    try:
+        if not kw or len(kw) < 3:
+            return []
+        query = (Book.query
+                 .filter(
+                    (Book.name.ilike(f'%{kw}%'))
+                 )
+                 .all()
+                 )
+        return query
+    except Exception as ex:
+        logging.error(f"Error during search: {str(ex)}")
+        return []
+
 if __name__ == "__main__":
     with app.app_context():
+
         # Order
         import datetime
 

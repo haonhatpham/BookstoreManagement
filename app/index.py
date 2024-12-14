@@ -485,6 +485,31 @@ def login_admin_process():
         login_user(user)
     return redirect('/admin')
 
+@app.route("/search", methods=['GET'])
+def live_search():
+    query = request.args.get('q', '').strip().lower()
+    if query:
+        try:
+            results = dao.search(query)
+            books = [{"name": book.name, "price": book.standard_price, "id": book.id, "image": book.image} for book in results]
+            return jsonify({"success": True, "data": books})
+
+        except Exception as ex:
+            return jsonify({"success": False, "message": str(ex), "data": []}), 500
+    return jsonify({"success": False, "message": "Query is empty", "data": []})
+
+
+@app.route('/search_result')
+def search_result():
+
+    query = request.args.get('q', '').strip().lower()
+    print(query)
+    books = []
+    if query:
+        books = dao.search(query)
+        print(books)
+    return render_template('search_result.html', books=books)
+
 
 if __name__ == '__main__':
     with app.app_context():
