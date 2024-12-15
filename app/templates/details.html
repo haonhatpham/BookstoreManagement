@@ -141,13 +141,13 @@
         <div class="row">
             <div class="col">
                 <h3 class="pb-2">Đánh giá sản phẩm</h3>
-                <div class="rattings-wrapper mb-5" id="comments-container">
+                <div class="rattings-wrapper mb-5 comment" id="comments-container">
                     {%if reviews == []%}
                     <h5 class="text-center" style="background-color: white; ">Chưa có đánh giá nào!</h5>
                     {%else%}
                     {%for r in reviews %}
-                    <div class="sin-rattings mb-4">
-                        <div class="star-author-all mb-2 clearfix">
+                    <div class="sin-rattings mb-4"  data-rating = {{r.rating}}>
+                        <div class="star-author-all mb-2 clearfix ">
                             <div class="ratting-author float-start">
                                 <h5 class="float-start me-3">{{r.last_name + ' ' + r.first_name}}</h5>
                                 <span>{{r.created_at}}</span>
@@ -165,9 +165,15 @@
                                 <span>({{r.rating}})</span>
                             </div>
                         </div>
-                        <p>
+                        <p id="comment-text">
                             {{r.comment}}
                         </p>
+                        {% if r.user_id == current_user.id or current_user.role_id == 1 %}
+                        <div class="d-flex justify-content-end">
+                            <button data-id="{{r.id}}" data-book-id="{{book.id}}" class="btn btn-warning btn-sm me-2 btn-edit">Sửa</button>
+                            <button class="btn btn-danger btn-sm btn-delete" data-id="{{r.id}}" data-book-id="{{book.id}}">Xóa</button>
+                        </div>
+                        {% endif %}
                     </div>
                     {%endfor%}
                     {%endif%}

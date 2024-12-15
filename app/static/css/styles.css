@@ -271,6 +271,11 @@ body.dark-theme .card{
   display: inline-block;
   cursor: pointer;
 }
+.search-container {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
 .dropdown-menu {
   display: flex;
   flex-direction: column;
@@ -296,11 +301,24 @@ body.dark-theme .card{
   background-color: transparent;
   cursor: pointer;
 }
+.dropdown-menu in {
+  display: flex;
+  width: 100%;
+  padding: 10px 20px;
+  text-align: left;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
 
 .dropdown-menu button:hover {
   background-color: #f0f0f0;
 }
 .icon-container:hover .dropdown-menu {
+  display: flex; /* Hiển thị menu khi hover */
+  position: absolute;
+}
+.search-container:hover .dropdown-menu {
   display: flex; /* Hiển thị menu khi hover */
   position: absolute;
 }
@@ -840,7 +858,7 @@ border: 2px solid var(--text-color);
 
   .nav {
     height: calc(var(--header-height) + 2rem);
-    column-gap: 4rem;
+    column-gap: 1rem;
   }
   .nav__link i {
     display: none;
@@ -850,7 +868,7 @@ border: 2px solid var(--text-color);
   }
   .nav__menu {
     width: initial;
-    margin-inline: auto 0;
+    margin-inline: 0;
   }
   .nav__list {
     column-gap: 4rem;
@@ -1068,4 +1086,44 @@ a {
     object-fit: contain;
     background-color: #f8f9fa;
     border-radius: 8px;
+}
+
+
+
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0;
+}
+#searchResults {
+    position: absolute;
+    top: 85px; /* Kết quả ngay dưới ô nhập liệu */
+    right: 0;
+    width: 300px;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ddd;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+.list-group-item {
+    cursor: pointer;
+}
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+#toggleSearch {
+    position: relative;
+}
+#searchInput {
+    display: none;
+    position: absolute;
+    top: 50px; /* Hiển thị ô nhập liệu ngay dưới nút */
+    right: 0;
+    width: 300px;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }

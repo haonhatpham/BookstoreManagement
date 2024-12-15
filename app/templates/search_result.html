@@ -1,0 +1,41 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<section class="section-content mb-5" style="margin-top: 100px">
+    <div class="container">
+        <header class="section-heading py-4 d-flex justify-content-between">
+            <h3 class="section-title">Kết quả tìm kiếm</h3>
+<!--            <a class="btn btn-secondary" href="#" role="button" style="height: fit-content;">Xem tất cả</a>-->
+        </header> <!-- section-heading.// -->
+        <div class="row item-grid ">
+            {% for b in books[:12] %}
+            <div class="col-lg-3 col-md-6 book ">
+                <div class="card p-3 mb-4 ">
+                    <a href="/details?book_id={{b.id}}" class="img-wrap text-center">
+                        <img class="img-fluid book__img " src="{{ b.image }}">
+                    </a>
+                    <figcaption class="info-wrap mt-2">
+                        <a href="/details?book_id={{b.id}}" class="title">{{ b.name }} </a>
+                        <div class="">
+                            <span class="price mt-1 fw-bold">{{ "{:,.0f}".format(b.unit_price - (b.unit_price * b.discount) / 100)  }}₫</span>
+                            {% if b.discount != 0 %}
+                            <span class="ms-2 text-muted text-decoration-line-through">{{  "{:,.0f}".format(b.unit_price) }}₫</span>
+                            <span class="ms-2 badge bg-info">-{{ b.discount }}%</span>
+
+                            {% endif %}
+                        </div>
+                    </figcaption>
+                </div>
+                <div class="book_icon_actions">
+                    <button><i class="ri-search-line"></i></button>
+                    <button><i class="ri-heart-3-line"></i></button>
+                    <button><i class="ri-eye-line"></i></button>
+                </div>
+            </div> <!-- col.// -->
+            {% endfor %}
+        </div> <!-- row.// -->
+    </div> <!-- container.// -->
+</section> <!-- section-content.// -->
+
+
+{%endblock%}
