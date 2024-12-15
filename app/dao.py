@@ -1,14 +1,14 @@
-from flask import jsonify
+from flask import jsonify, request
 from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
 from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
-    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review
+    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review, ImportDetail, ImportTicket
 from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
-from sqlalchemy import desc, engine, or_,func
+from sqlalchemy import desc, engine, or_, func
 from sqlalchemy.orm import session, sessionmaker
 import random
 
@@ -20,6 +20,7 @@ session = Session()
 def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
+
 
 # load sách tieu bieu ở home
 def load_feature_book():
@@ -41,6 +42,7 @@ def load_feature_book():
 
     # Trả về kết quả của truy vấn
     return query.all()
+
 
 # lay sach theo id
 def load_book(book_id=None, latest_books=None):
@@ -83,6 +85,7 @@ def get_category(cate_id=None, book_id=None):
     else:
         # Trả về toàn bộ category
         return Category.query.all()
+
 
 def existing_user(username):
     return User.query.filter_by(username=username).first()
@@ -151,17 +154,18 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
 #     return User.query.filter(User.username.__eq__(username.strip()),
 #                              User.password.__eq__(password)).first()
 
-def auth_user(username, password,role=None):
+def auth_user(username, password, roles=None):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
 
     u = User.query.filter(
         User.username == username.strip(),
         User.password == password
     )
-    if role:  # Nếu có yêu cầu kiểm tra vai trò
-        u = u.join(Role).filter(Role.name == role)
+    if roles:  # Nếu có yêu cầu kiểm tra vai trò
+       u= u.join(Role).filter(Role.name.in_(roles))  #
 
     return u.first()
+
 
 # Lấy user theo id
 def get_user_by_id(id):
@@ -184,6 +188,7 @@ def get_publisher_by_book_id(book_id):
     )
     return publisher
 
+
 def count_books(book_objects=None):
     if book_objects:
         # Trường hợp có danh sách các đối tượng sách
@@ -192,6 +197,7 @@ def count_books(book_objects=None):
         # Trường hợp không có danh sách, trả về tổng số sách trong cơ sở dữ liệu
         return Book.query.count()
 
+
 # Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
 def filter_books(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
     books = Book.query
@@ -199,13 +205,12 @@ def filter_books(category_id, checked_publishers, price_ranges, order_by, order_
 
     # Subquery tính tổng số lượng bán được (totalBuy)
     total_buy_subquery = db.session.query(OrderDetail
-        .book_id.label('book_id'),
-        func.sum(OrderDetail.quantity).label('totalBuy')
-    ).group_by(OrderDetail.book_id).subquery()
+                                          .book_id.label('book_id'),
+                                          func.sum(OrderDetail.quantity).label('totalBuy')
+                                          ).group_by(OrderDetail.book_id).subquery()
 
     # Join subquery với bảng Book
     books = books.outerjoin(total_buy_subquery, Book.id == total_buy_subquery.c.book_id)
-
 
     if category_id:
         books = books.join(book_category, book_category.c.book_id == Book.id) \
@@ -231,7 +236,8 @@ def filter_books(category_id, checked_publishers, price_ranges, order_by, order_
 
     # Sắp xếp theo order_by và order_dir
     if order_by == 'totalBuy':  # Trường hợp sắp xếp theo totalBuy
-        books = books.order_by(total_buy_subquery.c.totalBuy.desc() if order_dir == 'DESC' else total_buy_subquery.c.totalBuy)
+        books = books.order_by(
+            total_buy_subquery.c.totalBuy.desc() if order_dir == 'DESC' else total_buy_subquery.c.totalBuy)
     elif hasattr(Book, order_by):
         books = books.order_by(
             getattr(Book, order_by).desc() if order_dir == 'DESC' else getattr(Book, order_by),
@@ -433,19 +439,40 @@ def load_review(book_id):
 
 def count_product_by_cate():
     return db.session.query(Category.id, Category.name, func.count(Book.id)) \
-        .join(book_category, book_category.c.category_id == Category.id,isouter=True) \
+        .join(book_category, book_category.c.category_id == Category.id, isouter=True) \
         .join(Book, book_category.c.book_id == Book.id) \
         .group_by(Category.id).all()
 
 
+def save_import_ticket(employee_id, import_date, details):
 
-def stats_revenue(kw=None):
-    query=db.session.query(Book.id,Book.name,func.sum(OrderDetail.quantity*OrderDetail.unit_price))\
-        .join(OrderDetail,OrderDetail.book_id.__eq__(Book.id))
-    if kw:
-        query =query.filter(Book.name.contains(kw))
+    new_ticket = ImportTicket(
+        employee_id=employee_id,
+        import_date=import_date
+    )
+    db.session.add(new_ticket)
+    db.session.flush()  # Lấy ID của phiếu nhập ngay sau khi thêm
 
-    return query.group_by(Book.id).order_by(Book.id).all()
+    # Thêm chi tiết phiếu nhập và cập nhật tồn kho
+    for detail in details:
+        book_id = detail['book_id']
+        quantity = detail['quantity']
+        standard_price = detail['standard_price']
+
+        # Lưu chi tiết phiếu nhập
+        import_detail = ImportDetail(
+            ticket_id=new_ticket.id,
+            book_id=book_id,
+            quantity=quantity,
+            standard_price=standard_price
+        )
+        db.session.add(import_detail)
+        # Cập nhật tồn kho sách
+        book = Book.query.get(book_id)
+        if book:
+            book.available_quantity += quantity
+    db.session.commit()
+
 
 if __name__ == "__main__":
     with app.app_context():

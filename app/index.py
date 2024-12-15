@@ -3,6 +3,8 @@ from app import app, login, dao, utils
 from flask import render_template, request, redirect, session, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
+import json
+
 
 @app.route("/")
 def index():
@@ -12,7 +14,7 @@ def index():
     prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
     feature_books = dao.load_feature_book()
-    print(feature_books)
+    # print(feature_books)
     cates = dao.get_category()
     total = dao.count_books()
     category_ids = dao.load_category_ids()
@@ -76,7 +78,7 @@ def login_process():
         if u:
             session['user_id'] = u.id
             login_user(user=u)
-            n=request.args.get('next')
+            n = request.args.get('next')
             return redirect(n if n else '/')
     return render_template('login.html')
 
@@ -132,7 +134,7 @@ def details():
             avg_rating += r.rating
         avg_rating /= reviews_numbers
     else:
-        avg_rating=0
+        avg_rating = 0
 
     # Xử lý thêm vào danh sách yêu thích
     if request.method == 'POST':
@@ -161,7 +163,6 @@ def details():
     )
 
 
-
 @app.route('/post_comment', methods=['POST', 'GET'])
 @login_required
 def post_comment():
@@ -177,7 +178,7 @@ def post_comment():
         return jsonify({'error': 'Hãy đăng nhập để gửi bình luận. '}), 400
     try:
         book_id = int(data.get('book_id'))
-        review = dao.add_review(current_user.id, book_id, comment, rating )
+        review = dao.add_review(current_user.id, book_id, comment, rating)
 
         if review:
             return jsonify({'message': 'Bình luận đã được gửi.'}), 200
@@ -190,7 +191,6 @@ def post_comment():
 
 @app.route('/get_comments/<int:book_id>')
 def get_comments(book_id):
-
     reviews = dao.load_review(book_id)
 
     comments_list = [{
@@ -211,11 +211,14 @@ def account():
                            current_user=current_user,
                            address=address
                            )
+
+
 @login_required
 @app.route('/favourite', methods=['GET', 'POST'])
 def favourite():
     favourite_books = current_user.favourite_books
     return render_template('favourite.html', favourite_books=favourite_books)
+
 
 @login_required
 @app.route('/get_favourites_json', methods=['GET', 'POST'])
@@ -269,7 +272,6 @@ def manage_info():
     return render_template('manage_info.html')
 
 
-
 @login.user_loader
 def load_user(user_id):
     return dao.get_user_by_id(user_id)
@@ -305,8 +307,9 @@ def add_to_cart():
         }
         message = f"Đã thêm thành công {quantity} sản phẩm {name} vào giỏ hàng!"
     session[key] = cart
-    return jsonify({'message':message,
-                    'cart_stats':utils.cart_stats(cart=cart)})
+    return jsonify({'message': message,
+                    'cart_stats': utils.cart_stats(cart=cart)})
+
 
 @app.route('/api/cart/<book_id>', methods=['put'])
 def update_cart(book_id):
@@ -318,6 +321,7 @@ def update_cart(book_id):
 
     session[key] = cart
     return jsonify(utils.cart_stats(cart=cart))
+
 
 @app.route('/api/cart/<book_id>', methods=['delete'])
 def delete_cart(book_id):
@@ -332,13 +336,15 @@ def delete_cart(book_id):
     return jsonify({'message': message,
                     'cart_stats': utils.cart_stats(cart=cart)})
 
+
 @app.context_processor
 def common_attr():
-    categories=dao.get_category()
+    categories = dao.get_category()
     return {
-        'categories':categories,
+        'categories': categories,
         'cart': utils.cart_stats(session.get(app.config['CART_KEY']))
     }
+
 
 @app.route('/category', methods=['GET'])
 def category():
@@ -364,14 +370,14 @@ def category():
     order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
 
     books = dao.filter_books(category_id=cate_id,
-                            checked_publishers=checked_publishers,
-                            price_ranges=price_ranges,
-                            order_by=order_by,
-                            order_dir=order_dir,
-                            page=int(page)
+                             checked_publishers=checked_publishers,
+                             price_ranges=price_ranges,
+                             order_by=order_by,
+                             order_dir=order_dir,
+                             page=int(page)
                              )
     print(books)
-    total_products=dao.count_books(books)
+    total_products = dao.count_books(books)
     publishers = dao.get_publishers_by_category(cate_id)
 
     # Render template với dữ liệu
@@ -396,19 +402,38 @@ def order():
     return render_template('order.html')
 
 
-
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
-
     username = request.form.get('username')
     password = request.form.get('password')
-    user=dao.auth_user(username=username,password=password,role="Admin")
+    allowed_roles = ["Admin", "Customer", "Sales", "Storekeeper"] #Cac role co san
+    user = dao.auth_user(username=username, password=password, roles=allowed_roles)
     if user:
         login_user(user)
     return redirect('/admin')
 
 
+@app.route('/save_import_ticket', methods=['POST'])
+def save_import_ticket():
+    data = request.json
+    role_id=current_user.id
+    # Lấy thông tin từ request
+    employee_id = data.get('employee_id')
+    import_date = data.get('import_date')
+    details = data.get('details')
+
+    if not employee_id or not import_date or not details:
+        return jsonify({'error': 'Dữ liệu không hợp lệ!'}), 400
+    # Gọi dao để lưu phiếu nhập
+    ticket_id = dao.save_import_ticket(
+        employee_id=employee_id,
+        import_date=import_date,
+        details=details
+    )
+    return jsonify({'message': 'Phiếu nhập đã được lưu thành công!', 'ticket_id': ticket_id})
+
 if __name__ == '__main__':
     with app.app_context():
         from app import admin
+
         app.run(debug=True)

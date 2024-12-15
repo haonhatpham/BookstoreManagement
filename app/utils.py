@@ -1,3 +1,5 @@
+from app import dao
+
 def cart_stats(cart):
     total_amount, total_quantity = 0, 0
 
@@ -31,5 +33,8 @@ def cart_stats(cart):
 #     grand_total_plus_shipping = grand_total + configuration.quick_ship
 #
 #     return products, grand_total, grand_total_plus_shipping, quantity_total
-#
-#
+
+
+
+
+
