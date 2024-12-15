@@ -1,10 +1,10 @@
-from flask import redirect, request, url_for, render_template
+from flask import redirect, request, url_for, render_template,flash
 from flask_admin.helpers import get_url
 from markupsafe import Markup
 from app import app, db, dao,utils
 from flask_login import login_user, logout_user
 from flask_admin import Admin, BaseView, expose, AdminIndexView
-from app.models import Book, Review, Order, Voucher, Permission, Category, User
+from app.models import Book, Review, Order, Voucher, Permission, Category, User, Configuration
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, login_user
 from app.models import Role
@@ -74,11 +74,32 @@ class LapPhieuNhap(AuthenticatedBaseView):
         stats = dao.stats_revenue(kw=request.args.get('kw'))
         return self.render('admin/lapphieunhap.html')
 
-class ThayDoiQuyDinh(AuthenticatedBaseView):
-    @expose("/")
-    def index(self):
-        stats = dao.stats_revenue(kw=request.args.get('kw'))
-        return self.render('admin/thaydoiquydinh.html')
+class ThayDoiQuyDinh(ModelView):
+    column_display_pk = True
+    column_hide_backrefs = False
+    page_size = 20
+    can_view_details = True
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.name == "Admin"
+
+    def update_model(self, form, model):
+        if form.validate():
+            try:
+                if int(form.min_import_quantity.data) > 0 and int(form.min_stock_for_import.data) > 0 and int(
+                        form.time_to_end_order.data) > 0:
+
+                    model.min_import_quantity = form.min_import_quantity.data
+                    model.min_stock_for_import = form.min_stock_for_import.data
+                    model.time_to_end_order = form.time_to_end_order.data
+                    db.session.commit()
+                    return True
+                else:
+                    flash("Value can't be negative", "error")
+                    return False
+            except Exception as e:
+                print(e)
+                flash("Input error", "error")
+                return False
 
 class CategoryView(AuthenticatedView):
     column_formatters = {
@@ -107,7 +128,7 @@ class MyAdminView(AdminIndexView):
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session))
 admin.add_view(BookView(Book, db.session))
-admin.add_view(ThayDoiQuyDinh(name="Quy Định"))
+admin.add_view(ThayDoiQuyDinh(Configuration,db.session))
 admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))
