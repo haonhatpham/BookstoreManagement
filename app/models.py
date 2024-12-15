@@ -185,7 +185,6 @@ class Configuration(BaseModel):
     value = Column(Text, nullable=False)
     description = Column(Text)
 
-
 class PaymentMethod(BaseModel):
     __tablename__ = 'payment_method'
     name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
