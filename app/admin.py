@@ -1,10 +1,10 @@
-from flask import redirect, request, url_for, render_template
+from flask import redirect, request, url_for, render_template,flash
 from flask_admin.helpers import get_url
 from markupsafe import Markup
 from app import app, db, dao,utils
 from flask_login import login_user, logout_user
 from flask_admin import Admin, BaseView, expose, AdminIndexView
-from app.models import Book, Review, Order, Voucher, Permission, Category, User
+from app.models import Book, Review, Order, Voucher, Permission, Category, User,Configuration
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, login_user
 from app.models import Role
@@ -28,24 +28,27 @@ def _truncate_formatter(view, context, model, name):
 
 class AuthenticatedView(ModelView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.role.name == "Admin"
+        allowed_roles = ["Admin"]
+        return current_user.is_authenticated and current_user.role.name in allowed_roles
 
     can_view_details = True
     can_export = True
     edit_modal = True
     details_modal = True
     page_size = 10
-    column_filters = ['name']
     can_export = True
-    column_searchable_list = ['name']
 
+    form_excluded_columns = ['created_at', 'updated_at']
 
 class AuthenticatedBaseView(BaseView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.role.name == "Admin"
+        allowed_roles = ["Admin"]
+        return current_user.is_authenticated and current_user.role.name in allowed_roles
 
 
 class LogoutView(AuthenticatedBaseView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.name in ["Admin", "Sales", "Storekeeper"]
     @expose("/")
     def index(self):
         logout_user()
@@ -63,22 +66,48 @@ class StatsView(AuthenticatedBaseView):
         return self.render('admin/chart.html', data=data, labels=labels)
 
 class LapHoaDon(AuthenticatedBaseView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.name in ["Sales","Admin"]
+
     @expose("/")
     def index(self):
-        stats = dao.stats_revenue(kw=request.args.get('kw'))
         return self.render('admin/laphoadon.html')
 
 class LapPhieuNhap(AuthenticatedBaseView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.name in ["Storekeeper","Admin"]
     @expose("/")
     def index(self):
-        stats = dao.stats_revenue(kw=request.args.get('kw'))
-        return self.render('admin/lapphieunhap.html')
+        data=dao.load_book()
+        return self.render('admin/lapphieunhap.html',data =data )
 
-class ThayDoiQuyDinh(AuthenticatedBaseView):
-    @expose("/")
-    def index(self):
-        stats = dao.stats_revenue(kw=request.args.get('kw'))
-        return self.render('admin/thaydoiquydinh.html')
+
+class ThayDoiQuyDinh(ModelView):
+    column_display_pk = True
+    column_hide_backrefs = False
+    page_size = 20
+    can_view_details = True
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.name == "Admin"
+
+    def update_model(self, form, model):
+        if form.validate():
+            try:
+                if int(form.min_import_quantity.data) > 0 and int(form.min_stock_for_import.data) > 0 and int(
+                        form.time_to_end_order.data) > 0:
+
+                    model.min_import_quantity = form.min_import_quantity.data
+                    model.min_stock_for_import = form.min_stock_for_import.data
+                    model.time_to_end_order = form.time_to_end_order.data
+                    db.session.commit()
+                    return True
+                else:
+                    flash("Value can't be negative", "error")
+                    return False
+            except Exception as e:
+                print(e)
+                flash("Input error", "error")
+                return False
 
 class CategoryView(AuthenticatedView):
     column_formatters = {
@@ -93,9 +122,34 @@ class BookView(AuthenticatedView):
         'image': _image_formatter,  # Áp dụng formatter vào cột "image"
     }
     column_list = ['id', 'name', 'image', 'standard_price', 'discount', 'unit_price', 'available_quantity',
-                   'description',
-                   'is_enable']
+                   'description','categories','publisher']
+    form_create_rules = [
+        'name',
+        'standard_price',
+        'unit_price',
+        'is_enable',
+        'image',
+        'description',
+        'publisher',
+        'categories'
+    ]
 
+    form_edit_rules = [
+        'name',
+        'standard_price',
+        'unit_price',
+        'is_enable',
+        'image',
+        'description',
+        'publisher',
+        'categories'
+    ]
+    column_filters = ['name']
+    column_searchable_list = ['name']
+
+class ReviewView(AuthenticatedView):
+    column_list = ['id','rating','comment']
+    form_excluded_columns = ['user','created_at','updated_at']
 
 class MyAdminView(AdminIndexView):
     @expose('/')
@@ -107,7 +161,8 @@ class MyAdminView(AdminIndexView):
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session))
 admin.add_view(BookView(Book, db.session))
-admin.add_view(ThayDoiQuyDinh(name="Quy Định"))
+admin.add_view(ThayDoiQuyDinh(Configuration, db.session))
+admin.add_view(ReviewView(Review, db.session))
 admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))

@@ -494,10 +494,10 @@ def order():
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
-
     username = request.form.get('username')
     password = request.form.get('password')
-    user=dao.auth_user(username=username,password=password,role="Admin")
+    allowed_roles = ["Admin", "Customer", "Sales", "Storekeeper"] #Cac role co san
+    user = dao.auth_user(username=username, password=password, role=allowed_roles)
     if user:
         login_user(user)
     return redirect('/admin')
@@ -627,6 +627,25 @@ def statistic():
     if type == 'overall':
         data = utils.statistic_revenue()
     return data
+
+@app.route('/save_import_ticket', methods=['POST'])
+def save_import_ticket():
+    data = request.json
+    role_id=current_user.id
+    # Lấy thông tin từ request
+    employee_id = data.get('employee_id')
+    import_date = data.get('import_date')
+    details = data.get('details')
+
+    if not employee_id or not import_date or not details:
+        return jsonify({'error': 'Dữ liệu không hợp lệ!'}), 400
+    # Gọi dao để lưu phiếu nhập
+    ticket_id = dao.save_import_ticket(
+        employee_id=employee_id,
+        import_date=import_date,
+        details=details
+    )
+    return jsonify({'message': 'Phiếu nhập đã được lưu thành công!', 'ticket_id': ticket_id})
 
 if __name__ == '__main__':
     with app.app_context():

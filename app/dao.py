@@ -157,8 +157,7 @@ def auth_user(username, password, role=None):
         User.password == password
     )
     if role:  # Nếu có yêu cầu kiểm tra vai trò
-        u = u.join(Role).filter(Role.name == role)
-
+        u = u.join(Role).filter(Role.name.in_(role))
     return u.first()
 
 def change_password(new_password):
