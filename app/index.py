@@ -413,6 +413,61 @@ def login_admin_process():
     return redirect('/admin')
 
 
+
+@app.route('/api/pay', methods=['POST'])
+def api_pay():
+    try:
+        data = request.json
+        order_id = data.get('order_id', '123456')
+        amount = data.get('amount', 100000)
+        order_desc = data.get('order_desc', 'Thanh toán')
+        bank_code = data.get('bank_code', '')
+
+        vnp = Vnpay()
+        vnp.requestData = {
+            'vnp_Version': '2.1.0',
+            'vnp_Command': 'pay',
+            'vnp_TmnCode': app.config["VNPAY_TMN_CODE"],  # Kiểm tra mã TMN code
+            'vnp_Amount': amount * 100,  # Nhân 100 để đưa về VNĐ
+            'vnp_CurrCode': 'VND',
+            'vnp_TxnRef': order_id,      # Mã đơn hàng duy nhất
+            'vnp_OrderInfo': order_desc,
+            'vnp_OrderType': 'billpayment',
+            'vnp_Locale': 'vn',
+            'vnp_BankCode': bank_code,
+            'vnp_ReturnUrl': app.config["VNPAY_RETURN_URL"]  # URL trả về sau thanh toán
+        }
+
+        # Kiểm tra dữ liệu trước khi tạo URL
+        print("Request Data:", vnp.requestData)
+
+        payment_url = vnp.get_payment_url(
+            'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
+            app.config["VNPAY_HASH_SECRET_KEY"]
+        )
+
+        # Log URL thanh toán
+        print("Payment URL:", payment_url)
+
+        return jsonify({'status': 200, 'payment_url': payment_url})
+    except Exception as e:
+        return jsonify({'status': 500, 'message': str(e)})
+
+@app.route("/statistic", methods=['GET'])
+def statistic():
+    month = int(request.args.get("month"))
+    type = request.args.get("type")
+    data = None
+    if type == 'book':
+        data = utils.statistic_book_by_month(month)
+    if type == 'category':
+        data = utils.statistic_category_by_month(month)
+    if type == 'overall':
+        data = utils.statistic_revenue()
+    return data
+# 123123
+
+
 @app.route('/save_import_ticket', methods=['POST'])
 def save_import_ticket():
     data = request.json
@@ -431,6 +486,7 @@ def save_import_ticket():
         details=details
     )
     return jsonify({'message': 'Phiếu nhập đã được lưu thành công!', 'ticket_id': ticket_id})
+
 
 if __name__ == '__main__':
     with app.app_context():
