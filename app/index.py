@@ -627,6 +627,9 @@ def statistic():
     if type == 'overall':
         data = utils.statistic_revenue()
     return data
+# 123123
+
+
 
 if __name__ == '__main__':
     with app.app_context():
