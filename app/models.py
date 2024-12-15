@@ -1,3 +1,4 @@
+
 from enum import Enum as StatusEnum
 from app import db, app
 from flask_login import UserMixin
@@ -7,7 +8,7 @@ from sqlalchemy.orm import relationship, backref
 import hashlib
 import json, random, os
 import uuid
-from flask_security import Security, SQLAlchemyUserDatastore, permissions_accepted
+from flask_security import Security, SQLAlchemyUserDatastore
 import string
 from datetime import datetime, timedelta
 
@@ -27,7 +28,6 @@ class BaseModel(db.Model):
 
 class Publisher(BaseModel):
     __tablename__ = 'publishers'
-
     name = db.Column(db.String(255), nullable=False)
     books = db.relationship('Book', backref='publisher', lazy=True)
 
@@ -184,6 +184,7 @@ class Configuration(BaseModel):
     key = Column(String(100), nullable=False, unique=True)
     value = Column(Text, nullable=False)
     description = Column(Text)
+
 
 class PaymentMethod(BaseModel):
     __tablename__ = 'payment_method'
@@ -359,7 +360,7 @@ if __name__ == '__main__':
         storekeeper = Role(name="Storekeeper", description="Role for storekeeper staff")
         db.session.add_all([admin_role, customer_role, sales_role, storekeeper])
         db.session.commit()
-        #
+
         test_admin_role = Role.query.filter_by(name="Admin").first()
         # Lưu vai trò vào database
         admin_user = User(
@@ -487,54 +488,3 @@ if __name__ == '__main__':
                 db.session.add(new_rule)
 
             db.session.commit()
-        permissons= [
-            {"name": "view_stats", "display_name": " Thống kê"},
-            {"name": "manage_books", "display_name": "Quản lý sách"},
-            {"name": "create_order", "display_name": "Lập hóa đơn"},
-            {"name": "import_book", "display_name": "Nhập sách"},
-            {"name": "change_rules", "display_name": "Thay đổi quy định"},
-            {"name":"order_book","display_name":"Đặt sách"}
-        ]
-        for p in permissons :
-            existing_permission = Permission.query.filter_by(name=p['name']).first()
-            if not existing_permission:
-                permission = Permission(name=p['name'], display_name=p['display_name'])
-                db.session.add(permission)
-        db.session.commit()
-        admin_role = Role.query.filter_by(name="Admin").first()
-        customer_role = Role.query.filter_by(name="Customer").first()
-        sales_role = Role.query.filter_by(name="Sales").first()
-        storekeeper = Role.query.filter_by(name="Storekeeper").first()
-
-        all_permissions = Permission.query.all()
-        admin_role.permissions = [
-            permission for permission in all_permissions
-            if permission.name in ["view_stats", "manage_books", "create_order", "import_book", "change_rules"]
-        ]
-
-        sales_role.permissions = [
-            permission for permission in all_permissions
-            if permission.name == "create_order"
-        ]
-
-
-        storekeeper.permissions = [
-            permission for permission in all_permissions
-            if permission.name == "import_book"
-        ]
-
-
-        customer_role.permissions = [
-            permission for permission in all_permissions
-            if permission.name == "view_stats"
-        ]
-
-
-
-        db.session.commit()
-
-
-
-
-
-

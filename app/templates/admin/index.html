@@ -2,7 +2,7 @@
 
 {% block body %}
 
-{% if current_user.is_authenticated and  current_user.role.name in ["Admin", "Customer", "Sales", "Storekeeper"]%}
+{% if current_user.is_authenticated and  current_user.role.name == "Admin" %}
 <h1 class="text-center text-success">CHÀO MỪNG BẠN ĐẾN TRANG QUẢN TRỊ</h1>
 <h2 class="text-secondary"> Chào {{current_user.username }}
 <!--    <img style="width=300px "src="{{ current_user.avatar_file }}" alt="#" class="home__img">-->
