@@ -1,4 +1,5 @@
 from app import dao
+
 def cart_stats(cart):
     total_amount, total_quantity = 0, 0
 
@@ -12,52 +13,28 @@ def cart_stats(cart):
         'total_quantity': total_quantity
     }
 
-
-def statistic_revenue():
-    results = dao.statistic_revenue()
-    # for data in results:
-    #     print(data)
-    return [data[1] for data in dao.statistic_revenue()]
-
-
-def statistic_book_by_month(month):
-    sql_result = dao.stat_book_by_month(month)
-    if sql_result is None:
-        return None
-    total_quantity = 0
-    for res in sql_result:
-        total_quantity += res[2]
-    data = []
-    index = 1
-    for res in sql_result:
-        temp = {}
-        temp['index'] = index
-        temp['name'] = res[0]
-        temp['category'] = res[1]
-        temp['quantity'] = res[2]
-        temp['percentage'] = round((res[2] / total_quantity) * 100, 2)
-        data.append(temp)
-        index += 1
-    return data
+# def handle_cart():
+#     configuration = dao.get_configuration()
+#     products = []
+#     grand_total = 0
+#     index = 0
+#     quantity_total = 0
+#     for item in session['cart']:
+#         product = Book.query.filter_by(id=item['id']).first()
+#         quantity = int(item['quantity'])
+#         total = quantity * product.unit_price
+#         grand_total += total
+#
+#         quantity_total += quantity
+#
+#         products.append({'id': product.id, 'name': product.name, 'unit_price': product.unit_price,
+#                          'image_src': product.image_src, 'quantity': quantity, 'total': total, 'index': index})
+#         index += 1
+#     grand_total_plus_shipping = grand_total + configuration.quick_ship
+#
+#     return products, grand_total, grand_total_plus_shipping, quantity_total
 
 
-def statistic_category_by_month(month):
-    sql_result = dao.stat_category_by_month(month)
-    if sql_result is None:
-        return None
 
-    total_revenue = 0
-    for res in sql_result:
-        total_revenue += res[2]
-    data = []
-    index = 1
-    for res in sql_result:
-        temp = {}
-        temp['index'] = index
-        temp['name'] = res[0]
-        temp['revenue'] = res[2]
-        temp['number_of_purchases'] = res[1]
-        temp['percentage'] = round((res[2] / total_revenue) * 100, 2)
-        data.append(temp)
-        index += 1
-    return data
+
+
