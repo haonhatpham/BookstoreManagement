@@ -1,16 +1,17 @@
+from dns.e164 import query
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
 from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
-    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review
+    PaymentMethod, Order, OrderDetail, BankingInformation, Address, Review
 from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
 from sqlalchemy import desc, engine, or_,func
 from sqlalchemy.orm import session, sessionmaker
-import random
+import random ,logging
 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -343,6 +344,8 @@ def get_configuration():
 def get_payment_method_by_id(id):
     return PaymentMethod.query.get(id)
 
+def get_payment_method_all():
+    return PaymentMethod.query.all()
 
 def save_book(book):
     db.session.add(book)
@@ -376,9 +379,16 @@ def get_order_by_id(order_id):
     return Order.query.get(order_id)
 
 
-def get_orders_by_customer_id(customer_id):
-    return Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
+def get_orders_by_customer_id(customer_id,page=1):
+    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc())
+    page_size = 4
+    start = (page - 1) * page_size
+    query = query.slice(start, start + page_size)
+    return query.all()
 
+def count_orders_by_customer_id(customer_id):
+    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
+    return len(query)
 
 def save_banking_information(order_id, bank_transaction_number, vnpay_transaction_number, bank_code, card_type,
                              secure_hash):
@@ -407,6 +417,42 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
     # create order details
     order_details = []
     total_payment = 0
+    for book_id, ordered_book in books.items():
+        book_id = ordered_book['id']
+        book = load_book(book_id=book_id).first()
+        if book is not None:
+            detail = OrderDetail(unit_price=book.unit_price, quantity=ordered_book['quantity'], book=book)
+            total_payment += book.unit_price * ordered_book['quantity']
+            order_details.append(detail)
+            book.available_quantity -= ordered_book['quantity']
+            save_book(book)
+    # create order
+    time_to_cancel_order = db.session.query(Configuration).filter_by(key="time_to_cancel_order").first()
+    time_to_cancel_order_hours = 0
+    if time_to_cancel_order:
+        time_to_cancel_order_hours = int(time_to_cancel_order.value)
+    order = Order(cancel_date=initial_date + timedelta(hours=time_to_cancel_order_hours),
+                  payment_method=payment_method,
+                  customer_id=customer.id,
+                  employee_id=staff.id,
+                  total_payment=total_payment,
+                  initiated_date=initial_date,
+                  )
+
+    save_order_sampledb(order)
+    for od in order_details:
+        od.order = order
+        save_order_details(od)
+    return order
+
+def create_order_sample(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
+    configuration = get_configuration()
+    customer = get_user_by_id(customer_id)
+    staff = get_user_by_id(staff_id)
+    payment_method = get_payment_method_by_id(payment_method_id)
+    # create order details
+    order_details = []
+    total_payment = 0
     for ordered_book in books:
         book = load_book(book_id=ordered_book['id']).first()
         if book is not None:
@@ -426,7 +472,6 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
                   employee_id=staff.id,
                   total_payment=total_payment,
                   initiated_date=initial_date,
-                  status=random.choice([OrderEnum.GIAOHANGTHANHCONG, OrderEnum.DANGGIAOHANG, OrderEnum.HUYDONHANG])
                   )
 
     save_order_sampledb(order)
@@ -434,8 +479,6 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
         od.order = order
         save_order_details(od)
     return order
-
-
 def order_paid_incash(received_money, order_id, paid_date=datetime.now()):
     order = get_order_by_id(order_id)
     if order is None or order.paid_date:
@@ -605,6 +648,39 @@ def stat_book_by_month(month):
     .all()
 
 
+def get_user_address(customer_id):
+    # Tìm user theo customer_id
+    customer = User.query.get(customer_id)
+
+    if customer and customer.address_id:
+        # Lấy địa chỉ qua address_id của user
+        address = Address.query.get(customer.address_id)
+
+        if address:
+            # Trả về từng phần của địa chỉ
+            return {
+                "city": address.city,
+                "district": address.district,
+                "ward": address.ward,
+                "details": address.details
+            }
+
+    # Trường hợp không có địa chỉ, trả về giá trị mặc định rỗng
+    return {
+        "city": "",
+        "district": "",
+        "ward": "",
+        "details": ""
+    }
+
+
+def get_user_by_username(username):
+    return User.query.filter(User.username.__eq__(username)).first()
+
+def save_user(user):
+    db.session.add(user)
+    db.session.commit()
+
 if __name__ == "__main__":
     with app.app_context():
         # Order
@@ -637,7 +713,7 @@ if __name__ == "__main__":
             if days_increment > 30 * 12:
                 days_increment = 0
             days_increment += 20
-            order = create_order(customer.id, staff_id, order_details, in_cash.id, initial_date)
+            order = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
             rand_num = random.randint(1, 10)
             order_paid_incash(order.total_payment, order.id,
                               order.initiated_date + datetime.timedelta(hours=rand_num))

@@ -1,0 +1,98 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<section class="section-pagetop bg-light " style="margin-top: 100px; padding:40px">
+    <div class="container">
+        <h2 class="title-page">Nhập thông tin giao hàng</h2>
+    </div> <!-- container.// -->
+</section> <!-- section-pagetop.// -->
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9 mb-lg-0 mb-3">
+                <div class="card">
+                    <div class="panel panel-primary p-4">
+                        <form method="POST" action="{{ url_for('checkout') }}">
+                            <input type="hidden" name="customer_id" value="{{ form_data.customer_id }}">
+                            <div class="row">
+                                <div class="col-lg-6 mb-3">
+                                    <label for="full_name">Họ tên</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name"
+                                           value="{{ form_data.full_name }}">
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                    <label for="phone_number">Số điện thoại</label>
+                                    <input type="text" class="form-control" id="phone_number" name="phone_number"
+                                           value="{{ form_data.phone_number }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6 mb-3">
+                                    <label for="email">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email"
+                                           value="{{ form_data.email }}">
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                     <label>Tỉnh/Thành phố</label>
+                                     <input type="text" class="form-control" name="city" placeholder="City"  value="{{ form_data.city }}" required >
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                    <label >Quận/Huyện</label>
+                                     <input type="text" class="form-control" name="district" placeholder="District"  value="{{ form_data.district }}" required>
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                      <label>Phường/Thị xã</label>
+                                      <input type="text" class="form-control" name="ward" placeholder="Ward" value="{{ form_data.ward }}" required>
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                     <label>Số nhà, Tên đường</label>
+                                     <input type="text"  class="form-control" name="details" placeholder="Details"  value="{{ form_data.details }}" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-12 mb-3">
+                                    <label for="payment_type">Phương thức thanh toán</label>
+                                    <select id="payment_type" class="form-control" name="payment_type">
+                                        {% for method in payment_methods %}
+                                        <option value="{{ method.id }}">{{ method.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-3 float-end">Tiếp tục</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <aside class="col-lg-3">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-xxl-6 col-lg-12 col-6">Số lượng:</dt>
+                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><span class="cart-counter">{{ cart.total_quantity }}</span>
+                            </dd>
+                            <dt class="col-xxl-6 col-lg-12 col-6">Tạm tính:</dt>
+                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><span class="cart-amount">{{ "{:,.0f}".format(cart.total_amount)}}₫</span>
+                            </dd>
+                            <dt class="col-xxl-6 col-lg-12 col-6">Tổng cộng:</dt>
+                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><strong>{{
+                                "{:,.0f}".format(cart.total_amount) }}₫</strong></dd>
+                        </dl>
+                    </div> <!-- card-body.// -->
+                </div> <!-- card.// -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="card-title fw-bolder">Lợi ích khi mua sắm với cửa hàng chúng tôi:
+                        </div>
+                        <p class="">Tùy chọn thanh toán linh hoạt</p>
+                        <p class="">Giao hàng miễn phí khi thanh toán online</p>
+                        <p class="">Đảm bảo hoàn tiền trong 7 ngày</p>
+                    </div>
+
+                </div>
+            </aside> <!-- col.// -->
+        </div>
+    </div>
+    </div>
+</section>
+
+{% endblock %}

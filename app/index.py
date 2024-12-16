@@ -1,13 +1,13 @@
 import hashlib
 import math
-
-from app import app, login, dao, utils
-from flask import render_template, request, redirect, session, jsonify, url_for
+from app import app, login, dao, utils,db
+from flask import render_template, request, redirect, session, jsonify, url_for,flash
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
+from app.utils import cart_stats
 from app.vnpay.form import PaymentForm
 from app.vnpay.vnpay import Vnpay
-
+import datetime
 
 @app.route("/")
 def index():
@@ -17,7 +17,6 @@ def index():
     prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
     feature_books = dao.load_feature_book()
-    print(feature_books)
     cates = dao.get_category()
     total = dao.count_books()
     category_ids = dao.load_category_ids()
@@ -414,18 +413,18 @@ def delete_cart(book_id):
                     'cart_stats': utils.cart_stats(cart=cart)})
 
 
-@app.route('/api/pay')
-@login_required
-def pay():
-    key = app.config['CART_KEY']
-    cart = session.get(key)
-    try:
-        dao.save_order(cart)
-    except:
-        return jsonify({'status': 500})
-    else:
-        del session[key]
-    return jsonify({'status': 200})
+# @app.route('/api/pay')
+# @login_required
+# def pay():
+#     key = app.config['CART_KEY']
+#     cart = session.get(key)
+#     try:
+#         dao.save_order(cart)
+#     except:
+#         return jsonify({'status': 500})
+#     else:
+#         del session[key]
+#     return jsonify({'status': 200})
 
 @app.context_processor
 def common_attr():
@@ -465,7 +464,6 @@ def category():
                             order_dir=order_dir,
                             page=int(page)
                              )
-    print(books)
     total_products=dao.count_books(books)
     publishers = dao.get_publishers_by_category(cate_id)
 
@@ -515,7 +513,6 @@ def live_search():
             return jsonify({"success": False, "message": str(ex), "data": []}), 500
     return jsonify({"success": False, "message": "Query is empty", "data": []})
 
-
 @app.route('/search_result')
 def search_result():
 
@@ -526,55 +523,6 @@ def search_result():
         books = dao.search(query)
         print(books)
     return render_template('search_result.html', books=books)
-
-# @app.route('/orders/process_vnpay', methods=['POST'])
-# def process_vnpay():
-#     form = PaymentForm(request.form)
-#     if form.validate_on_submit():
-#         vnp = Vnpay()
-#         vnp.requestData = {
-#             'vnp_Version': '2.1.0',
-#             'vnp_Command': 'pay',
-#             'vnp_TmnCode': app.config["VNPAY_TMN_CODE"],
-#             'vnp_Amount': form.amount.data * 100,  # Số tiền phải *100
-#             'vnp_CurrCode': 'VND',
-#             'vnp_TxnRef': form.order_id.data,
-#             'vnp_OrderInfo': form.order_desc.data,
-#             'vnp_OrderType': form.order_type.data,
-#             'vnp_Locale': form.language.data,
-#             'vnp_BankCode': form.bank_code.data,
-#             'vnp_ReturnUrl': app.config["VNPAY_PAYMENT_URL"]
-#         }
-#
-#         payment_url = vnp.get_payment_url(app.config["VNPAY_PAYMENT_URL"], app.config["VNPAY_HASH_SECRET_KEY"])
-#         return redirect(payment_url)
-#     else:
-#         return "Invalid Form Data", 400
-
-@app.route('/payment_return', methods=['GET'])
-def payment_return():
-    vnp = Vnpay()
-    vnp.responseData = request.args.to_dict()  # Lấy dữ liệu từ URL callback của VNPay
-
-    # Kiểm tra tính hợp lệ của dữ liệu trả về
-    if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
-        response_code = vnp.responseData.get('vnp_ResponseCode')
-        if response_code == '00':  # Giao dịch thành công
-            dao.order_paid_by_vnpay(
-                order_id=vnp.responseData.get('vnp_TxnRef'),
-                bank_transaction_number=vnp.responseData.get('vnp_TransactionNo'),
-                vnpay_transaction_number=vnp.responseData.get('vnp_TransactionNo'),
-                bank_code=vnp.responseData.get('vnp_BankCode'),
-                card_type=vnp.responseData.get('vnp_CardType'),
-                secure_hash=vnp.responseData.get('vnp_SecureHash'),
-                received_money=int(vnp.responseData.get('vnp_Amount')) // 100,
-                paid_date=vnp.responseData.get('vnp_PayDate')
-            )
-            return "Payment Success"
-        else:
-            return "Payment Failed"
-    else:
-        return "Invalid Response"
 
 @app.route('/api/pay', methods=['POST'])
 def api_pay():
@@ -646,6 +594,216 @@ def save_import_ticket():
         details=details
     )
     return jsonify({'message': 'Phiếu nhập đã được lưu thành công!', 'ticket_id': ticket_id})
+
+
+
+@app.route("/payment_return", methods=["GET"])
+def payment_return():
+    if request.args:
+        vnp = Vnpay()
+        vnp.responseData = request.args.to_dict()
+        order_id = request.args.get('vnp_TxnRef')
+        amount = int(request.args.get('vnp_Amount')) / 100
+        order_desc = request.args.get('vnp_OrderInfo')
+        vnp_BankTranNo = request.args.get("vnp_BankTranNo")
+        vnp_TransactionNo = request.args.get('vnp_TransactionNo')
+        vnp_ResponseCode = request.args.get('vnp_ResponseCode')
+        vnp_PayDate = request.args.get('vnp_PayDate')
+        vnp_BankCode = request.args.get('vnp_BankCode')
+        vnp_CardType = request.args.get('vnp_CardType')
+        vnp_SecureHash = request.args.get('vnp_SecureHash')
+        if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
+            if vnp_ResponseCode == "00":
+                dao.order_paid_by_vnpay(order_id=int(order_id[0:2:1]), bank_transaction_number=vnp_BankTranNo,
+                                          vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
+                                          card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
+                                          paid_date=vnp_PayDate)
+                return render_template("vnpay/payment_return.html", title="Payment result",
+                                       result="Success", order_id=order_id,
+                                       amount=amount,
+                                       order_desc=order_desc,
+                                       vnp_TransactionNo=vnp_TransactionNo,
+                                       vnp_ResponseCode=vnp_ResponseCode)
+            else:
+                return render_template("vnpay/payment_return.html", title="Payment result",
+                                       result="Error", order_id=order_id,
+                                       amount=amount,
+                                       order_desc=order_desc,
+                                       vnp_TransactionNo=vnp_TransactionNo,
+                                       vnp_ResponseCode=vnp_ResponseCode)
+        else:
+            return render_template("vnpay/payment_return.html",
+                                   title="Payment result", result="Error", order_id=order_id, amount=amount,
+                                   order_desc=order_desc, vnp_TransactionNo=vnp_TransactionNo,
+                                   vnp_ResponseCode=vnp_ResponseCode, msg="Wrong checksum")
+    else:
+        return render_template("vnpay/payment_return.html", title="Kết quả thanh toán", result="")
+
+@app.route("/my_order")
+@login_required
+def myOrder():
+    page = request.args.get('page', 1)
+    page_size = 4
+    current_page = int(page)
+    orders = dao.get_orders_by_customer_id(current_user.id,page=int(page))
+    quantity_order=dao.count_orders_by_customer_id(current_user.id)
+    return render_template('my_order.html', title='Order Books', orders=orders, datetime=datetime.datetime,
+                           current_page=int(page),
+                           pages=math.ceil(quantity_order / page_size),
+                           quantity_order=quantity_order
+                           )
+
+@app.route("/api/order/cash/pay", methods = ["POST"])
+def intable_pay_order():
+    try:
+        order_id = int(request.json.get("order_id"))
+        received_money = int(request.json.get("received_money"))
+        print(order_id, received_money)
+        if utils.order_paid_incash(received_money, order_id) == 0:
+            utils.order_delivered(order_id)
+            return jsonify({"code": 200})
+        else:
+            return jsonify({"code": 402})
+    except Exception as e:
+        print(e)
+        return jsonify({"code": 400})
+
+
+@app.route('/checkout', methods=['GET', 'POST'])
+@login_required
+def checkout():
+    key = app.config['CART_KEY']
+    configuration = dao.get_configuration()
+    payment_methods = dao.get_payment_method_all()
+    # Xử lý logic cho GET và POST
+    if request.method == 'GET':
+        # Chuẩn bị dữ liệu cho form
+        customer = current_user
+        user_address = dao.get_user_address(customer.id)  # Lấy địa chỉ của customer
+
+        form_data = {
+            "customer_id": customer.id,
+            "full_name": f"{customer.first_name} {customer.last_name}",
+            "phone_number": customer.phone,
+            "email": customer.email,
+             "city": user_address["city"],
+            "district": user_address["district"],
+            "ward": user_address["ward"],
+            "details": user_address["details"]
+        }
+        return render_template('checkout.html', form_data=form_data, payment_methods=payment_methods)
+
+    elif request.method == 'POST':
+        # Lấy dữ liệu từ request.form
+        customer_id = request.form.get("customer_id")
+        full_name = request.form.get("full_name")
+        phone_number = request.form.get("phone_number")
+        email = request.form.get("email")
+        city = request.form.get("city")
+        district = request.form.get("district")
+        ward = request.form.get("ward")
+        details = request.form.get("details")
+        payment_type = request.form.get("payment_type")
+
+        # Xử lý logic tạo đơn hàng
+        # staff tạo đơn hàng cho khách hàng mua trực tiếp
+        if int(customer_id) != current_user.id:
+            customer = dao.get_user_by_id(int(customer_id))
+            staff = current_user
+        else:
+            # khách hàng mua online
+            customer = current_user
+            staff = dao.get_user_by_username("saler")
+        order = dao.create_order(customer.id, staff.id,session['cart'], payment_type)
+        print(order)
+        session[key] = {}  # Xóa cart sau khi tạo đơn hàng
+        session.modified = True
+
+        #nhân viên bán hàng tạo đơn hàng cho khách mua trực tiếp
+        if (current_user.id != customer.id):
+            if (order.payment_method.name.__eq__("CASH")):
+                flash("New order has been created", "success")
+                return redirect(url_for("users.staff"))
+        else:
+            address = dao.get_user_address(current_user.id)
+            if not address or address["city"] != city or address["district"] != district or address["ward"] != ward or \
+                    address["details"] != details:
+                # Tạo địa chỉ mới nếu có thay đổi
+                new_address=dao.add_address(city=city, district=district, ward=ward, details=details)
+
+
+                # Cập nhật `address_id` cho user
+                current_user.address_id = new_address.id
+                db.session.commit()
+
+                # Cập nhật số điện thoại nếu cần
+            if current_user.phone != phone_number:
+                current_user.phone = phone_number
+                db.session.commit()
+        if payment_type == "2":
+            return redirect(url_for("process_vnpay", order_id=order.id, user_id=customer.id))
+        else:
+            return redirect(url_for("myOrder"))
+    #         Chưa xử lí
+
+    return render_template('checkout.html')
+
+@app.route("/vnpay", methods=["GET", "POST"])
+@login_required
+def process_vnpay():
+    form = PaymentForm()
+    if request.method == 'POST':
+        # Process input data and build url payment
+        if form.validate_on_submit():
+            order_type = form.order_type.data
+            order_id = form.order_id.data
+            amount = int(form.amount.data)
+            order_desc = form.order_desc.data
+            bank_code = form.bank_code.data
+            language = form.language.data
+            ipaddr = request.remote_addr
+            # Build URL Payment
+            vnp = Vnpay()
+            vnp.requestData['vnp_Version'] = '2.1.0'
+            vnp.requestData['vnp_Command'] = 'pay'
+            vnp.requestData['vnp_TmnCode'] = app.config["VNPAY_TMN_CODE"]
+            vnp.requestData['vnp_Amount'] = amount * 100
+            vnp.requestData['vnp_CurrCode'] = 'VND'
+            vnp.requestData['vnp_TxnRef'] = str(order_id) + "_" + datetime.datetime.now().__str__()
+            vnp.requestData['vnp_OrderInfo'] = order_desc
+            vnp.requestData['vnp_OrderType'] = order_type
+            # Check language, default: vn
+            if language and language != '':
+                vnp.requestData['vnp_Locale'] = language
+            else:
+                vnp.requestData['vnp_Locale'] = 'vn'
+                # Check bank_code, if bank_code is empty, customer will be selected bank on VNPAY
+            if bank_code and bank_code != "":
+                vnp.requestData['vnp_BankCode'] = bank_code
+
+            vnp.requestData['vnp_CreateDate'] = datetime.datetime.now().strftime('%Y%m%d%H%M%S')  # 20150410063022
+            vnp.requestData['vnp_IpAddr'] = ipaddr
+            vnp.requestData['vnp_ReturnUrl'] = app.config["VNPAY_RETURN_URL"]
+            vnpay_payment_url = vnp.get_payment_url(app.config["VNPAY_PAYMENT_URL"], app.config["VNPAY_HASH_SECRET_KEY"])
+            return redirect(vnpay_payment_url)
+        else:
+            print("Form input not validate")
+    else:
+        order_id = int(request.args.get("order_id"))
+        user_id = int(request.args.get("user_id"))
+        order = dao.get_order_by_id(order_id)
+        user = dao.get_user_by_id(user_id)
+        if not order:
+            flash("Order not found", "danger")
+            return redirect(url_for("checkout"))
+        if not user:
+            flash("User not found", "danger")
+            return redirect(url_for("checkout"))
+        form.order_id.data = order.id
+        form.amount.data = order.total_payment
+        form.order_desc.data = "%s pay for bookstore online shopping" % (
+            user.last_name+ user.first_name)
+        return render_template("vnpay/payment.html", title="Kiểm tra thông tin", form=form)
 
 if __name__ == '__main__':
     with app.app_context():

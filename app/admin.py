@@ -157,13 +157,17 @@ class MyAdminView(AdminIndexView):
         stats = dao.count_product_by_cate()
         return self.render('admin/index.html', stats=stats)
 
+class OrderView(AuthenticatedView):
+    column_sortable_list = ['initiated_date', 'total_payment']
 
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session))
 admin.add_view(BookView(Book, db.session))
-admin.add_view(ThayDoiQuyDinh(Configuration, db.session))
+admin.add_view(OrderView(Order, db.session))
 admin.add_view(ReviewView(Review, db.session))
 admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))
+admin.add_view(ThayDoiQuyDinh(Configuration, db.session))
 admin.add_view(LogoutView(name="Đăng Xuất"))
+

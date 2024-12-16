@@ -63,7 +63,12 @@
 
                     <div class="card-body border-top">
                         {% if current_user.is_authenticated %}
-                        <input type="button" class="btn btn-primary float-end" onclick="pay()"  value="Thanh toán">
+<!--                        <input type="button" class="btn btn-primary float-end" onclick="pay()"  value="Thanh toán">-->
+                        <a class="icon-link icon-link-hover btn btn-primary float-end" href="{{ url_for('checkout') }}">
+                            Thanh toán
+                            <i class="bi bi-arrow-right p-0 m-0"></i>
+                        </a>
+<!--                        <i class="bi bi-arrow-right p-0 m-0"></i>-->
                         {% else %}
                         <p class="float-end">Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán</p>
                         {% endif %}
