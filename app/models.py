@@ -13,12 +13,6 @@ import string
 from datetime import datetime, timedelta
 
 
-class OrderEnum(StatusEnum):
-    GIAOHANGTHANHCONG = 1
-    DANGGIAOHANG = 2
-    HUYDONHANG = 3
-
-
 class BaseModel(db.Model):
     __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -61,6 +55,7 @@ class Address(BaseModel):
     details = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
 
     users = relationship("User", backref='Address', lazy=True)
+    order = relationship("Order",backref="Address",lazy=True)
 
 
 class User(BaseModel, UserMixin):
@@ -101,7 +96,7 @@ class Order(BaseModel):
     received_money = Column(Integer, nullable=True)
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
-    status = Column(Enum(OrderEnum), nullable=False)
+    delivered_at = Column(ForeignKey(Address.id), index=True,nullable=True)
     payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False, default=1)
 
     books = relationship('OrderDetail', backref='order')

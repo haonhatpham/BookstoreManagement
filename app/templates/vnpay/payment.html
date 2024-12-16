@@ -1,10 +1,15 @@
-{% extends "layout.html" %}
-{% block body %}
-    <div class="content-section">
+{% extends 'layout/base.html' %}{% block content %}
+<section class="section-pagetop bg-light " style="margin-top: 100px; padding:40px">
+    <div class="container">
+        <h2 class="title-page">Thông tin chuyển khoản</h2>
+    </div> <!-- container.// -->
+</section> <!-- section-pagetop.// -->
+<section class="section-content padding-y">
+    <div class="container">
         <div>
             <h3>{{ title }}</h3>
         </div>
-        <form action="{{ url_for('orders.process_vnpay') }}" id="create_form" method="post">
+        <form action="{{ url_for('process_vnpay') }}" id="create_form" method="post">
             {{ form.csrf_token }}
             <div class="form-group mt-3">
                 <label class="form-control-label" for="order_type">Order Type</label>
@@ -33,4 +38,5 @@
             <button type="submit" class="btn btn-primary mt-3 btn-block">Continue</button>
         </form>
     </div>
+</section>
 {% endblock %}
