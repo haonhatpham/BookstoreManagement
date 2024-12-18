@@ -17,7 +17,7 @@ def index():
     prods = dao.load_book(latest_books=1)
     banner = dao.load_banner()
     feature_books = dao.load_feature_book()
-    print(feature_books)
+    #print(feature_books)
     cates = dao.get_category()
     total = dao.count_books()
     category_ids = dao.load_category_ids()
@@ -628,24 +628,27 @@ def statistic():
         data = utils.statistic_revenue()
     return data
 
+
+
 @app.route('/save_import_ticket', methods=['POST'])
 def save_import_ticket():
     data = request.json
-    role_id=current_user.id
-    # Lấy thông tin từ request
-    employee_id = data.get('employee_id')
+    employee_id = current_user.id
     import_date = data.get('import_date')
     details = data.get('details')
-
     if not employee_id or not import_date or not details:
-        return jsonify({'error': 'Dữ liệu không hợp lệ!'}), 400
+        return jsonify({'error': 'Dữ liệu không hợp lệ!'})
     # Gọi dao để lưu phiếu nhập
+
     ticket_id = dao.save_import_ticket(
         employee_id=employee_id,
         import_date=import_date,
         details=details
     )
     return jsonify({'message': 'Phiếu nhập đã được lưu thành công!', 'ticket_id': ticket_id})
+
+
+
 
 if __name__ == '__main__':
     with app.app_context():

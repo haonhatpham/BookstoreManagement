@@ -71,7 +71,8 @@ class LapHoaDon(AuthenticatedBaseView):
 
     @expose("/")
     def index(self):
-        return self.render('admin/laphoadon.html')
+        data = dao.load_User()
+        return self.render('admin/laphoadon.html',data=data)
 
 class LapPhieuNhap(AuthenticatedBaseView):
     def is_accessible(self):
@@ -79,7 +80,9 @@ class LapPhieuNhap(AuthenticatedBaseView):
     @expose("/")
     def index(self):
         data=dao.load_book()
-        return self.render('admin/lapphieunhap.html',data =data )
+        min_import_quantity,max_stock_for_import=dao.get_import_rules()
+        return self.render('admin/lapphieunhap.html',data =data ,min_import_quantity=min_import_quantity
+                           ,max_stock_for_import=max_stock_for_import)
 
 
 class ThayDoiQuyDinh(ModelView):
@@ -124,26 +127,9 @@ class BookView(AuthenticatedView):
     column_list = ['id', 'name', 'image', 'standard_price', 'discount', 'unit_price', 'available_quantity',
                    'description','categories','publisher']
     form_create_rules = [
-        'name',
-        'standard_price',
-        'unit_price',
-        'is_enable',
-        'image',
-        'description',
-        'publisher',
-        'categories'
-    ]
-
+        'name','standard_price','unit_price','is_enable','image','description','publisher','categories']
     form_edit_rules = [
-        'name',
-        'standard_price',
-        'unit_price',
-        'is_enable',
-        'image',
-        'description',
-        'publisher',
-        'categories'
-    ]
+        'name','standard_price','unit_price','is_enable','image','description','publisher','categories']
     column_filters = ['name']
     column_searchable_list = ['name']
 

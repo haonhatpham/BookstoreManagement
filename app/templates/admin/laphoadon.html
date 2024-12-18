@@ -1,8 +1,284 @@
 {% extends 'admin/master.html' %}
 
 {% block body %}
-<h1 class="text-center text-danger">Lập Hóa Đơn</h1>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Nhập Thông Tin Khách Hàng</h3>
+    </div>
+    <div class="card-body">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="full_name">Họ tên</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="phone_number">Số điện thoại</label>
+                    <input type="text" class="form-control" id="phone_number" name="phone_number" required onblur="checkPhoneNumber()">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="city">Tỉnh/Thành phố</label>
+                    <input type="text" class="form-control" id="city" name="city" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="district">Quận/Huyện</label>
+                    <input type="text" class="form-control" id="district" name="district" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="ward">Phường/Thị xã</label>
+                    <input type="text" class="form-control" id="ward" name="ward" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="details">Số nhà, Tên đường</label>
+                <input type="text" class="form-control" id="details" name="details" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <h1 class="display-6">Chọn Sách</h1>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-success" onclick="showAddBookForm()">
+                    <i class="bi bi-plus-lg"></i> Chọn Sách
+                </button>
+            </div>
+        </div>
+
+        <!-- Form nhập sách -->
+        <div id="add-book-form" class="card mb-4" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">Nhập Chi Tiết Sách</h3>
+            </div>
+            <div class="card-body">
+                <form id="bookForm" action="/lapphieunhap" method="get">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="book-dropdown" class="form-label">Chọn Sách</label>
+                            <select id="book-dropdown" class="form-control" onchange="loadBookDetails()">
+                                <option value="">Chọn Sách</option>
+                                {% for b in data %}
+                                <option value="{{ b.id }}"
+                                        data-name="{{ b.name }}"
+                                        data-available="{{ b.available_quantity }}"
+                                        data-price="{{ b.standard_price}}">
+                                    {{ b.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="quantity" class="form-label">Số Lượng </label>
+                            <input type="number" class="form-control" id="quantity" required min="1"
+                                   placeholder="Nhập số lượng"
+                                   onchange="checkConf()">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="available_quantity" class="form-label">Số Lượng Hiện Có</label>
+                            <input type="number" class="form-control" id="available_quantity" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="standard_price" class="form-label">Đơn Giá (VNĐ)</label>
+                            <input type="number" class="form-control" id="standard_price" readonly>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-primary" onclick="saveBook()">
+                            <i class="bi bi-save"></i> Lưu Sách
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelBookForm()">
+                            <i class="bi bi-x-lg"></i> Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Danh Sách Sách Nhập</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="input-date" class="form-label">Ngày Nhập:</label>
+                        <input type="date" id="input-date" class="form-control">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Tên Sách</th>
+                            <th>Số Lượng</th>
+                            <th>Đơn Giá</th>
+                            <th>Thành Tiền</th>
+                            <th>Hành Động</th>
+                        </tr>
+                        </thead>
+                        <tbody id="book-list">
+                        {% for p in phieu %}
+                        <tr>
+                            <td>{{ p.bookName }}</td>
+                            <td>{{ p.quantity }}</td>
+                            <td>{{ p.available_quantity }}</td>
+                            <td>{{ p.standard_price }}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="deleteBook({{ p.id }})">Xóa</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-success" onclick="createImportSlip()">
+                    <i class="bi bi-file-earmark-plus"></i> Lập Hóa Đơn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+           loadFromLocalStorage();
+       });
+
+       function loadBookDetails() {
+           const selectedOption = document.getElementById('book-dropdown').selectedOptions[0];
+           if (selectedOption) {
+               const availableQuantity = selectedOption.getAttribute('data-available');
+               const price = selectedOption.getAttribute('data-price');
+
+               // Hiển thị thông tin sách
+               document.getElementById('available_quantity').value = availableQuantity;
+               document.getElementById('standard_price').value = price;
+           }
+       }
 
 
+       function saveToLocalStorage() {
+           const table = document.getElementById('book-list');
+           const rows = Array.from(table.rows);
+           const data = rows.map(row => ({
+               bookName: row.cells[0].innerText,
+               quantity: row.cells[1].innerText,
+               availableQuantity: row.cells[2].innerText,
+               standardPrice: row.cells[3].innerText
+           }));
+           localStorage.setItem('bookData', JSON.stringify(data));
+       }
 
+       function loadFromLocalStorage() {
+           const data = localStorage.getItem('bookData');
+           if (data) {
+               const books = JSON.parse(data);
+               const table = document.getElementById('book-list');
+               books.forEach(book => {
+                   const row = table.insertRow();
+                   row.innerHTML = `
+                       <td>${book.bookName}</td>
+                       <td>${book.quantity}</td>
+                       <td>${book.availableQuantity}</td>
+                       <td>${book.standardPrice}</td>
+                       <td><button class="btn btn-danger" onclick="deleteRow(this)">Xóa</button></td>
+                   `;
+               });
+           }
+       }
+
+       // Hàm thêm sách vào bảng
+       function saveBook() {
+           const bookId = document.getElementById('book-dropdown').value;
+           const quantity = parseInt(document.getElementById('quantity').value, 10);
+           const unitPrice = document.getElementById('standard_price').value;
+           if (!bookId || !quantity || !unitPrice) {
+               alert("Vui lòng chọn sách và nhập thông tin đầy đủ.");
+               return;
+           }
+           const bookName = document.getElementById('book-dropdown').selectedOptions[0].text;
+           const availableQuantity = document.getElementById('available_quantity').value;
+           const totalPrice = quantity * unitPrice;
+
+           // Kiểm tra nếu sách đã có trong bảng
+           const table = document.getElementById('book-list');
+           let existingRow = null;
+
+           for (const row of table.rows) {
+               if (row.cells[0].innerText === bookName) {
+                   existingRow = row;
+                   break;
+               }
+           }
+           if (existingRow) {
+               // Nếu sách đã tồn tại, tăng số lượng
+               const currentQuantity = parseInt(existingRow.cells[1].innerText, 10);
+               existingRow.cells[1].innerText = currentQuantity + quantity;
+           } else {
+               // Nếu sách chưa tồn tại, thêm dòng mới
+               const row = table.insertRow();
+               row.innerHTML = `
+                   <td>${bookName}</td>
+                   <td>${quantity}</td>
+                   <td>${unitPrice}</td>
+                   <td>${totalPrice}</td>
+                   <td><button class="btn btn-danger" onclick="deleteRow(this)">Xóa</button></td>
+               `;
+           }
+           // Lưu dữ liệu vào localStorage
+           saveToLocalStorage();
+       }
+
+       function cancelBookForm() {
+           document.getElementById('add-book-form').style.display = 'none';
+           document.getElementById('bookForm').reset();
+       }
+
+       function showAddBookForm() {
+           document.getElementById('add-book-form').style.display = 'block';
+       }
+
+
+       function deleteRow(button) {
+           const row = button.closest('tr');
+           row.remove();
+           // Lưu dữ liệu vào localStorage sau khi xóa
+           saveToLocalStorage();
+       }
+
+       function deleteBook(bookId) {
+           fetch(`/delete_book/${bookId}`, {
+               method: 'DELETE'
+           }).then(response => {
+               if (response.ok) {
+                   alert("Sách đã được xóa.");
+                   location.reload();
+               } else {
+                   alert("Lỗi khi xóa sách.");
+               }
+           });
+       }
+
+
+</script>
 {% endblock %}

@@ -3,7 +3,7 @@ from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
 from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
-    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review
+    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review,ImportDetail,ImportTicket
 from datetime import datetime, timedelta
 from app import app, db
 import hashlib
@@ -11,7 +11,7 @@ import cloudinary.uploader
 from sqlalchemy import desc, engine, or_,func
 from sqlalchemy.orm import session, sessionmaker
 import random
-
+import logging
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -604,6 +604,49 @@ def stat_book_by_month(month):
     .order_by(desc("quantity")) \
     .all()
 
+def get_import_rules():
+    min_import_quantity = Configuration.query.filter_by(key="min_import_quantity").first().value
+    max_stock_for_import = Configuration.query.filter_by(key="max_stock_for_import").first().value
+    return int(min_import_quantity), int(max_stock_for_import)
+
+def save_import_ticket(employee_id, import_date, details):
+    new_ticket = ImportTicket(
+        employee_id=employee_id,
+        import_date=import_date
+    )
+    db.session.add(new_ticket)
+    db.session.flush()  # Lấy ID của phiếu nhập ngay sau khi thêm
+
+    for detail in details:
+        book_id = detail['book_id']
+        quantity = detail['quantity']
+        standard_price = detail['standard_price']
+
+        # Lưu chi tiết phiếu nhập
+        import_detail = ImportDetail(
+            ticket_id=new_ticket.id,
+            book_id=book_id,
+            quantity=quantity,
+            standard_price=standard_price
+        )
+        db.session.add(import_detail)
+        # Cập nhật tồn kho sách
+        book = Book.query.get(book_id)
+
+        if book:
+            book.available_quantity += quantity
+    db.session.commit()
+
+
+def load_User(User_id=None, latest_users=None):
+    if User_id:
+        return User.query.filter(User.id == User_id)
+    if latest_users:
+        return User.query.order_by(desc(User.id))
+    return User.query.all()
+
+
+
 
 if __name__ == "__main__":
     with app.app_context():
@@ -659,7 +702,6 @@ if __name__ == "__main__":
             'Xuan Phu', 'Phu Hoi', 'Hai Ba Trung', 'Dong Da', 'Hoan Kiem',
             'Thach That', 'Soc Son', 'Hoai Duc', 'Thanh Tri', 'Ha Dong'
         ]
-
         wards = [
             'Ngoc Ha', 'Khuong Dinh', 'Dich Vong', 'Ward 12', 'Ward 6',
             'Thuan Phuoc', 'An Hai Bac', 'Man Thai', 'Tran Nguyen Han', 'Ngo Quyen',
@@ -667,7 +709,6 @@ if __name__ == "__main__":
             'Thuy Xuan', 'Phu Cat', 'Hai Tan', 'Trung Hoa', 'Quang An',
             'Tay Ho', 'Mai Dich', 'Yen So', 'Van Quan', 'Mo Lao'
         ]
-
         details = [
             '123 Nguyen Trai Street', '456 Tran Hung Dao Street', '789 Le Loi Avenue',
             '12 Phan Dinh Phung Street', '34 Vo Thi Sau Street',
