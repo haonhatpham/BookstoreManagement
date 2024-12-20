@@ -158,7 +158,7 @@ class MyAdminView(AdminIndexView):
         return self.render('admin/index.html', stats=stats)
 
 class OrderView(AuthenticatedView):
-    column_sortable_list = ['initiated_date', 'total_payment']
+    column_sortable_list = ['initiated_date']
 
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session))

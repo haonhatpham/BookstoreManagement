@@ -237,7 +237,7 @@ def count_books(book_objects=None):
         return Book.query.count()
 
 # Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
-def filter_books(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
+def filter_books(category_id=None, checked_publishers=None, price_ranges=None, order_by=None, order_dir=None, page=1):
     books = Book.query
     from sqlalchemy.sql import text
 
@@ -283,11 +283,11 @@ def filter_books(category_id, checked_publishers, price_ranges, order_by, order_
         )
     else:
         raise ValueError(f"Invalid order_by column: {order_by}")
-
+    count_all_books =len(books.all())
     page_size = app.config["PAGE_SIZE"]
     start = (page - 1) * page_size
     books = books.slice(start, start + page_size)
-    return books.all()
+    return books.all(),count_all_books
 
 
 # Lấy nhà xuất bản theo id của thể loại
@@ -302,6 +302,8 @@ def get_publishers_by_category(category_id):
     )
     return publishers
 
+def get_all_publishers():
+    return Publisher.query.all()
 
 def get_sold_quantity(book_id):
     book_sold = (OrderDetail.query
@@ -312,10 +314,6 @@ def get_sold_quantity(book_id):
     for i in range(len(book_sold)):
         sold_quantity += book_sold[i].quantity
     return sold_quantity
-
-    # book_available = (Book.query
-    #                   .filter(Book.id==book_id))
-
 
 def add_to_favourites(user_id, book_id):
     existing_favourite = db.session.query(favourite_books).filter_by(user_id=user_id, book_id=book_id).first()
@@ -429,6 +427,8 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
     customer = get_user_by_id(customer_id)
     staff = get_user_by_id(staff_id)
     payment_method = get_payment_method_by_id(payment_method_id)
+    address = Address.query.filter_by(id=customer.address_id).first()
+
     # create order details
     order_details = []
     total_payment = 0
@@ -450,8 +450,8 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
                   payment_method=payment_method,
                   customer_id=customer.id,
                   employee_id=staff.id,
-                  total_payment=total_payment,
                   initiated_date=initial_date,
+                  delivered_at=address.id
                   )
 
     save_order_sampledb(order)
@@ -464,9 +464,10 @@ def create_order_sample(customer_id, staff_id, books, payment_method_id, initial
     configuration = get_configuration()
     customer = get_user_by_id(customer_id)
     staff = get_user_by_id(staff_id)
+    payment_method = get_payment_method_by_id(payment_method_id)
     # Truy xuất Address từ address_id
     address = db.session.query(Address).filter_by(id=customer.address_id).first()
-    payment_method = get_payment_method_by_id(payment_method_id)
+
     # create order details
     order_details = []
     total_payment = 0
@@ -487,7 +488,6 @@ def create_order_sample(customer_id, staff_id, books, payment_method_id, initial
                   payment_method=payment_method,
                   customer_id=customer.id,
                   employee_id=staff.id,
-                  total_payment=total_payment,
                   initiated_date=initial_date,
                   delivered_at=address.id
                   )
@@ -496,12 +496,12 @@ def create_order_sample(customer_id, staff_id, books, payment_method_id, initial
     for od in order_details:
         od.order = order
         save_order_details(od)
-    return order
-def order_paid_incash(received_money, order_id, paid_date=datetime.now()):
+    return order,total_payment
+def order_paid_incash(total_payment,received_money, order_id, paid_date=datetime.now()):
     order = get_order_by_id(order_id)
     if order is None or order.paid_date:
         return -1
-    if received_money < order.total_payment:
+    if received_money < total_payment:
         return -2
     order.received_money = received_money
     order.paid_date = paid_date
@@ -699,6 +699,34 @@ def save_user(user):
     db.session.add(user)
     db.session.commit()
 
+def get_orders_count(user_id):
+    return Order.query.filter(Order.customer_id == user_id).count()
+
+
+def get_delivering_count(user_id):
+    return Order.query \
+        .filter(Order.customer_id == user_id,  # Lọc theo ID người dùng
+                Order.paid_date.isnot(None),  # Đã thanh toán
+                Order.delivered_date.is_(None)).count()
+
+def get_received_count(user_id):
+    return Order.query \
+        .filter(Order.customer_id == user_id,  # Lọc theo ID người dùng
+                Order.delivered_date.isnot(None)).count()
+
+
+def calculate_order_total(order_id):
+    # Lấy danh sách các OrderDetail liên quan đến order_id
+    order_details = OrderDetail.query.filter_by(order_id=order_id).all()
+
+    if not order_details:
+        return 0  # Trả về 0 nếu không tìm thấy chi tiết đơn hàng nào
+
+    # Tính tổng tiền
+    total_payment = sum(detail.quantity * detail.unit_price for detail in order_details)
+
+    return int(total_payment)
+
 if __name__ == "__main__":
     with app.app_context():
 
@@ -750,27 +778,6 @@ if __name__ == "__main__":
             u.address_id = random.choice(address_ids)
         db.session.commit()
 
-        # Comment
-        books = Book.query.all()
-        comments = [
-            'Great work on this project! The results are impressive and clearly show the effort put into development. The attention to detail in the implementation stands out, and it has significantly improved the user experience. Keep up the excellent work!',
-            'Consider optimizing the code for better performance. While the functionality is solid, some areas of the code could benefit from refactoring to reduce redundancy and improve efficiency. This would also make the system easier to maintain in the long run.',
-            'The documentation is clear and helpful, making it easy for others to understand how the system works. Including additional examples and potential use cases would further enhance its value, especially for new developers joining the team.',
-            'There seems to be a bug when handling edge cases, such as unexpected input formats or extreme values. It would be great to add more test cases to ensure robustness and prevent these issues from occurring in production environments.',
-            'The design is intuitive and user-friendly, making it easy for users to navigate the interface. However, it might be worth exploring additional features, such as customization options or advanced settings, to cater to a broader range of user needs.'
-        ]
-
-        user_ids = [user.id for user in users]
-        book_ids = [book.id for book in books]
-
-        for r in range(len(book_ids)):
-            review = add_review(
-                user_id=random.choice(user_ids),
-                book_id=r + 1,
-                comment=random.choice(comments),
-                rating=random.randint(1, 5)
-            )
-
         # Order
         import datetime
 
@@ -801,8 +808,30 @@ if __name__ == "__main__":
             if days_increment > 30 * 12:
                 days_increment = 0
             days_increment += 20
-            order = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
+            order,total_payment = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
             rand_num = random.randint(1, 10)
-            order_paid_incash(order.total_payment, order.id,
+            order_paid_incash(total_payment,total_payment, order.id,
                               order.initiated_date + datetime.timedelta(hours=rand_num))
             order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))
+
+
+        # Comment
+        books = Book.query.all()
+        comments = [
+            'Great work on this project! The results are impressive and clearly show the effort put into development. The attention to detail in the implementation stands out, and it has significantly improved the user experience. Keep up the excellent work!',
+            'Consider optimizing the code for better performance. While the functionality is solid, some areas of the code could benefit from refactoring to reduce redundancy and improve efficiency. This would also make the system easier to maintain in the long run.',
+            'The documentation is clear and helpful, making it easy for others to understand how the system works. Including additional examples and potential use cases would further enhance its value, especially for new developers joining the team.',
+            'There seems to be a bug when handling edge cases, such as unexpected input formats or extreme values. It would be great to add more test cases to ensure robustness and prevent these issues from occurring in production environments.',
+            'The design is intuitive and user-friendly, making it easy for users to navigate the interface. However, it might be worth exploring additional features, such as customization options or advanced settings, to cater to a broader range of user needs.'
+        ]
+
+        user_ids = [user.id for user in users]
+        book_ids = [book.id for book in books]
+
+        for r in range(len(book_ids)):
+            review = add_review(
+                user_id=random.choice(user_ids),
+                book_id=r + 1,
+                comment=random.choice(comments),
+                rating=random.randint(1, 5)
+            )
