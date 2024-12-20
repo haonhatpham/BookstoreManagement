@@ -6,7 +6,6 @@ if (window.location.pathname === '/details') {
             event.preventDefault(); // Ngăn không reload trang
 
             const bookId = this.getAttribute("data-id"); // Lấy book_id từ nút
-
             fetch("/details?book_id=" + bookId, {
                 method: "POST",
                 headers: {
