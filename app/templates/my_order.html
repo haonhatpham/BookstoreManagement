@@ -28,29 +28,29 @@
                             </tr>
                             </thead>
                             <tbody>
-                                {% for order in orders %}
-                                    <tr>
-                                        <th scope="row">{{ order.id }}</th>
-                                        <td>{{ order.initiated_date.strftime('%Y/%m/%d') }}</td>
-                                        <td>{{order.id}}</td>
-                                        <td>{{ "{:,.0f}".format(order.total_payment) }}đ</td>
-                                        <td> {% if order.paid_date is none and order.delivered_date is none and
-                                            order.cancel_date <
-                                            datetime.now() %}
-                                            CANCELLED
-                                            {% elif order.cancel_date > datetime.now() and order.paid_date is none %}
-                                            UNPAID
-                                            {% elif order.paid_date is not none and order.delivered_date is none %}
-                                            DELIVERING
-                                            {% elif order.delivered_date is not none %}
-                                            DELIVERED
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-center text-nowrap">
-                                            <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
+                            {% for item in orders_with_total %}
+                            <tr>
+                                <th scope="row">{{ item.order.id }}</th>
+                                <td>{{ item.order.initiated_date.strftime('%Y/%m/%d') }}</td>
+                                <td>{{ item.order.id }}</td>
+                                <td>{{ "{:,.0f}".format(item.total_payment) }}đ</td>
+                                <td>
+                                    {% if item.order.paid_date is none and item.order.delivered_date is none and
+                                    item.order.cancel_date < datetime.now() %}
+                                    CANCELLED
+                                    {% elif item.order.cancel_date > datetime.now() and item.order.paid_date is none %}
+                                    UNPAID
+                                    {% elif item.order.paid_date is not none and item.order.delivered_date is none %}
+                                    DELIVERING
+                                    {% elif item.order.delivered_date is not none %}
+                                    DELIVERED
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -61,7 +61,7 @@
                         <li class="page-item">
                             <a class="page-link"
                                href="?page={{ current_page - 1 }}"
-                               {% if current_page == 1 %} style="pointer-events: none; opacity: 0.5;" {% endif %}>
+                               {% if current_page== 1 %} style="pointer-events: none; opacity: 0.5;" {% endif %}>
                                 Trang trước
                             </a>
                         </li>
@@ -74,7 +74,7 @@
                         <li class="page-item">
                             <a class="page-link"
                                href="?page={{ current_page + 1 }}"
-                               {% if current_page == pages %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
+                               {% if current_page== pages %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
                                 Trang sau
                             </a>
                         </li>

@@ -82,6 +82,9 @@ def login_process():
             login_user(user=u)
             n=request.args.get('next')
             return redirect(n if n else '/')
+        else:
+            err_msg = 'Tên đăng nhập hoặc mật khẩu không chính xác'
+
     return render_template('login.html')
 
 
@@ -214,7 +217,6 @@ def get_comments(book_id):
     return jsonify(response_data)
 
 
-
 @app.route('/edit_review', methods=['POST'])
 def edit_review():
 
@@ -238,7 +240,6 @@ def edit_review():
     except ValueError:
         return jsonify({'error': 'ID review không hợp lệ.'}), 400
 
-
 @app.route('/delete_review', methods=['POST', 'GET'])
 def delete_review():
     review_id = request.args.get('review_id')
@@ -253,10 +254,20 @@ def delete_review():
 @app.route('/account')
 def account():
     address = dao.load_user_address(current_user.id)
+    cart = session.get('cart', {})  # Lấy thông tin giỏ hàng từ session
+    cart_quantity = sum(item['quantity'] for item in cart.values())  # Tổng số lượng sản phẩm trong giỏ
+    orders_count = dao.get_orders_count(current_user.id)  # Hàm lấy số đơn hàng
+    delivering_count = dao.get_delivering_count(current_user.id)  # Hàm lấy số sản phẩm đang giao
+    received_count = dao.get_received_count(current_user.id)  # Hàm lấy số sản phẩm đã nhận
     return render_template('account.html',
                            current_user=current_user,
-                           address=address
+                           address=address,
+                           orders_count=orders_count,
+                           delivering_count=delivering_count,
+                           cart_quantity=cart_quantity,
+                           received_count=received_count
                            )
+
 @login_required
 @app.route('/favourite', methods=['GET', 'POST'])
 def favourite():
@@ -312,7 +323,6 @@ def change_password():
 @app.route('/api/change_passwd', methods = ['POST'])
 @login_required
 def change_passwd():
-
     current_password = request.form.get('current_password')
     new_password = request.form.get('new_password')
 
@@ -358,7 +368,6 @@ def load_user(user_id):
 @app.route('/cart', methods=['GET'])
 def cart():
     return render_template('cart.html')
-
 
 @app.route('/api/cart', methods=['POST'])
 def add_to_cart():
@@ -454,17 +463,17 @@ def category():
     # Lấy các tiêu chí lọc từ request
     checked_publishers = request.args.getlist('checkedPublishers')
     price_ranges = request.args.getlist('priceRanges')
-    order_param = request.args.get('order', 'unit_price-ASC')
+    print(price_ranges)
+    order_param = request.args.get('order', 'totalBuy-DESC')
     order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
 
-    books = dao.filter_books(category_id=cate_id,
+    books,total_products = dao.filter_books(category_id=cate_id,
                             checked_publishers=checked_publishers,
                             price_ranges=price_ranges,
                             order_by=order_by,
                             order_dir=order_dir,
                             page=int(page)
                              )
-    total_products=dao.count_books(books)
     publishers = dao.get_publishers_by_category(cate_id)
 
     # Render template với dữ liệu
@@ -483,6 +492,52 @@ def category():
         current_page=int(page),
     )
 
+@app.route('/categories', methods=['GET'])
+def all_categories():
+    page = request.args.get('page', 1)
+    page_size = app.config["PAGE_SIZE"]
+    all_price_ranges = ['0-50000', '50000-200000', '200000-infinity']
+    ORDER_BY_OPTIONS = [
+        {'value': 'totalBuy-DESC', 'label': 'Bán chạy nhất'},
+        {'value': 'created_at-DESC', 'label': 'Mới nhất'},
+        {'value': 'unit_price-ASC', 'label': 'Giá thấp nhất'}
+    ]
+    order_param = request.args.get('order', 'unit_price-ASC')
+    order_by, order_dir = order_param.split('-')
+
+    # Lấy tất cả thể loại category từ database
+    cate = dao.get_category()
+    category_id = request.args.get('category_id')
+    # current_category = Category.query.get(category_id)
+
+    # Lấy các tiêu chí lọc từ request
+    checked_publishers = request.args.getlist('checkedPublishers')
+    price_ranges = request.args.getlist('priceRanges')
+    order_param = request.args.get('order', 'totalBuy-DESC')
+    order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
+    books,total_products = dao.filter_books(checked_publishers=checked_publishers,
+                             price_ranges=price_ranges,
+                             order_by=order_by,
+                             order_dir=order_dir,
+                             page=int(page)
+                             )
+    publishers = dao.get_all_publishers()
+
+    # Render template
+    return render_template(
+        'all_categories.html',
+        category=cate,
+        total_products=total_products,
+        pages=math.ceil(total_products / page_size),
+        products=books,
+        publishers=publishers,
+        checked_publishers=checked_publishers,
+        price_ranges=price_ranges,
+        order=order_param,
+        all_price_ranges=all_price_ranges,
+        ORDER_BY_OPTIONS=ORDER_BY_OPTIONS,
+        current_page=int(page),
+    )
 
 @app.route('/order')
 def order():
@@ -515,7 +570,6 @@ def live_search():
 
 @app.route('/search_result')
 def search_result():
-
     query = request.args.get('q', '').strip().lower()
     print(query)
     books = []
@@ -646,27 +700,34 @@ def myOrder():
     page_size = 4
     current_page = int(page)
     orders = dao.get_orders_by_customer_id(current_user.id,page=int(page))
+    orders_with_total = []
+    for order in orders:
+        total_payment = dao.calculate_order_total(order.id)  # Tính tổng tiền cho đơn hàng
+        orders_with_total.append({
+            "order": order,
+            "total_payment": total_payment
+        })
     quantity_order=dao.count_orders_by_customer_id(current_user.id)
-    return render_template('my_order.html', title='Order Books', orders=orders, datetime=datetime.datetime,
+    return render_template('my_order.html', title='Order Books',  orders_with_total=orders_with_total, datetime=datetime.datetime,
                            current_page=int(page),
                            pages=math.ceil(quantity_order / page_size),
                            quantity_order=quantity_order
                            )
 
-@app.route("/api/order/cash/pay", methods = ["POST"])
-def intable_pay_order():
-    try:
-        order_id = int(request.json.get("order_id"))
-        received_money = int(request.json.get("received_money"))
-        print(order_id, received_money)
-        if utils.order_paid_incash(received_money, order_id) == 0:
-            utils.order_delivered(order_id)
-            return jsonify({"code": 200})
-        else:
-            return jsonify({"code": 402})
-    except Exception as e:
-        print(e)
-        return jsonify({"code": 400})
+# @app.route("/api/order/cash/pay", methods = ["POST"])
+# def intable_pay_order():
+#     try:
+#         order_id = int(request.json.get("order_id"))
+#         received_money = int(request.json.get("received_money"))
+#         print(order_id, received_money)
+#         if utils.order_paid_incash(received_money, order_id) == 0:
+#             utils.order_delivered(order_id)
+#             return jsonify({"code": 200})
+#         else:
+#             return jsonify({"code": 402})
+#     except Exception as e:
+#         print(e)
+#         return jsonify({"code": 400})
 
 
 @app.route('/checkout', methods=['GET', 'POST'])
@@ -744,8 +805,6 @@ def checkout():
             return redirect(url_for("process_vnpay", order_id=order.id, user_id=customer.id))
         else:
             return redirect(url_for("myOrder"))
-    #         Chưa xử lí
-
     return render_template('checkout.html')
 
 @app.route("/vnpay", methods=["GET", "POST"])
@@ -800,7 +859,7 @@ def process_vnpay():
             flash("User not found", "danger")
             return redirect(url_for("checkout"))
         form.order_id.data = order.id
-        form.amount.data = order.total_payment
+        form.amount.data = dao.calculate_order_total(order.id)
         form.order_desc.data = "%s pay for bookstore online shopping" % (
             user.last_name+ user.first_name)
         return render_template("vnpay/payment.html", title="Kiểm tra thông tin", form=form)

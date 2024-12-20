@@ -16,16 +16,16 @@
                             <strong><i class="bi bi-list"></i> Danh mục sản phẩm</strong>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#">Sách giáo khoa</a></li>
-                            <li><a class="dropdown-item" href="#">Sách khoa học</a></li>
-                            <li><a class="dropdown-item" href="#">Truyện tranh</a></li>
-                            <li><a class="dropdown-item" href="#">Tiểu thuyết</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 11">Sách giáo khoa</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 2">Sách khoa học</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 10">Truyện tranh</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 12">Tiểu thuyết</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/category">Tất cả danh mục</a></li>
+                            <li><a class="dropdown-item" href="/categories">Tất cả danh mục</a></li>
                         </ul>
                     </li>
                     <li class="nav__item">
-                        <a href="#discount" class="nav__link">
+                        <a href="#featured" class="nav__link">
                             <i class="ri-price-tag-3-line"></i>
                             <span>Sản phẩm bán chạy</span>
                         </a>
@@ -42,7 +42,7 @@
             <div class="nav__actions">
                 <!-- Search button -->
                 <div class="search-container">
-                    <button id="toggleSearch" class="btn btn-primary">Tìm kiếm</button>
+                    <button id="toggleSearch" class="btn"><i class="ri-search-line search-button" id="search-button"></i></button>
                     <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm sách..." autocomplete="off" >
                     <ul id="searchResults" class="list-group"></ul>
                 </div>

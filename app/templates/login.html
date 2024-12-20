@@ -6,7 +6,12 @@
     <div class="card mx-auto" style="max-width: 60%;  justify-content: center;">
         <div class="card-body">
             <h4 class="card-title mb-4">Đăng nhập</h4>
-            <form method="post"> <!--action="/login"-->
+            <form method="post" action="/login">
+                {% if err_msg %}
+                <div class="alert alert-danger ">
+                    {{ err_msg }}
+                </div>
+                {% endif %}
                 <div class="mb-3">
                     <input name="username" class="form-control" placeholder="Tên đăng nhập" type="text"
                            autocomplete="off">
