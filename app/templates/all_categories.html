@@ -2,25 +2,45 @@
 {% block content %}
 <section class="section-pagetop bg-light" style="margin-top: 100px">
     <div class="container">
-        <h2 class="title-page">{{ category.name }}</h2>
+        <h2 class="title-page">Tất cả danh mục</h2>
         <nav>
             <ol class="breadcrumb">
                 <li class="breadcrumb-item" aria-current="page"><a href="/">Trang chủ</a></li>
-                {% if request.args.get('from_all_categories') %}
-                <li class="breadcrumb-item"><a href="/categories">Tất cả danh mục</a></li>
-                {% endif %}
-                <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+                <li class="breadcrumb-item active" aria-current="page">Tất cả danh mục</li>
             </ol>
         </nav>
-    </div> <!-- container.// -->
-</section> <!-- section-pagetop.// -->
+    </div>
+</section>
 
 <section class="section-content padding-y">
     <div class="container">
         <div class="row">
             <aside class="col-md-4 col-lg-3 mb-md-0 mb-3">
                 <div class="card">
-                    <form action="/category" method="get">
+                    <article class="filter-group">
+                        <header class="card-header my-1">
+                            <a data-bs-toggle="collapse" href="#collapse_categories" aria-expanded="true"
+                               aria-controls="collapse_categories">
+                                <i class="float-end bi bi-chevron-down"></i>
+                                <h6 class="title fw-bold">Danh mục</h6>
+                            </a>
+                        </header>
+                        <div class="filter-content collapse show" id="collapse_categories">
+                            <div class="card-body pt-0">
+                                <ul class="list-unstyled">
+                                    {% for category in categories %}
+                                    <li>
+                                        <a href="/category?category_id={{ category.id }}&from_all_categories=1" class="text-decoration-none">
+                                            {{ category.name }}
+                                        </a>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </article>
+                    <form action="/categories" method="get">
                         <article class="filter-group">
                             <header class="card-header my-1">
                                 <a data-bs-toggle="collapse" href="#collapse_1" aria-expanded="true"
@@ -99,78 +119,66 @@
                             <button type="submit" class="btn btn-primary w-100">Lọc</button>
                         </article>
                     </form>
-                </div> <!-- card.// -->
-            </aside> <!-- col.// -->
+                </div>
+            </aside>
 
             <main class="col-md-8 col-lg-9">
                 <header class="border-bottom mb-4 pb-3">
                     <div class="form-inline d-flex justify-content-between align-items-center">
                         <span>{{ total_products }} sản phẩm</span>
-                        <div>
-                            <select class="form-select">
-                                <option>Bán chạy nhất</option>
-                                <option>Mới nhất</option>
-                                <option>Đánh giá cao nhất</option>
-                                <option>Giá thấp nhất</option>
-                            </select>
-                        </div>
                     </div>
-                </header> <!-- sect-heading -->
+                </header>
 
                 <div class="row item-grid">
                     {% for b in products %}
                     <div class="col-lg-4 col-md-6">
                         <div class="card p-3 mb-4">
-                            <a href="/details?book_id={{b.id}}&category_id={{category.id}}"
-                               class="img-wrap text-center">
-                                <img class="img-fluid book__img " src="{{ b.image }}">
+                            <a href="/details?book_id={{ b.id }}" class="img-wrap text-center">
+                                <img class="img-fluid book__img" src="{{ b.image }}">
                             </a>
                             <figcaption class="info-wrap mt-2">
-                                <a href="/details?book_id={{b.id}}"
-                                   class="title">{{ b.name }} </a>
+                                <a href="/details?book_id={{ b.id }}" class="title">{{ b.name }}</a>
                                 <div class="">
-                                    <span class="price mt-1 fw-bold">{{  "{:,.0f}".format(b.unit_price) }}₫</span>
+                                    <span class="price mt-1 fw-bold">{{ "{:,.0f}".format(b.unit_price) }}₫</span>
                                     {% if b.discount != 0 %}
-                                    <span class="ms-2 text-muted text-decoration-line-through">{{ "{:,.0f}".format(b.unit_price - (b.unit_price * b.discount) / 100)  }}₫</span>
-                                    <span class="ms-2 badge bg-info">-20%</span>
+                                    <span class="ms-2 text-muted text-decoration-line-through">
+                                        {{ "{:,.0f}".format(b.unit_price - (b.unit_price * b.discount) / 100) }}₫
+                                    </span>
+                                    <span class="ms-2 badge bg-info">-{{ b.discount }}%</span>
                                     {% endif %}
                                 </div>
                             </figcaption>
                         </div>
-                    </div> <!-- col.// -->
+                    </div>
                     {% endfor %}
-
-                </div> <!-- row end.// -->
+                </div>
 
                 <nav class="mt-4">
                     <ul class="pagination">
                         <li class="page-item">
                             <a class="page-link"
-                               href="?category_id={{ request.args.get('category_id') }}&page={{ current_page - 1 }}{% for publisher in checked_publishers %}&checkedPublishers={{ publisher }}{% endfor %}{% for range in price_ranges %}&priceRanges={{ range }}{% endfor %}{% if order %}&order={{ order }}{% endif %}"
+                               href="?page={{ current_page - 1 }}{% for publisher in checked_publishers %}&checkedPublishers={{ publisher }}{% endfor %}{% for range in price_ranges %}&priceRanges={{ range }}{% endfor %}{% if order %}&order={{ order }}{% endif %}"
                                {% if current_page== 1 %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
                                 Trang trước
                             </a>
                         </li>
                         {% for i in range(1, pages + 1) %}
                         <li class="page-item {% if i == current_page %}active{% endif %}">
-                            <a class="page-link" href="?category_id={{ request.args.get('category_id') }}&page={{ i }}{% for publisher in checked_publishers %}&checkedPublishers={{ publisher }}{% endfor %}{% for range in price_ranges %}&priceRanges={{ range }}{% endfor %}{% if order %}&order={{ order }}{% endif %}">
-                                {{ i }}</a>
+                            <a class="page-link" href="?page={{ i }}{% for publisher in checked_publishers %}&checkedPublishers={{ publisher }}{% endfor %}{% for range in price_ranges %}&priceRanges={{ range }}{% endfor %}{% if order %}&order={{ order }}{% endif %}">{{ i }}
+                            </a>
                         </li>
                         {% endfor %}
                         <li class="page-item">
                             <a class="page-link"
-                               href="?category_id={{ request.args.get('category_id') }}&page={{ current_page + 1 }}{% for publisher in checked_publishers %}&checkedPublishers={{ publisher }}{% endfor %}{% for range in price_ranges %}&priceRanges={{ range }}{% endfor %}{% if order %}&order={{ order }}{% endif %}"
+                               href="?page={{ current_page + 1 }}{% for publisher in checked_publishers %}&checkedPublishers={{ publisher }}{% endfor %}{% for range in price_ranges %}&priceRanges={{ range }}{% endfor %}{% if order %}&order={{ order }}{% endif %}"
                                {% if current_page== pages %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
                                 Trang sau
                             </a>
                         </li>
                     </ul>
                 </nav>
-
-            </main> <!-- col.// -->
-        </div> <!-- row.// -->
-    </div> <!-- container.//  -->
-</section> <!-- section-content.// -->
-
-
-{% endblock %}
+            </main>
+        </div>
+    </div>
+</section>
+{%endblock%}

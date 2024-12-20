@@ -92,7 +92,6 @@ class Order(BaseModel):
     employee_id = Column(ForeignKey(User.id), index=True, nullable=False)
     initiated_date = Column(DateTime, nullable=False)
     cancel_date = Column(DateTime, nullable=False)
-    total_payment = Column(Integer, nullable=False)
     received_money = Column(Integer, nullable=True)
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
