@@ -287,7 +287,7 @@ def filter_books(category_id=None, checked_publishers=None, price_ranges=None, o
     page_size = app.config["PAGE_SIZE"]
     start = (page - 1) * page_size
     books = books.slice(start, start + page_size)
-    return books.all(),count_all_books
+    return books.all()
 
 
 # Lấy nhà xuất bản theo id của thể loại
@@ -406,6 +406,21 @@ def order_delivered(order_id, delivered_date=datetime.now()):
     save_order_sampledb(order)
     return 0
 
+def get_order_details(order_id):
+    return (Order.query
+            .join(OrderDetail, OrderDetail.order_id == Order.id)
+            .join(Book, Book.id == OrderDetail.book_id)
+            .with_entities(OrderDetail.unit_price, OrderDetail.quantity, Book.name, Book.image)
+            .filter(order_id == OrderDetail.order_id)
+            .all())
+
+def get_user_info_in_order(user_id, order_id):
+    return (User.query
+            .join(Order, User.id == Order.customer_id)
+            .join(Address, User.address_id == Address.id)
+            .filter(user_id == Order.customer_id, order_id == Order.id)
+            .with_entities(User.first_name, User.last_name, User.phone, Order.initiated_date, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
+            .first())
 
 def create_order(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
     configuration = get_configuration()
@@ -761,6 +776,27 @@ if __name__ == "__main__":
             u.address_id = random.choice(address_ids)
         db.session.commit()
 
+        # Comment
+        books = Book.query.all()
+        comments = [
+            'Great work on this project! The results are impressive and clearly show the effort put into development. The attention to detail in the implementation stands out, and it has significantly improved the user experience. Keep up the excellent work!',
+            'Consider optimizing the code for better performance. While the functionality is solid, some areas of the code could benefit from refactoring to reduce redundancy and improve efficiency. This would also make the system easier to maintain in the long run.',
+            'The documentation is clear and helpful, making it easy for others to understand how the system works. Including additional examples and potential use cases would further enhance its value, especially for new developers joining the team.',
+            'There seems to be a bug when handling edge cases, such as unexpected input formats or extreme values. It would be great to add more test cases to ensure robustness and prevent these issues from occurring in production environments.',
+            'The design is intuitive and user-friendly, making it easy for users to navigate the interface. However, it might be worth exploring additional features, such as customization options or advanced settings, to cater to a broader range of user needs.'
+        ]
+
+        user_ids = [user.id for user in users]
+        book_ids = [book.id for book in books]
+
+        for r in range(len(book_ids)):
+            review = add_review(
+                user_id=random.choice(user_ids),
+                book_id=r + 1,
+                comment=random.choice(comments),
+                rating=random.randint(1, 5)
+            )
+
         # Order
         import datetime
 
@@ -796,25 +832,3 @@ if __name__ == "__main__":
             order_paid_incash(total_payment,total_payment, order.id,
                               order.initiated_date + datetime.timedelta(hours=rand_num))
             order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))
-
-
-        # Comment
-        books = Book.query.all()
-        comments = [
-            'Great work on this project! The results are impressive and clearly show the effort put into development. The attention to detail in the implementation stands out, and it has significantly improved the user experience. Keep up the excellent work!',
-            'Consider optimizing the code for better performance. While the functionality is solid, some areas of the code could benefit from refactoring to reduce redundancy and improve efficiency. This would also make the system easier to maintain in the long run.',
-            'The documentation is clear and helpful, making it easy for others to understand how the system works. Including additional examples and potential use cases would further enhance its value, especially for new developers joining the team.',
-            'There seems to be a bug when handling edge cases, such as unexpected input formats or extreme values. It would be great to add more test cases to ensure robustness and prevent these issues from occurring in production environments.',
-            'The design is intuitive and user-friendly, making it easy for users to navigate the interface. However, it might be worth exploring additional features, such as customization options or advanced settings, to cater to a broader range of user needs.'
-        ]
-
-        user_ids = [user.id for user in users]
-        book_ids = [book.id for book in books]
-
-        for r in range(len(book_ids)):
-            review = add_review(
-                user_id=random.choice(user_ids),
-                book_id=r + 1,
-                comment=random.choice(comments),
-                rating=random.randint(1, 5)
-            )
