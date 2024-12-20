@@ -408,6 +408,21 @@ def order_delivered(order_id, delivered_date=datetime.now()):
     save_order_sampledb(order)
     return 0
 
+def get_order_details(order_id):
+    return (Order.query
+            .join(OrderDetail, OrderDetail.order_id == Order.id)
+            .join(Book, Book.id == OrderDetail.book_id)
+            .with_entities(OrderDetail.unit_price, OrderDetail.quantity, Book.name, Book.image)
+            .filter(order_id == OrderDetail.order_id)
+            .all())
+
+def get_user_info_in_order(user_id, order_id):
+    return (User.query
+            .join(Order, User.id == Order.customer_id)
+            .join(Address, User.address_id == Address.id)
+            .filter(user_id == Order.customer_id, order_id == Order.id)
+            .with_entities(User.first_name, User.last_name, User.phone, Order.initiated_date, Order.total_payment, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
+            .first())
 
 def create_order(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
     configuration = get_configuration()
@@ -449,6 +464,8 @@ def create_order_sample(customer_id, staff_id, books, payment_method_id, initial
     configuration = get_configuration()
     customer = get_user_by_id(customer_id)
     staff = get_user_by_id(staff_id)
+    # Truy xuất Address từ address_id
+    address = db.session.query(Address).filter_by(id=customer.address_id).first()
     payment_method = get_payment_method_by_id(payment_method_id)
     # create order details
     order_details = []
@@ -472,6 +489,7 @@ def create_order_sample(customer_id, staff_id, books, payment_method_id, initial
                   employee_id=staff.id,
                   total_payment=total_payment,
                   initiated_date=initial_date,
+                  delivered_at=address.id
                   )
 
     save_order_sampledb(order)
@@ -683,41 +701,7 @@ def save_user(user):
 
 if __name__ == "__main__":
     with app.app_context():
-        # Order
-        import datetime
 
-        in_cash = PaymentMethod(name='CASH')
-        internet_banking = PaymentMethod(name='BANKING')
-        staff_id = 2
-        customer_list = User.query.filter(User.id > 3)
-        book_list = Book.query.all()
-        start_date = datetime.datetime(2024, 1, 1)
-        days_increment = 0
-        for customer in customer_list:
-            random_number = random.randint(4, 7)
-            order_details = []
-            for i in range(0, random_number):
-                b = random.choice(book_list)
-                q = random.randint(1, 5)
-                f = True
-                for o in order_details:
-                    if o['id'] == b.id:
-                        o['quantity'] += q
-                        f = False
-                if f:
-                    detail = {}
-                    detail['id'] = b.id
-                    detail['quantity'] = q
-                    order_details.append(detail)
-            initial_date = start_date + datetime.timedelta(days=days_increment)
-            if days_increment > 30 * 12:
-                days_increment = 0
-            days_increment += 20
-            order = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
-            rand_num = random.randint(1, 10)
-            order_paid_incash(order.total_payment, order.id,
-                              order.initiated_date + datetime.timedelta(hours=rand_num))
-            order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))
 
         # Address
         cities = [
@@ -786,3 +770,39 @@ if __name__ == "__main__":
                 comment=random.choice(comments),
                 rating=random.randint(1, 5)
             )
+
+        # Order
+        import datetime
+
+        in_cash = PaymentMethod(name='CASH')
+        internet_banking = PaymentMethod(name='BANKING')
+        staff_id = 2
+        customer_list = User.query.filter(User.id > 3)
+        book_list = Book.query.all()
+        start_date = datetime.datetime(2024, 1, 1)
+        days_increment = 0
+        for customer in customer_list:
+            random_number = random.randint(4, 7)
+            order_details = []
+            for i in range(0, random_number):
+                b = random.choice(book_list)
+                q = random.randint(1, 5)
+                f = True
+                for o in order_details:
+                    if o['id'] == b.id:
+                        o['quantity'] += q
+                        f = False
+                if f:
+                    detail = {}
+                    detail['id'] = b.id
+                    detail['quantity'] = q
+                    order_details.append(detail)
+            initial_date = start_date + datetime.timedelta(days=days_increment)
+            if days_increment > 30 * 12:
+                days_increment = 0
+            days_increment += 20
+            order = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
+            rand_num = random.randint(1, 10)
+            order_paid_incash(order.total_payment, order.id,
+                              order.initiated_date + datetime.timedelta(hours=rand_num))
+            order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))

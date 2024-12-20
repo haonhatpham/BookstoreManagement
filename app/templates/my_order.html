@@ -1,7 +1,7 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 
-<section class="section-pagetop bg-light">
+<section class="section-pagetop bg-light" style="margin-top: 100px; padding:40px">
     <div class="container">
         <h2 class="title-page">Đơn hàng</h2>
     </div> <!-- container.// -->
@@ -47,7 +47,7 @@
                                             {% endif %}
                                         </td>
                                         <td class="text-center text-nowrap">
-                                            <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
+                                            <a class="btn btn-primary me-2" href="order_details?order_id={{order.id}}" role="button">Xem đơn hàng</a>
                                         </td>
                                     </tr>
                                 {% endfor %}

@@ -653,6 +653,17 @@ def myOrder():
                            quantity_order=quantity_order
                            )
 
+@app.route("/order_details")
+@login_required
+def order_details():
+    order_id = request.args.get("order_id")
+    order_details = dao.get_order_details(order_id)
+    order = dao.get_user_info_in_order(current_user.id, order_id)
+    print(order_details)
+    print(order)
+    return render_template("order_details.html", order_details=order_details, order=order, order_id = order_id)
+
+
 @app.route("/api/order/cash/pay", methods = ["POST"])
 def intable_pay_order():
     try:
@@ -729,13 +740,15 @@ def checkout():
             if not address or address["city"] != city or address["district"] != district or address["ward"] != ward or \
                     address["details"] != details:
                 # Tạo địa chỉ mới nếu có thay đổi
-                new_address=dao.add_address(city=city, district=district, ward=ward, details=details)
-
+                new_address=dao.add_address(city=city, district=district, ward=ward, street=details)
 
                 # Cập nhật `address_id` cho user
-                current_user.address_id = new_address.id
+                current_user.address_id = new_address
+                order.delivered_at = new_address
                 db.session.commit()
-
+            else:
+                order.delivered_at = current_user.address_id
+                db.session.commit()
                 # Cập nhật số điện thoại nếu cần
             if current_user.phone != phone_number:
                 current_user.phone = phone_number
