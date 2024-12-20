@@ -419,7 +419,7 @@ def get_user_info_in_order(user_id, order_id):
             .join(Order, User.id == Order.customer_id)
             .join(Address, User.address_id == Address.id)
             .filter(user_id == Order.customer_id, order_id == Order.id)
-            .with_entities(User.first_name, User.last_name, User.phone, Order.initiated_date, Order.total_payment, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
+            .with_entities(User.first_name, User.last_name, User.phone, Order.initiated_date, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
             .first())
 
 def create_order(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):

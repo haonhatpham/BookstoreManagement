@@ -720,9 +720,9 @@ def order_details():
     order_id = request.args.get("order_id")
     order_details = dao.get_order_details(order_id)
     order = dao.get_user_info_in_order(current_user.id, order_id)
-    print(order_details)
     print(order)
-    return render_template("order_details.html", order_details=order_details, order=order, order_id = order_id)
+    total_payment = dao.calculate_order_total(order_id)  # Tính tổng tiền cho đơn hàng
+    return render_template("order_details.html", order_details=order_details, order=order, order_id = order_id,total_payment=total_payment)
 # @app.route("/api/order/cash/pay", methods = ["POST"])
 # def intable_pay_order():
 #     try:
