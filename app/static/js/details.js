@@ -1,12 +1,10 @@
 
-
 if (window.location.pathname === '/details') {
     //    Thêm vào danh sách yêu thích
     document.querySelector("#favourite-form").addEventListener("click", function (event) {
             event.preventDefault(); // Ngăn không reload trang
 
             const bookId = this.getAttribute("data-id"); // Lấy book_id từ nút
-
             fetch("/details?book_id=" + bookId, {
                 method: "POST",
                 headers: {

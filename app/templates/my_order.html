@@ -1,7 +1,7 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 
-<section class="section-pagetop bg-light">
+<section class="section-pagetop bg-light" style="margin-top: 100px; padding:40px">
     <div class="container">
         <h2 class="title-page">Đơn hàng</h2>
     </div> <!-- container.// -->
@@ -28,29 +28,30 @@
                             </tr>
                             </thead>
                             <tbody>
-                                {% for order in orders %}
-                                    <tr>
-                                        <th scope="row">{{ order.id }}</th>
-                                        <td>{{ order.initiated_date.strftime('%Y/%m/%d') }}</td>
-                                        <td>{{order.id}}</td>
-                                        <td>{{ "{:,.0f}".format(order.total_payment) }}đ</td>
-                                        <td> {% if order.paid_date is none and order.delivered_date is none and
-                                            order.cancel_date <
-                                            datetime.now() %}
-                                            CANCELLED
-                                            {% elif order.cancel_date > datetime.now() and order.paid_date is none %}
-                                            UNPAID
-                                            {% elif order.paid_date is not none and order.delivered_date is none %}
-                                            DELIVERING
-                                            {% elif order.delivered_date is not none %}
-                                            DELIVERED
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-center text-nowrap">
-                                            <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
+
+                            {% for item in orders_with_total %}
+                            <tr>
+                                <th scope="row">{{ item.order.id }}</th>
+                                <td>{{ item.order.initiated_date.strftime('%Y/%m/%d') }}</td>
+                                <td>{{ item.order.id }}</td>
+                                <td>{{ "{:,.0f}".format(item.total_payment) }}đ</td>
+                                <td>
+                                    {% if (item.order.paid_date is none and item.order.delivered_date is none and
+                                    item.order.cancel_date < datetime.now()) or (item.order.cancel_date == item.order.updated_at) %}
+                                    <span class="badge bg-danger">Hủy đơn hàng</span>
+                                    {% elif item.order.cancel_date > datetime.now() and item.order.paid_date is none %}
+                                    <span class="badge bg-primary text-white">Chờ thanh toán</span>
+                                    {% elif item.order.paid_date is not none and item.order.delivered_date is none %}
+                                    <span class="badge bg-warning text-dark">Đang giao hàng</span>
+                                    {% elif item.order.delivered_date is not none %}
+                                    <span class="badge bg-success">Giao hàng thành công</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <a class="btn btn-primary me-2" href="/order_details?order_id={{item.order.id}}" role="button">Xem đơn hàng</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -61,7 +62,7 @@
                         <li class="page-item">
                             <a class="page-link"
                                href="?page={{ current_page - 1 }}"
-                               {% if current_page == 1 %} style="pointer-events: none; opacity: 0.5;" {% endif %}>
+                               {% if current_page== 1 %} style="pointer-events: none; opacity: 0.5;" {% endif %}>
                                 Trang trước
                             </a>
                         </li>
@@ -74,7 +75,7 @@
                         <li class="page-item">
                             <a class="page-link"
                                href="?page={{ current_page + 1 }}"
-                               {% if current_page == pages %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
+                               {% if current_page== pages %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
                                 Trang sau
                             </a>
                         </li>

@@ -54,7 +54,8 @@ class Address(BaseModel):
     details = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
 
     users = relationship("User", backref='Address', lazy=True)
-    order = relationship("Order", backref="Address", lazy=True)
+    order = relationship("Order",backref="Address",lazy=True)
+
 
 
 class User(BaseModel, UserMixin):
@@ -91,11 +92,11 @@ class Order(BaseModel):
     employee_id = Column(ForeignKey(User.id), index=True, nullable=False)
     initiated_date = Column(DateTime, nullable=False)
     cancel_date = Column(DateTime, nullable=False)
-    total_payment = Column(Integer, nullable=False)
     received_money = Column(Integer, nullable=True)
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
-    delivered_at = Column(ForeignKey(Address.id), index=True, nullable=True)
+
+    delivered_at = Column(ForeignKey(Address.id), index=True,nullable=True)
     payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False, default=1)
 
     books = relationship('OrderDetail', backref='order')
@@ -406,8 +407,8 @@ if __name__ == '__main__':
         db.session.commit()
 
         # payment method
-        in_cash = PaymentMethod(name='CASH')
-        internet_banking = PaymentMethod(name='BANKING')
+        in_cash = PaymentMethod(name='Tiền mặt')
+        internet_banking = PaymentMethod(name='Chuyển khoản')
         db.session.add_all([in_cash, internet_banking])
         db.session.commit()
 

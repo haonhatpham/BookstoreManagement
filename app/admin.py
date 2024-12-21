@@ -155,6 +155,8 @@ class MyAdminView(AdminIndexView):
         stats = dao.count_product_by_cate()
         return self.render('admin/index.html', stats=stats)
 
+class OrderView(AuthenticatedView):
+    column_sortable_list = ['initiated_date']
 
 
 class OrderView(AuthenticatedView):
