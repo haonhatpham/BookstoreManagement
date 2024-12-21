@@ -8,6 +8,8 @@ from app.utils import cart_stats
 from app.vnpay.form import PaymentForm
 from app.vnpay.vnpay import Vnpay
 import datetime
+import logging
+
 
 @app.route("/")
 def index():
@@ -80,7 +82,7 @@ def login_process():
         if u:
             session['user_id'] = u.id
             login_user(user=u)
-            n=request.args.get('next')
+            n = request.args.get('next')
             return redirect(n if n else '/')
         else:
             err_msg = 'Tên đăng nhập hoặc mật khẩu không chính xác'
@@ -139,7 +141,7 @@ def details():
             avg_rating += r.rating
         avg_rating /= reviews_numbers
     else:
-        avg_rating=0
+        avg_rating = 0
 
     # Xử lý thêm vào danh sách yêu thích
     if request.method == 'POST':
@@ -168,7 +170,6 @@ def details():
     )
 
 
-
 @app.route('/post_comment', methods=['POST', 'GET'])
 @login_required
 def post_comment():
@@ -184,7 +185,7 @@ def post_comment():
         return jsonify({'error': 'Hãy đăng nhập để gửi bình luận. '}), 400
     try:
         book_id = int(data.get('book_id'))
-        review = dao.add_review(current_user.id, book_id, comment, rating )
+        review = dao.add_review(current_user.id, book_id, comment, rating)
 
         if review:
             return jsonify({'message': 'Bình luận đã được gửi.'}), 200
@@ -197,7 +198,6 @@ def post_comment():
 
 @app.route('/get_comments/<int:book_id>')
 def get_comments(book_id):
-
     reviews = dao.load_review(book_id)
 
     comments_list = [{
@@ -206,7 +206,7 @@ def get_comments(book_id):
         'created_at': review.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         'rating': review.rating,
         'user_id': review.user_id,
-        'id':review.id
+        'id': review.id
     } for review in reviews]
 
     response_data = {
@@ -219,7 +219,6 @@ def get_comments(book_id):
 
 @app.route('/edit_review', methods=['POST'])
 def edit_review():
-
     data = request.json
 
     review_id = data.get('review_id')
@@ -250,6 +249,7 @@ def delete_review():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+
 @login_required
 @app.route('/account')
 def account():
@@ -267,12 +267,12 @@ def account():
                            cart_quantity=cart_quantity,
                            received_count=received_count
                            )
-
 @login_required
 @app.route('/favourite', methods=['GET', 'POST'])
 def favourite():
     favourite_books = current_user.favourite_books
     return render_template('favourite.html', favourite_books=favourite_books)
+
 
 @login_required
 @app.route('/get_favourites_json', methods=['GET', 'POST'])
@@ -315,12 +315,14 @@ def delete_favourite():
     except ValueError:
         return jsonify({'error': 'ID sách không hợp lệ.'}), 400
 
+
 @app.route('/change_password')
 @login_required
 def change_password():
     return render_template('change_password.html')
 
-@app.route('/api/change_passwd', methods = ['POST'])
+
+@app.route('/api/change_passwd', methods=['POST'])
 @login_required
 def change_passwd():
     current_password = request.form.get('current_password')
@@ -339,11 +341,13 @@ def change_passwd():
     except Exception as e:
         return jsonify({'error': 'Có lỗi xảy ra, vui lòng thử lại!'}), 500
 
+
 @app.route('/manage_info')
 @login_required
 def manage_info():
     address = dao.load_user_address(current_user.id)
     return render_template('manage_info.html', current_user=current_user, address=address)
+
 
 @app.route('/manage_user_info', methods=['POST'])
 @login_required
@@ -394,8 +398,9 @@ def add_to_cart():
         }
         message = f"Đã thêm thành công {quantity} sản phẩm {name} vào giỏ hàng!"
     session[key] = cart
-    return jsonify({'message':message,
-                    'cart_stats':utils.cart_stats(cart=cart)})
+    return jsonify({'message': message,
+                    'cart_stats': utils.cart_stats(cart=cart)})
+
 
 @app.route('/api/cart/<book_id>', methods=['put'])
 def update_cart(book_id):
@@ -407,6 +412,7 @@ def update_cart(book_id):
 
     session[key] = cart
     return jsonify(utils.cart_stats(cart=cart))
+
 
 @app.route('/api/cart/<book_id>', methods=['delete'])
 def delete_cart(book_id):
@@ -437,11 +443,12 @@ def delete_cart(book_id):
 
 @app.context_processor
 def common_attr():
-    categories=dao.get_category()
+    categories = dao.get_category()
     return {
-        'categories':categories,
+        'categories': categories,
         'cart': utils.cart_stats(session.get(app.config['CART_KEY']))
     }
+
 
 @app.route('/category', methods=['GET'])
 def category():
@@ -539,16 +546,16 @@ def all_categories():
         current_page=int(page),
     )
 
-
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
     username = request.form.get('username')
     password = request.form.get('password')
-    allowed_roles = ["Admin", "Customer", "Sales", "Storekeeper"] #Cac role co san
+    allowed_roles = ["Admin", "Customer", "Sales", "Storekeeper"]  # Cac role co san
     user = dao.auth_user(username=username, password=password, role=allowed_roles)
     if user:
         login_user(user)
     return redirect('/admin')
+
 
 @app.route("/search", methods=['GET'])
 def live_search():
@@ -556,7 +563,8 @@ def live_search():
     if query:
         try:
             results = dao.search(query)
-            books = [{"name": book.name, "price": book.standard_price, "id": book.id, "image": book.image} for book in results]
+            books = [{"name": book.name, "price": book.standard_price, "id": book.id, "image": book.image} for book in
+                     results]
             return jsonify({"success": True, "data": books})
 
         except Exception as ex:
@@ -589,7 +597,7 @@ def api_pay():
             'vnp_TmnCode': app.config["VNPAY_TMN_CODE"],  # Kiểm tra mã TMN code
             'vnp_Amount': amount * 100,  # Nhân 100 để đưa về VNĐ
             'vnp_CurrCode': 'VND',
-            'vnp_TxnRef': order_id,      # Mã đơn hàng duy nhất
+            'vnp_TxnRef': order_id,  # Mã đơn hàng duy nhất
             'vnp_OrderInfo': order_desc,
             'vnp_OrderType': 'billpayment',
             'vnp_Locale': 'vn',
@@ -612,6 +620,7 @@ def api_pay():
     except Exception as e:
         return jsonify({'status': 500, 'message': str(e)})
 
+
 @app.route("/statistic", methods=['GET'])
 def statistic():
     month = int(request.args.get("month"))
@@ -625,18 +634,17 @@ def statistic():
         data = utils.statistic_revenue()
     return data
 
+
 @app.route('/save_import_ticket', methods=['POST'])
 def save_import_ticket():
     data = request.json
-    role_id=current_user.id
-    # Lấy thông tin từ request
-    employee_id = data.get('employee_id')
+    employee_id = current_user.id
     import_date = data.get('import_date')
     details = data.get('details')
-
     if not employee_id or not import_date or not details:
-        return jsonify({'error': 'Dữ liệu không hợp lệ!'}), 400
+        return jsonify({'error': 'Dữ liệu không hợp lệ!'})
     # Gọi dao để lưu phiếu nhập
+
     ticket_id = dao.save_import_ticket(
         employee_id=employee_id,
         import_date=import_date,
@@ -709,6 +717,7 @@ def myOrder():
                            pages=math.ceil(quantity_order / page_size),
                            quantity_order=quantity_order
                            )
+
 
 @app.route("/order_details")
 @login_required
@@ -893,4 +902,5 @@ def cancel_order():
 if __name__ == '__main__':
     with app.app_context():
         from app import admin
+
         app.run(debug=True)

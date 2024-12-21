@@ -1,8 +1,9 @@
 {% extends 'admin/master.html' %}
 
 {% block body %}
-
-{% if current_user.is_authenticated and  current_user.role.name == "Admin" %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+{% if current_user.is_authenticated and  current_user.role.name in ["Admin","Sales","Storekeeper"] %}
 <h1 class="text-center text-success">CHÀO MỪNG BẠN ĐẾN TRANG QUẢN TRỊ</h1>
 <h2 class="text-secondary"> Chào {{current_user.username }}
 <!--    <img style="width=300px "src="{{ current_user.avatar_file }}" alt="#" class="home__img">-->

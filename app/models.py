@@ -1,4 +1,3 @@
-
 from enum import Enum as StatusEnum
 from app import db, app
 from flask_login import UserMixin
@@ -58,6 +57,7 @@ class Address(BaseModel):
     order = relationship("Order",backref="Address",lazy=True)
 
 
+
 class User(BaseModel, UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
@@ -72,7 +72,7 @@ class User(BaseModel, UserMixin):
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
 
     role_id = Column(ForeignKey(Role.id), nullable=False, index=True)
-    address_id = Column(ForeignKey(Address.id), index=True,nullable=True)
+    address_id = Column(ForeignKey(Address.id), index=True, nullable=True)
 
     customer_orders = relationship("Order", backref="customer", lazy=True, foreign_keys='Order.customer_id')  # 1-n
     employee_orders = relationship("Order", backref="employee", lazy=True, foreign_keys='Order.employee_id')  # 1-n
@@ -95,6 +95,7 @@ class Order(BaseModel):
     received_money = Column(Integer, nullable=True)
     paid_date = Column(DateTime, nullable=True)
     delivered_date = Column(DateTime, nullable=True, default=None)
+
     delivered_at = Column(ForeignKey(Address.id), index=True,nullable=True)
     payment_method_id = Column(ForeignKey('payment_method.id'), index=True, nullable=False, default=1)
 
@@ -423,14 +424,13 @@ if __name__ == '__main__':
             'Ali', 'Mason', 'Mitchell', 'Rose', 'Davis', 'Davies', 'Rodriguez', 'Cox', 'Alexander'
         ]
 
+
         def random_birthday(start_year=1980, end_year=2005):
             start_date = datetime(start_year, 1, 1)
             end_date = datetime(end_year, 12, 31)
             delta = end_date - start_date
             random_days = random.randint(0, delta.days)
             return (start_date + timedelta(days=random_days)).strftime('%Y-%m-%d')
-
-
 
 
         for i in range(len(first_names)):
@@ -482,3 +482,62 @@ if __name__ == '__main__':
                 db.session.add(new_rule)
 
             db.session.commit()
+        permissions = [
+            {"name": "view_admin_panel", "display_name": "Truy cập trang quản trị"},
+            {"name": "manage_users", "display_name": "Quản lý người dùng"},
+            {"name": "manage_books", "display_name": "Quản lý sách"},
+            {"name": "manage_orders", "display_name": "Quản lý đơn hàng"},
+            {"name": "manage_categories", "display_name": "Quản lý danh mục"},
+            {"name": "view_reports", "display_name": "Xem báo cáo"},
+            {"name": "create_import_slip", "display_name": "Lập phiếu nhập"},
+            {"name": "create_order", "display_name": "Lập hóa đơn"},
+        ]
+
+        # Thêm các quyền vào DB
+        for perm in permissions:
+            p = Permission.query.filter_by(name=perm["name"]).first()
+            if not p:
+                p = Permission(name=perm["name"], display_name=perm["display_name"])
+                db.session.add(p)
+
+        db.session.commit()
+
+        admin_role = Role.query.filter_by(name="Admin").first()
+        # Lấy tất cả các quyền
+        all_permissions = Permission.query.all()
+        if admin_role:
+            for perm in all_permissions:
+                # Kiểm tra xem quyền đã được gán hay chưa
+                existing = RoleHasPermission.query.filter_by(role_id=admin_role.id, permission_id=perm.id).first()
+                if not existing:
+                    # Nếu chưa, thêm quyền vào vai trò
+                    new_role_permission = RoleHasPermission(role_id=admin_role.id, permission_id=perm.id)
+                    db.session.add(new_role_permission)
+
+        # Lưu thay đổi vào database
+        db.session.commit()
+        # Gán quyền "create_order" cho sales_role
+        sales_role = Role.query.filter_by(name="Sales").first()
+        storekeeper = Role.query.filter_by(name="Storekeeper").first()
+
+        create_order_perm = Permission.query.filter_by(name="create_order").first()
+        create_import_slip_perm = Permission.query.filter_by(name="create_import_slip").first()
+
+        # Gán quyền cho Sales Role
+        if sales_role and create_order_perm:
+            existing = RoleHasPermission.query.filter_by(role_id=sales_role.id,
+                                                         permission_id=create_order_perm.id).first()
+            if not existing:
+                new_role_permission = RoleHasPermission(role_id=sales_role.id, permission_id=create_order_perm.id)
+                db.session.add(new_role_permission)
+
+        # Gán quyền cho Storekeeper Role
+        if storekeeper and create_import_slip_perm:
+            existing = RoleHasPermission.query.filter_by(role_id=storekeeper.id,
+                                                         permission_id=create_import_slip_perm.id).first()
+            if not existing:
+                new_role_permission = RoleHasPermission(role_id=storekeeper.id,
+                                                        permission_id=create_import_slip_perm.id)
+                db.session.add(new_role_permission)
+        # Lưu vào database
+        db.session.commit()

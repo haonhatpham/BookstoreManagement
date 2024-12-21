@@ -65,6 +65,7 @@
 
                     <div class="card-body border-top">
                         {% if current_user.is_authenticated %}
+
                             {% if 'cart' in session and session['cart'] %}
                                 <a class="icon-link icon-link-hover btn btn-primary float-end" href="{{ url_for('checkout') }}">
                                     Thanh toán
