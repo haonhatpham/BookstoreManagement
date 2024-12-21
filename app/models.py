@@ -406,8 +406,8 @@ if __name__ == '__main__':
         db.session.commit()
 
         # payment method
-        in_cash = PaymentMethod(name='CASH')
-        internet_banking = PaymentMethod(name='BANKING')
+        in_cash = PaymentMethod(name='Tiền mặt')
+        internet_banking = PaymentMethod(name='Chuyển khoản')
         db.session.add_all([in_cash, internet_banking])
         db.session.commit()
 

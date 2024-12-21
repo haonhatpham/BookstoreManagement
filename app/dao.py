@@ -287,7 +287,7 @@ def filter_books(category_id=None, checked_publishers=None, price_ranges=None, o
     page_size = app.config["PAGE_SIZE"]
     start = (page - 1) * page_size
     books = books.slice(start, start + page_size)
-    return books.all()
+    return books.all(),count_all_books
 
 
 # Lấy nhà xuất bản theo id của thể loại
@@ -378,7 +378,7 @@ def get_order_by_id(order_id):
 
 
 def get_orders_by_customer_id(customer_id,page=1):
-    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc())
+    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.desc())
     page_size = 4
     start = (page - 1) * page_size
     query = query.slice(start, start + page_size)
@@ -410,7 +410,8 @@ def get_order_details(order_id):
     return (Order.query
             .join(OrderDetail, OrderDetail.order_id == Order.id)
             .join(Book, Book.id == OrderDetail.book_id)
-            .with_entities(OrderDetail.unit_price, OrderDetail.quantity, Book.name, Book.image)
+            .with_entities(OrderDetail.unit_price, OrderDetail.quantity,
+                           Book.name, Book.image, Book.id, Book.discount)
             .filter(order_id == OrderDetail.order_id)
             .all())
 
@@ -419,7 +420,7 @@ def get_user_info_in_order(user_id, order_id):
             .join(Order, User.id == Order.customer_id)
             .join(Address, User.address_id == Address.id)
             .filter(user_id == Order.customer_id, order_id == Order.id)
-            .with_entities(User.first_name, User.last_name, User.phone, Order.initiated_date, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
+            .with_entities(User.id, User.first_name, User.last_name, User.phone, Order.initiated_date, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
             .first())
 
 def create_order(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
@@ -511,6 +512,8 @@ def order_paid_incash(total_payment,received_money, order_id, paid_date=datetime
 
 def order_paid_by_vnpay(order_id, bank_transaction_number, vnpay_transaction_number, bank_code, card_type,
                         secure_hash, received_money, paid_date):
+    print(paid_date)
+    print(received_money)
     order = get_order_by_id(order_id)
     if not order or order.paid_date:
         return -1
@@ -726,6 +729,20 @@ def calculate_order_total(order_id):
     total_payment = sum(detail.quantity * detail.unit_price for detail in order_details)
 
     return int(total_payment)
+
+def cancel_order(order_id, user_id):
+    order = Order.query.filter_by(id=order_id, customer_id=user_id).first()
+    if order:
+        order.cancel_date = datetime.now()
+        db.session.commit()
+        return True
+    return False
+
+def get_payment_method_by_order_id(order_id):
+    order = Order.query.filter(Order.id == order_id).first()  # Tìm đơn hàng
+    if order and order.payment_method_id:
+        return PaymentMethod.query.filter(PaymentMethod.id == order.payment_method_id).first()  # Tìm phương thức thanh toán
+    return None
 
 if __name__ == "__main__":
     with app.app_context():

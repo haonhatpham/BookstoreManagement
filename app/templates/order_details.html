@@ -2,100 +2,120 @@
 {% block content %}
 
 
-  <section class="section-pagetop bg-light"  style="margin-top: 100px; padding:40px">
+<section class="section-pagetop bg-light" style="margin-top: 100px; padding:40px">
     <div class="container">
-      <h2 class="title-page">Thông tin đơn hàng #{{order_id}}</h2>
+        <h2 class="title-page">Thông tin đơn hàng #{{order_id}}</h2>
     </div> <!-- container.// -->
-  </section> <!-- section-pagetop.// -->
+</section> <!-- section-pagetop.// -->
 
-  <section class="section-content padding-y">
+<section class="section-content padding-y">
     <div class="container">
-      <div class="row">
+        <div class="row">
 
-        {% block aside %}
-        {% include 'layout/user_info_aside.html' %}
-        {% endblock %}
+            {% block aside %}
+            {% include 'layout/user_info_aside.html' %}
+            {% endblock %}
 
-        <main class="col-md-9">
+            <main class="col-md-9">
 
-          <article class="card mb-4">
+                <article class="card mb-4">
 
-            <header class="card-header">
-              <strong class="d-inline-block me-4">Mã đơn hàng: {{order_id}}</strong>
-              <span>Ngày mua: {{ order.initiated_date.strftime('%d/%m/%Y') }}</span>
-            </header> <!-- card-header.// -->
+                    <header class="card-header">
+                        <strong class="d-inline-block me-4">Mã đơn hàng: {{order_id}}</strong>
+                        <span>Ngày mua: {{ order.initiated_date.strftime('%d/%m/%Y') }}</span>
+                    </header> <!-- card-header.// -->
 
-            <div class="card-body pb-0">
-              <div class="row">
-                <div class="col-lg-8">
-                  <h6 class="text-muted">Thông tin người nhận</h6>
-                  <p class="lh-lg">
-                    {{order.last_name + ' ' + order.first_name}} <br>
-                    Số điện thoại: {{order.phone}} <br>
-                    Địa chỉ: {{order.details + ", " +order.ward+ ", " +order.district + ", " +order.city}}
-                  </p>
-                </div>
-                <div class="col-lg-4">
-                  <h6 class="text-muted">Hình thức thanh toán</h6>
-                  <span class="text-success">
-                    <i class="fab fa-lg fa-cc-visa"></i>
-                    Giao tiêu chuẩn
-                  </span>
-                  <p class="lh-lg">
-                    Tạm tính:{{  "{:,.0f}".format(total_payment) }}₫ <br>
-                    Phí vận chuyển: 30,000₫ <br>
-                    <strong>Tổng cộng:{{  "{:,.0f}".format(total_payment+ 30000)  }}₫</strong>
-                  </p>
-                </div>
-              </div> <!-- row.// -->
-            </div> <!-- card-body.// -->
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h6 class="text-muted">Thông tin người nhận</h6>
+                                <p class="lh-lg">
+                                    {{ user_order_info.last_name + ' ' + user_order_info.first_name}} <br>
+                                    Số điện thoại: {{user_order_info.phone}} <br>
+                                    Địa chỉ: {{user_order_info.details + ", " +user_order_info.ward+ ", " +user_order_info.district + ", "
+                                    +user_order_info.city}}
+                                </p>
+                            </div>
+                            <div class="col-lg-4">
+                                <h6 class="text-muted">Hình thức thanh toán</h6>
+                                <span class="text-success">{{ payment_method.name }}
+                                </span>
+                                <p class="lh-lg">
+                                    Tạm tính: {{ "{:,.0f}".format(total_payment) }}₫ <br>
+                                    <strong>Tổng cộng: {{ "{:,.0f}".format(total_payment+ 30000) }}₫</strong>
+                                </p>
+                            </div>
+                        </div> <!-- row.// -->
+                    </div> <!-- card-body.// -->
 
-            <hr class="m-0">
+                    <hr class="m-0">
 
-            <div class="table-responsive">
-              <table class="cart-table table table-borderless">
-                <thead class="text-muted">
-                  <tr class="small text-uppercase">
-                    <th scope="col" style="min-width: 280px;">Sản phẩm</th>
-                    <th scope="col" width="150" style="min-width: 150px;">Giá</th>
-                    <th scope="col" width="150" style="min-width: 150px;">Số lượng</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {% for book in order_details %}
-                  <tr>
-                    <td>
-                      <figure class="itemside">
-                        <div class="float-start me-3"><img src="{{book.image}}" style="width: 100px; height: 100px; object-fit: scale-down; margin-right: 10px;"></div>
-                        <figcaption class="info">
-                          <a href="#" class="title">{{book.name}}</a>
-                        </figcaption>
-                      </figure>
-                    </td>
-                    <td>
-                      <div class="price-wrap">
-                        <span class="price">{{  "{:,.0f}".format(book.unit_price) }}₫</span>
-                      </div>
-                    </td>
-                    <td>
-                      {{book.quantity}}
-                    </td>
-                  </tr>
-                {%endfor%}
-                </tbody>
-              </table>
-            </div> <!-- table.responsive-md.// -->
+                    <div class="table-responsive">
+                        <table class="cart-table table table-borderless">
+                            <thead class="text-muted">
+                            <tr class="small text-uppercase">
+                                <th scope="col" style="min-width: 280px;">Sản phẩm</th>
+                                <th scope="col" style="min-width: 150px;">Giá</th>
+                                <th scope="col" style="min-width: 150px;">Số lượng</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for book in order_details %}
+                            <tr>
+                                <td>
+                                    <figure class="itemside">
+                                        <div class="float-start me-3"><img src="{{book.image}}"
+                                                                           style="width: 100px; height: 100px; object-fit: scale-down; margin-right: 10px;">
+                                        </div>
+                                        <figcaption class="info">
+                                            <a href="/details?book_id={{ book.id }}" class="title">{{ book.name }}</a>
+                                        </figcaption>
+                                    </figure>
+                                </td>
+                                <td>
+                                    <div class="price-wrap">
+                                        <div>
+                                            <span class="price">{{ "{:,.0f}".format(book.unit_price - (book.unit_price * book.discount) / 100)  }}₫</span>
+                                            {% if book.discount != 0 %}
+                                            <span class="badge bg-info">-{{ book.discount }}%</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if book.discount != 0 %}
+                                        <small class="text-muted text-decoration-line-through">{{
+                                            "{:,.0f}".format(book.unit_price) }}₫</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {{book.quantity}}
+                                </td>
+                            </tr>
+                            {%endfor%}
+                            </tbody>
+                        </table>
+                    </div> <!-- table.responsive-md.// -->
 
-            <div class="card-footer py-3">
-              <a href="#" class="btn btn-primary me-2">Theo dõi đơn hàng</a>
-              <a href="#" class="btn btn-danger">Hủy đơn hàng</a>
-            </div> <!-- card-footer.// -->
+                    <div class="card-footer py-3">
+                        <button type="submit"
+                          {% if order.delivered_date is not none or order.updated_at == order.cancel_date %} disabled {% endif %}
+                          class="btn btn-danger"
+                          onclick="cancelOrder({{ order_id }})" > Hủy đơn hàng
+                        </button>
+                        {% if payment_method.name == "Chuyển khoản" and order.paid_date is none %}
+                        <button>
+                            <a href="{{ url_for('process_vnpay', order_id=order_id, user_id=user_order_info.id) }}"
+                               class="btn btn-primary ms-2">
+                                Thanh toán ngay
+                            </a>
+                        </button>
+                        {% endif %}
+                    </div> <!-- card-footer.// -->
 
-          </article>
+                </article>
 
-        </main> <!-- col.// -->
+            </main> <!-- col.// -->
 
-      </div> <!-- row.// -->
+        </div> <!-- row.// -->
     </div> <!-- container.// -->
-  </section> <!-- section-content.// -->
+</section> <!-- section-content.// -->
 {% endblock %}

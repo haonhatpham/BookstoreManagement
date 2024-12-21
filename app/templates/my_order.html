@@ -36,15 +36,15 @@
                                 <td>{{ item.order.id }}</td>
                                 <td>{{ "{:,.0f}".format(item.total_payment) }}đ</td>
                                 <td>
-                                    {% if item.order.paid_date is none and item.order.delivered_date is none and
-                                    item.order.cancel_date < datetime.now() %}
-                                    CANCELLED
+                                    {% if (item.order.paid_date is none and item.order.delivered_date is none and
+                                    item.order.cancel_date < datetime.now()) or (item.order.cancel_date == item.order.updated_at) %}
+                                    <span class="badge bg-danger">Hủy đơn hàng</span>
                                     {% elif item.order.cancel_date > datetime.now() and item.order.paid_date is none %}
-                                    UNPAID
+                                    <span class="badge bg-primary text-white">Chờ thanh toán</span>
                                     {% elif item.order.paid_date is not none and item.order.delivered_date is none %}
-                                    DELIVERING
+                                    <span class="badge bg-warning text-dark">Đang giao hàng</span>
                                     {% elif item.order.delivered_date is not none %}
-                                    DELIVERED
+                                    <span class="badge bg-success">Giao hàng thành công</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center text-nowrap">

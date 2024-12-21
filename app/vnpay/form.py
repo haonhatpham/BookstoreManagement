@@ -5,7 +5,7 @@ from wtforms.validators import Length
 
 class PaymentForm(FlaskForm):
     order_id = StringField("Order_id", validators=[Length(min=1, max=250)])
-    order_type = StringField("Order_type", validators=[Length(min=1, max=20)], default="Bill payment")
+    order_type = StringField("Order_type", validators=[Length(min=1, max=20)], default="Hóa đơn thanh toán")
     amount = IntegerField("Amount")
     order_desc = StringField("Description", validators=[Length(min=1, max=100)])
     bank_code = SelectField("Bank_code", choices=[("NCB", "NCB"), ("AGRIBANK", "Agribank"),
