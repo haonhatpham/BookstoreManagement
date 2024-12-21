@@ -539,11 +539,6 @@ def all_categories():
         current_page=int(page),
     )
 
-@app.route('/order')
-def order():
-    return render_template('order.html')
-
-
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
@@ -662,6 +657,7 @@ def payment_return():
         vnp_BankTranNo = request.args.get("vnp_BankTranNo")
         vnp_TransactionNo = request.args.get('vnp_TransactionNo')
         vnp_ResponseCode = request.args.get('vnp_ResponseCode')
+        print(vnp_ResponseCode)
         vnp_PayDate = request.args.get('vnp_PayDate')
         vnp_BankCode = request.args.get('vnp_BankCode')
         vnp_CardType = request.args.get('vnp_CardType')
@@ -672,24 +668,24 @@ def payment_return():
                                           vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
                                           card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
                                           paid_date=vnp_PayDate)
-                return render_template("vnpay/payment_return.html", title="Payment result",
-                                       result="Success", order_id=order_id,
+                return render_template("vnpay/payment_return.html", title="Kết quả giao dịch",
+                                       result="Thành công", order_id=order_id,
                                        amount=amount,
                                        order_desc=order_desc,
                                        vnp_TransactionNo=vnp_TransactionNo,
                                        vnp_ResponseCode=vnp_ResponseCode)
             else:
-                return render_template("vnpay/payment_return.html", title="Payment result",
-                                       result="Error", order_id=order_id,
+                return render_template("vnpay/payment_return.html", title="Kết quả giao dịch",
+                                       result="Lỗi", order_id=order_id,
                                        amount=amount,
                                        order_desc=order_desc,
                                        vnp_TransactionNo=vnp_TransactionNo,
                                        vnp_ResponseCode=vnp_ResponseCode)
         else:
             return render_template("vnpay/payment_return.html",
-                                   title="Payment result", result="Error", order_id=order_id, amount=amount,
+                                   title="Kết quả giao dịch", result="Lỗi", order_id=order_id, amount=amount,
                                    order_desc=order_desc, vnp_TransactionNo=vnp_TransactionNo,
-                                   vnp_ResponseCode=vnp_ResponseCode, msg="Wrong checksum")
+                                   vnp_ResponseCode=vnp_ResponseCode, msg="Sai checksum")
     else:
         return render_template("vnpay/payment_return.html", title="Kết quả thanh toán", result="")
 
@@ -718,11 +714,14 @@ def myOrder():
 @login_required
 def order_details():
     order_id = request.args.get("order_id")
+    order=dao.get_order_by_id(order_id=order_id)
     order_details = dao.get_order_details(order_id)
-    order = dao.get_user_info_in_order(current_user.id, order_id)
-    print(order)
+    payment_method= dao.get_payment_method_by_order_id(order_id)
+    user_info = dao.get_user_info_in_order(current_user.id, order_id)
+
     total_payment = dao.calculate_order_total(order_id)  # Tính tổng tiền cho đơn hàng
-    return render_template("order_details.html", order_details=order_details, order=order, order_id = order_id,total_payment=total_payment)
+    return render_template("order_details.html", order_details=order_details, user_order_info=user_info, order_id = order_id,total_payment=total_payment,order=order,
+                           datetime=datetime.datetime,payment_method=payment_method)
 # @app.route("/api/order/cash/pay", methods = ["POST"])
 # def intable_pay_order():
 #     try:
@@ -871,9 +870,25 @@ def process_vnpay():
             return redirect(url_for("checkout"))
         form.order_id.data = order.id
         form.amount.data = dao.calculate_order_total(order.id)
-        form.order_desc.data = "%s pay for bookstore online shopping" % (
+        form.order_desc.data = "%s thanh toán online cho cửa hàng bookstore3h" % (
             user.last_name+ user.first_name)
         return render_template("vnpay/payment.html", title="Kiểm tra thông tin", form=form)
+
+
+@app.route("/cancel_order", methods=["POST"])
+@login_required
+def cancel_order():
+    data = request.get_json()
+    order_id = data.get("order_id")
+    # Cập nhật trạng thái đơn hàng trong cơ sở dữ liệu
+    success = dao.cancel_order(order_id, current_user.id)
+
+    if success:
+        print("Hủy đơn hàng thành công")
+        return jsonify({"message": "Hủy đơn hàng thành công"}), 200
+    else:
+        print("Không thể hủy đơn hàng")
+        return jsonify({"error": "Hủy đơn hàng thất bại"}), 400
 
 if __name__ == '__main__':
     with app.app_context():
