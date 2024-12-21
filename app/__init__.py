@@ -21,3 +21,8 @@ cloudinary.config(cloud_name='dtcxjo4ns',
                   api_secret="1yivw8eviVI7BBQ7q9S909OS2mU",
                   secure=True
                   )
+
+app.config["VNPAY_TMN_CODE"] = "HGOIVYK1"
+app.config["VNPAY_PAYMENT_URL"] = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+app.config["VNPAY_HASH_SECRET_KEY"]= "2GD9EW3J8D7V7EW11L3D2B0PB22DC7Q1"
+app.config["VNPAY_RETURN_URL"] = "http://localhost:5000/payment_return"

@@ -1,0 +1,89 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+
+<section class="section-pagetop bg-light">
+    <div class="container">
+        <h2 class="title-page">Đơn hàng</h2>
+    </div> <!-- container.// -->
+</section> <!-- section-pagetop.// -->
+
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            {% block aside %}
+            {% include 'layout/user_info_aside.html' %}
+            {% endblock %}
+            <main class="col-md-9">
+                <article class="card">
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped table-hover align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col" style="min-width: 125px;">Mã đơn hàng</th>
+                                <th scope="col" style="min-width: 100px;">Ngày mua</th>
+                                <th scope="col" style="min-width: 200px;">Sản phẩm</th>
+                                <th scope="col" style="min-width: 100px;">Tổng tiền</th>
+                                <th scope="col" style="min-width: 175px;">Trạng thái đơn hàng</th>
+                                <th scope="col">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                    <tr>
+                                        <th scope="row">{{ order.id }}</th>
+                                        <td>{{ order.initiated_date.strftime('%Y/%m/%d') }}</td>
+                                        <td>{{order.id}}</td>
+                                        <td>{{ "{:,.0f}".format(order.total_payment) }}đ</td>
+                                        <td> {% if order.paid_date is none and order.delivered_date is none and
+                                            order.cancel_date <
+                                            datetime.now() %}
+                                            CANCELLED
+                                            {% elif order.cancel_date > datetime.now() and order.paid_date is none %}
+                                            UNPAID
+                                            {% elif order.paid_date is not none and order.delivered_date is none %}
+                                            DELIVERING
+                                            {% elif order.delivered_date is not none %}
+                                            DELIVERED
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center text-nowrap">
+                                            <a class="btn btn-primary me-2" href="#" role="button">Xem đơn hàng</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <nav class="mt-4">
+                    <ul class="pagination">
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ current_page - 1 }}"
+                               {% if current_page == 1 %} style="pointer-events: none; opacity: 0.5;" {% endif %}>
+                                Trang trước
+                            </a>
+                        </li>
+                        {% for i in range(1, pages + 1) %}
+                        <li class="page-item {% if i == current_page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ i }}">{{
+                                i }}</a>
+                        </li>
+                        {% endfor %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ current_page + 1 }}"
+                               {% if current_page == pages %}style="pointer-events: none; opacity: 0.5;" {% endif %}>
+                                Trang sau
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+            </main> <!-- col.// -->
+
+        </div> <!-- row.// -->
+    </div> <!-- container.// -->
+</section> <!-- section-content.// -->
+{% endblock %}

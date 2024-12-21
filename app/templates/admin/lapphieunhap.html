@@ -22,7 +22,7 @@
             <h3 class="card-title">Nhập Chi Tiết Sách</h3>
         </div>
         <div class="card-body">
-            <form id="bookForm" action="/lapphieunhap" method="get">
+            <form id="bookForm">
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="book-dropdown" class="form-label">Chọn Sách</label>
@@ -193,10 +193,10 @@ function saveBook() {
        if (!checkConf()) {
         return;
     }
-
     const bookId = document.getElementById('book-dropdown').value;
     const quantity = parseInt(document.getElementById('quantity').value, 10);
     const unitPrice = document.getElementById('standard_price').value;
+
     if (!bookId || !quantity || !unitPrice) {
         alert("Vui lòng chọn sách và nhập thông tin đầy đủ.");
         return;
@@ -204,7 +204,6 @@ function saveBook() {
 
     const bookName = document.getElementById('book-dropdown').selectedOptions[0].text;
     const availableQuantity = document.getElementById('available_quantity').value;
-
 
     // Kiểm tra nếu sách đã có trong bảng
     const table = document.getElementById('book-list');
@@ -221,22 +220,21 @@ function saveBook() {
         // Nếu sách đã tồn tại, tăng số lượng
         const currentQuantity = parseInt(existingRow.cells[1].innerText, 10);
         existingRow.cells[1].innerText = currentQuantity + quantity;
-    } else {
+    } else
+    {
         // Nếu sách chưa tồn tại, thêm dòng mới
         const row = table.insertRow();
         row.innerHTML = `
             <td>${bookName}</td>
             <td>${quantity}</td>
             <td>${availableQuantity}</td>
-            <td>${unitPrice}</td>
+            <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(unitPrice)}</td>
             <td><button class="btn btn-danger" onclick="deleteRow(this)">Xóa</button></td>
         `;
     }
     // Lưu dữ liệu vào localStorage
     saveToLocalStorage();
 }
-
-
 function cancelBookForm() {
     document.getElementById('add-book-form').style.display = 'none';
     document.getElementById('bookForm').reset();
@@ -277,6 +275,14 @@ function createImportSlip() {
         return;
     }
 
+        // Kiểm tra nếu không nhập ngày
+    const importDate = document.getElementById('input-date').value;
+    if (!importDate) {
+        alert("Vui lòng nhập ngày!");
+        return;
+    }
+
+
     const details = rows.map(row => {
         const bookName = row.cells[0].innerText;
         const bookOption = Array.from(document.getElementById('book-dropdown').options)
@@ -310,9 +316,7 @@ function createImportSlip() {
     .then(response => {
         if (response.ok) {
             alert("Phiếu nhập lưu thành công!");
-
             localStorage.removeItem('bookData');
-
             // Xóa dữ liệu trong bảng hiện ra
             while (table.rows.length > 0) {
                 table.deleteRow(0);

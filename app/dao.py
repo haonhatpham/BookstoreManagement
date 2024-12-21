@@ -1,17 +1,20 @@
+from dns.e164 import query
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy.testing.suite.test_reflection import users
 from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
-    PaymentMethod, Order, OrderEnum, OrderDetail, BankingInformation, Address, Review,ImportDetail,ImportTicket
+    PaymentMethod, Order, OrderDetail, BankingInformation, Address, Review, ImportDetail, ImportTicket, Permission, \
+    RoleHasPermission, UserHasPermission
 from datetime import datetime, timedelta
 from app import app, db
 import hashlib
 import cloudinary.uploader
-from sqlalchemy import desc, engine, or_,func
+from sqlalchemy import desc, engine, or_, func
 from sqlalchemy.orm import session, sessionmaker
 import random
-import logging
+import logging, time
+
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -20,6 +23,7 @@ session = Session()
 def load_banner():
     books_banner = Book.query.limit(4).all()
     return books_banner
+
 
 # load sách tieu bieu ở home
 def load_feature_book():
@@ -41,6 +45,7 @@ def load_feature_book():
 
     # Trả về kết quả của truy vấn
     return query.all()
+
 
 # lay sach theo id
 def load_book(book_id=None, latest_books=None):
@@ -84,6 +89,7 @@ def get_category(cate_id=None, book_id=None):
         # Trả về toàn bộ category
         return Category.query.all()
 
+
 def existing_user(username):
     return User.query.filter_by(username=username).first()
 
@@ -113,7 +119,7 @@ def load_user_address(user_id):
 # Thêm user ở Client
 def add_user(name, username, password, email, phone, birth, gender, avatar, address_id):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
-    user_role = Role.query.filter_by(name="User").first()
+    user_role = Role.query.filter_by(name="Customer").first()
     name_parts = name.strip().split(" ", 1)
     if len(name_parts) > 1:
         first_name = name_parts[1]
@@ -160,16 +166,18 @@ def auth_user(username, password, role=None):
         u = u.join(Role).filter(Role.name.in_(role))
     return u.first()
 
+
 def change_password(new_password):
     user = (User.query
-        .filter(User.id == current_user.id)
-        .first()
-    )
+            .filter(User.id == current_user.id)
+            .first()
+            )
     password = hashlib.md5(new_password.encode('utf-8')).hexdigest()
     user.password = password
 
     db.session.commit()
     return user
+
 
 def manage_user_info(data):
     try:
@@ -206,6 +214,7 @@ def manage_user_info(data):
         print(f"Error updating user info: {e}")
         return False
 
+
 # Lấy user theo id
 def get_user_by_id(id):
     return User.query.get(id)
@@ -227,6 +236,7 @@ def get_publisher_by_book_id(book_id):
     )
     return publisher
 
+
 def count_books(book_objects=None):
     if book_objects:
         # Trường hợp có danh sách các đối tượng sách
@@ -234,6 +244,7 @@ def count_books(book_objects=None):
     else:
         # Trường hợp không có danh sách, trả về tổng số sách trong cơ sở dữ liệu
         return Book.query.count()
+
 
 # Lọc danh sách các sách theo: nxb, giá, và sắp xếp theo ORDERBY,...
 def filter_books(category_id, checked_publishers, price_ranges, order_by, order_dir, page=1):
@@ -248,7 +259,6 @@ def filter_books(category_id, checked_publishers, price_ranges, order_by, order_
 
     # Join subquery với bảng Book
     books = books.outerjoin(total_buy_subquery, Book.id == total_buy_subquery.c.book_id)
-
 
     if category_id:
         books = books.join(book_category, book_category.c.book_id == Book.id) \
@@ -344,6 +354,10 @@ def get_payment_method_by_id(id):
     return PaymentMethod.query.get(id)
 
 
+def get_payment_method_all():
+    return PaymentMethod.query.all()
+
+
 def save_book(book):
     db.session.add(book)
     db.session.commit()
@@ -362,7 +376,7 @@ def save_order(cart):
         for c in cart.values():
             d = OrderDetail(quantity=c['quantity'],
                             unit_price=c['unit_price'],
-                            order_id=r,book_id=c['id'])
+                            order_id=r, book_id=c['id'])
             db.session.add(d)
         db.session.commit()
 
@@ -376,8 +390,17 @@ def get_order_by_id(order_id):
     return Order.query.get(order_id)
 
 
-def get_orders_by_customer_id(customer_id):
-    return Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
+def get_orders_by_customer_id(customer_id, page=1):
+    query = Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc())
+    page_size = 4
+    start = (page - 1) * page_size
+    query = query.slice(start, start + page_size)
+    return query.all()
+
+
+def count_orders_by_customer_id(customer_id):
+    query = Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
+    return len(query)
 
 
 def save_banking_information(order_id, bank_transaction_number, vnpay_transaction_number, bank_code, card_type,
@@ -407,6 +430,43 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
     # create order details
     order_details = []
     total_payment = 0
+    for book_id, ordered_book in books.items():
+        book_id = ordered_book['id']
+        book = load_book(book_id=book_id).first()
+        if book is not None:
+            detail = OrderDetail(unit_price=book.unit_price, quantity=ordered_book['quantity'], book=book)
+            total_payment += book.unit_price * ordered_book['quantity']
+            order_details.append(detail)
+            book.available_quantity -= ordered_book['quantity']
+            save_book(book)
+    # create order
+    time_to_cancel_order = db.session.query(Configuration).filter_by(key="time_to_cancel_order").first()
+    time_to_cancel_order_hours = 0
+    if time_to_cancel_order:
+        time_to_cancel_order_hours = int(time_to_cancel_order.value)
+    order = Order(cancel_date=initial_date + timedelta(hours=time_to_cancel_order_hours),
+                  payment_method=payment_method,
+                  customer_id=customer.id,
+                  employee_id=staff.id,
+                  total_payment=total_payment,
+                  initiated_date=initial_date,
+                  )
+
+    save_order_sampledb(order)
+    for od in order_details:
+        od.order = order
+        save_order_details(od)
+    return order
+
+
+def create_order_sample(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
+    configuration = get_configuration()
+    customer = get_user_by_id(customer_id)
+    staff = get_user_by_id(staff_id)
+    payment_method = get_payment_method_by_id(payment_method_id)
+    # create order details
+    order_details = []
+    total_payment = 0
     for ordered_book in books:
         book = load_book(book_id=ordered_book['id']).first()
         if book is not None:
@@ -426,7 +486,6 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
                   employee_id=staff.id,
                   total_payment=total_payment,
                   initiated_date=initial_date,
-                  status=random.choice([OrderEnum.GIAOHANGTHANHCONG, OrderEnum.DANGGIAOHANG, OrderEnum.HUYDONHANG])
                   )
 
     save_order_sampledb(order)
@@ -479,11 +538,13 @@ def add_review(user_id, book_id, comment, rating):
 def load_review(book_id):
     return (User.query
             .join(Review, User.id == Review.user_id)
-            .with_entities(User.first_name, User.last_name, User.role_id, Review.created_at, Review.comment, Review.rating, Review.user_id, Review.id)
+            .with_entities(User.first_name, User.last_name, User.role_id, Review.created_at, Review.comment,
+                           Review.rating, Review.user_id, Review.id)
             .filter(Review.book_id == book_id)
             .order_by(Review.created_at.desc())
             .all()
             )
+
 
 def edit_review(review_id, rating, comment):
     review = Review.query.filter(Review.id == review_id).first()
@@ -492,10 +553,10 @@ def edit_review(review_id, rating, comment):
     db.session.commit()
     return review
 
+
 def delete_review(review_id):
     (Review.query.filter(Review.id == review_id).delete())
     db.session.commit()
-
 
 
 def count_product_by_cate():
@@ -503,7 +564,6 @@ def count_product_by_cate():
         .join(book_category, book_category.c.category_id == Category.id, isouter=True) \
         .join(Book, book_category.c.book_id == Book.id) \
         .group_by(Category.id).all()
-
 
 
 def stats_revenue(kw=None):
@@ -514,14 +574,15 @@ def stats_revenue(kw=None):
 
     return query.group_by(Book.id).order_by(Book.id).all()
 
+
 def search(kw):
     try:
         if not kw or len(kw) < 3:
             return []
         query = (Book.query
                  .filter(
-                    (Book.name.ilike(f'%{kw}%'))
-                 )
+            (Book.name.ilike(f'%{kw}%'))
+        )
                  .all()
                  )
         return query
@@ -529,26 +590,31 @@ def search(kw):
         logging.error(f"Error during search: {str(ex)}")
         return []
 
+
 def statistic_revenue():
     return db.session.query(
         func.extract("month", Order.paid_date).label("month"),  # Lấy tháng từ paid_date trong Order
         func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")  # Tính doanh thu
     ) \
-    .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(func.extract("month", Order.paid_date)).all()
+        .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(
+        func.extract("month", Order.paid_date)).all()
+
+
 def stat_category_by_month(month):
     return db.session.query(
         Category.name,
         func.count(OrderDetail.book_id),
         func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")
     ) \
-    .join(book_category, book_category.c.category_id == Category.id) \
-    .join(Book, book_category.c.book_id == Book.id) \
-    .join(OrderDetail, Book.id == OrderDetail.book_id) \
-    .join(Order, OrderDetail.order_id == Order.id) \
-    .group_by(Category.name) \
-    .filter(func.extract("month", Order.paid_date) == month) \
-    .order_by(desc("revenue")) \
-    .all()
+        .join(book_category, book_category.c.category_id == Category.id) \
+        .join(Book, book_category.c.book_id == Book.id) \
+        .join(OrderDetail, Book.id == OrderDetail.book_id) \
+        .join(Order, OrderDetail.order_id == Order.id) \
+        .group_by(Category.name) \
+        .filter(func.extract("month", Order.paid_date) == month) \
+        .order_by(desc("revenue")) \
+        .all()
+
 
 def stat_book_by_month(month):
     category_list = func.group_concat(Category.name).label("categories")
@@ -557,14 +623,14 @@ def stat_book_by_month(month):
         category_list,
         func.sum(OrderDetail.quantity).label("quantity")
     ) \
-    .join(OrderDetail, Book.id == OrderDetail.book_id) \
-    .join(Order, OrderDetail.order_id == Order.id) \
-    .join(book_category, book_category.c.book_id == Book.id) \
-    .join(Category, book_category.c.category_id == Category.id) \
-    .group_by(Book.name) \
-    .filter(func.extract("month", Order.paid_date) == month) \
-    .order_by(desc("quantity")) \
-    .all()
+        .join(OrderDetail, Book.id == OrderDetail.book_id) \
+        .join(Order, OrderDetail.order_id == Order.id) \
+        .join(book_category, book_category.c.book_id == Book.id) \
+        .join(Category, book_category.c.category_id == Category.id) \
+        .group_by(Book.name) \
+        .filter(func.extract("month", Order.paid_date) == month) \
+        .order_by(desc("quantity")) \
+        .all()
 
 
 def statistic_revenue():
@@ -572,21 +638,25 @@ def statistic_revenue():
         func.extract("month", Order.paid_date).label("month"),  # Lấy tháng từ paid_date trong Order
         func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")  # Tính doanh thu
     ) \
-    .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(func.extract("month", Order.paid_date)).all()
+        .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(
+        func.extract("month", Order.paid_date)).all()
+
+
 def stat_category_by_month(month):
     return db.session.query(
         Category.name,
         func.count(OrderDetail.book_id),
         func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")
     ) \
-    .join(book_category, book_category.c.category_id == Category.id) \
-    .join(Book, book_category.c.book_id == Book.id) \
-    .join(OrderDetail, Book.id == OrderDetail.book_id) \
-    .join(Order, OrderDetail.order_id == Order.id) \
-    .group_by(Category.name) \
-    .filter(func.extract("month", Order.paid_date) == month) \
-    .order_by(desc("revenue")) \
-    .all()
+        .join(book_category, book_category.c.category_id == Category.id) \
+        .join(Book, book_category.c.book_id == Book.id) \
+        .join(OrderDetail, Book.id == OrderDetail.book_id) \
+        .join(Order, OrderDetail.order_id == Order.id) \
+        .group_by(Category.name) \
+        .filter(func.extract("month", Order.paid_date) == month) \
+        .order_by(desc("revenue")) \
+        .all()
+
 
 def stat_book_by_month(month):
     category_list = func.group_concat(Category.name).label("categories")
@@ -595,19 +665,21 @@ def stat_book_by_month(month):
         category_list,
         func.sum(OrderDetail.quantity).label("quantity")
     ) \
-    .join(OrderDetail, Book.id == OrderDetail.book_id) \
-    .join(Order, OrderDetail.order_id == Order.id) \
-    .join(book_category, book_category.c.book_id == Book.id) \
-    .join(Category, book_category.c.category_id == Category.id) \
-    .group_by(Book.name) \
-    .filter(func.extract("month", Order.paid_date) == month) \
-    .order_by(desc("quantity")) \
-    .all()
+        .join(OrderDetail, Book.id == OrderDetail.book_id) \
+        .join(Order, OrderDetail.order_id == Order.id) \
+        .join(book_category, book_category.c.book_id == Book.id) \
+        .join(Category, book_category.c.category_id == Category.id) \
+        .group_by(Book.name) \
+        .filter(func.extract("month", Order.paid_date) == month) \
+        .order_by(desc("quantity")) \
+        .all()
+
 
 def get_import_rules():
     min_import_quantity = Configuration.query.filter_by(key="min_import_quantity").first().value
     max_stock_for_import = Configuration.query.filter_by(key="max_stock_for_import").first().value
     return int(min_import_quantity), int(max_stock_for_import)
+
 
 def save_import_ticket(employee_id, import_date, details):
     new_ticket = ImportTicket(
@@ -638,6 +710,127 @@ def save_import_ticket(employee_id, import_date, details):
     db.session.commit()
 
 
+def new_user_in_order(phone, full_name, email, city, district, ward, details):
+    new_address = Address(
+        city=city.strip(),
+        district=district.strip(),
+        ward=ward.strip(),
+        details=details.strip()
+    )
+    db.session.add(new_address)
+    db.session.commit()
+    timestamp = int(time.time())
+    random_number = random.randint(1000, 9999)
+    unique_username = f"user_{timestamp}_{random_number}"
+    name_parts = full_name.strip().split(' ')
+    if len(name_parts) > 1:
+        last_name = name_parts[0]  # Họ là phần tử đầu tiên
+        first_name = ' '.join(name_parts[1:])  # Tên là phần còn lại
+    else:
+        last_name = name_parts[0]  # Nếu chỉ có một từ
+        first_name = name_parts[0]
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        phone=phone.strip(),
+        email=email.strip(),
+        role_id=2,  # Gán role User
+        address_id=new_address.id,
+        username=unique_username,
+        password='',
+        fs_uniquifier=unique_username
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return new_user
+
+
+def load_user(user_id=None):
+    if user_id:
+        return User.query.filter(User.id == user_id).first()
+    return User.query.all()
+
+
+def load_role(role_id=None):
+    if role_id:
+        return Role.query.filter(Role.id == role_id).first()
+    return Role.query.all()
+
+
+def load_permission(permission_id=None):
+    if permission_id:
+        return Permission.query.filter(Permission.id == permission_id).first()
+    return Permission.query.all()
+
+
+def add_permission_in_role(role_id, permission_id):
+    role = Role.query.get(role_id)
+    if not role:
+        raise ValueError("Role không tồn tại!")
+    permission = Permission.query.get(permission_id)
+    if not permission:
+        raise ValueError("Permission không tồn tại!")
+
+    existing_permission = RoleHasPermission.query.filter_by(role_id=role_id, permission_id=permission_id).first()
+    if existing_permission:
+        raise ValueError("Permission đã được gán cho Role này!")
+
+    new_role_permission = RoleHasPermission(role_id=role_id, permission_id=permission_id)
+    db.session.add(new_role_permission)
+    db.session.commit()
+
+    return {'success': True, 'message': 'Permission đã được thêm vào Role thành công!'}
+
+
+# Hàm add_permission_in_user
+def add_permission_in_user(user_id, permission_id):
+    user = User.query.get(user_id)
+    if not user:
+        raise ValueError("User không tồn tại!")
+    permission = Permission.query.get(permission_id)
+    if not permission:
+        raise ValueError("Permission không tồn tại!")
+    existing_permission = UserHasPermission.query.filter_by(user_id=user_id, permission_id=permission_id).first()
+    if existing_permission:
+        raise ValueError("Permission đã được gán cho User này!")
+
+    # Thêm Permission vào User
+    new_user_permission = UserHasPermission(user_id=user_id, permission_id=permission_id)
+    db.session.add(new_user_permission)
+    db.session.commit()
+
+    # Trả về kết quả success khi hoàn tất
+    return {'success': True, 'message': 'Phân quyền thành công!'}
+
+
+
+def add_order_in_order(customer_id, total_payment, payment_method_id, order_details):
+    new_order = Order(
+        customer_id=customer_id,
+        employee_id=current_user.id,
+        initiated_date=datetime.now(),
+        cancel_date=datetime.now(),
+        total_payment=total_payment,
+        received_money=total_payment,
+        payment_method_id=payment_method_id  # Mặc định là 1
+    )
+    db.session.add(new_order)
+    db.session.flush()
+    new_order = Order.query.get(new_order.id)
+    for detail in order_details:
+        book_id = detail['book_id']
+        quantity = detail['quantity']
+        unit_price = detail['unit_price']
+        order_detail = OrderDetail(
+            order_id=new_order.id,
+            book_id=book_id,
+            quantity=quantity,
+            unit_price=unit_price
+        )
+        db.session.add(order_detail)
+    db.session.commit()
+
+
 def load_User(User_id=None, latest_users=None):
     if User_id:
         return User.query.filter(User.id == User_id)
@@ -646,6 +839,43 @@ def load_User(User_id=None, latest_users=None):
     return User.query.all()
 
 
+def get_user_by_username(username):
+    return User.query.filter(User.username.__eq__(username)).first()
+
+
+def get_user_by_phone(phone):
+    return db.session.query(User).filter(User.phone == phone).first()
+
+
+def get_user_address(customer_id):
+    # Tìm user theo customer_id
+    customer = User.query.get(customer_id)
+
+    if customer and customer.address_id:
+        # Lấy địa chỉ qua address_id của user
+        address = Address.query.get(customer.address_id)
+
+        if address:
+            # Trả về từng phần của địa chỉ
+            return {
+                "city": address.city,
+                "district": address.district,
+                "ward": address.ward,
+                "details": address.details
+            }
+
+    # Trường hợp không có địa chỉ, trả về giá trị mặc định rỗng
+    return {
+        "city": "",
+        "district": "",
+        "ward": "",
+        "details": ""
+    }
+
+
+def save_user(user):
+    db.session.add(user)
+    db.session.commit()
 
 
 if __name__ == "__main__":
@@ -680,7 +910,7 @@ if __name__ == "__main__":
             if days_increment > 30 * 12:
                 days_increment = 0
             days_increment += 20
-            order = create_order(customer.id, staff_id, order_details, in_cash.id, initial_date)
+            order = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
             rand_num = random.randint(1, 10)
             order_paid_incash(order.total_payment, order.id,
                               order.initiated_date + datetime.timedelta(hours=rand_num))
@@ -702,6 +932,7 @@ if __name__ == "__main__":
             'Xuan Phu', 'Phu Hoi', 'Hai Ba Trung', 'Dong Da', 'Hoan Kiem',
             'Thach That', 'Soc Son', 'Hoai Duc', 'Thanh Tri', 'Ha Dong'
         ]
+
         wards = [
             'Ngoc Ha', 'Khuong Dinh', 'Dich Vong', 'Ward 12', 'Ward 6',
             'Thuan Phuoc', 'An Hai Bac', 'Man Thai', 'Tran Nguyen Han', 'Ngo Quyen',
@@ -709,6 +940,7 @@ if __name__ == "__main__":
             'Thuy Xuan', 'Phu Cat', 'Hai Tan', 'Trung Hoa', 'Quang An',
             'Tay Ho', 'Mai Dich', 'Yen So', 'Van Quan', 'Mo Lao'
         ]
+
         details = [
             '123 Nguyen Trai Street', '456 Tran Hung Dao Street', '789 Le Loi Avenue',
             '12 Phan Dinh Phung Street', '34 Vo Thi Sau Street',

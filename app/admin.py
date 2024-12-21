@@ -12,8 +12,13 @@ import calendar
 
 
 def _image_formatter(view, context, model, name):
-    if getattr(model, name):  # Kiểm tra nếu có hình ảnh
-        return Markup(f'<img src="{model.image}" style="width: 50px; height: auto;">')
+    # Kiểm tra nếu thuộc tính `name` có giá trị
+    if getattr(model, name):
+        return Markup(f'<img src="{getattr(model, name)}" style="width: 50px; height: auto;">')
+    # Nếu không có `name`, kiểm tra `avata_file`
+    if getattr(model, 'avatar_file'):
+        return Markup(f'<img src="{model.avatar_file}" style="width: 50px; height: auto;">')
+    # Trả về nếu không có hình ảnh
     return Markup('<span>No Image</span>')
 
 
@@ -71,8 +76,10 @@ class LapHoaDon(AuthenticatedBaseView):
 
     @expose("/")
     def index(self):
-        data = dao.load_User()
-        return self.render('admin/laphoadon.html',data=data)
+        data=dao.load_book()
+        user=dao.load_User()
+        return self.render('admin/laphoadon.html',data=data, user=user)
+
 
 class LapPhieuNhap(AuthenticatedBaseView):
     def is_accessible(self):
@@ -84,6 +91,15 @@ class LapPhieuNhap(AuthenticatedBaseView):
         return self.render('admin/lapphieunhap.html',data =data ,min_import_quantity=min_import_quantity
                            ,max_stock_for_import=max_stock_for_import)
 
+class PhanQuyen(AuthenticatedBaseView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.name in ["Admin"]
+    @expose("/")
+    def index(self):
+        permission=dao.load_permission()
+        role=dao.load_role()
+        user=dao.load_user()
+        return self.render('admin/phanquyen.html',permission=permission,user=user,role=role)
 
 class ThayDoiQuyDinh(ModelView):
     column_display_pk = True
@@ -93,24 +109,7 @@ class ThayDoiQuyDinh(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.role.name == "Admin"
 
-    def update_model(self, form, model):
-        if form.validate():
-            try:
-                if int(form.min_import_quantity.data) > 0 and int(form.min_stock_for_import.data) > 0 and int(
-                        form.time_to_end_order.data) > 0:
 
-                    model.min_import_quantity = form.min_import_quantity.data
-                    model.min_stock_for_import = form.min_stock_for_import.data
-                    model.time_to_end_order = form.time_to_end_order.data
-                    db.session.commit()
-                    return True
-                else:
-                    flash("Value can't be negative", "error")
-                    return False
-            except Exception as e:
-                print(e)
-                flash("Input error", "error")
-                return False
 
 class CategoryView(AuthenticatedView):
     column_formatters = {
@@ -121,7 +120,7 @@ class CategoryView(AuthenticatedView):
 
 class BookView(AuthenticatedView):
     column_formatters = {
-        'description': _truncate_formatter,  # Áp dụng formatter vào cột "image"
+        'description': _truncate_formatter,  # Áp dụng formatter vào cột "description"
         'image': _image_formatter,  # Áp dụng formatter vào cột "image"
     }
     column_list = ['id', 'name', 'image', 'standard_price', 'discount', 'unit_price', 'available_quantity',
@@ -132,6 +131,19 @@ class BookView(AuthenticatedView):
         'name','standard_price','unit_price','is_enable','image','description','publisher','categories']
     column_filters = ['name']
     column_searchable_list = ['name']
+
+
+class UserView(AuthenticatedView):
+    column_formatters = {
+        'avatar_file': _image_formatter,  # Áp dụng formatter vào cột "image"
+    }
+    column_list = ['id', 'first_name','last_name','email','phone','birth','gender','avatar_file',
+                   'active']
+
+    form_create_rules = [
+        'first_name', 'last_name', 'email', 'phone', 'birth', 'gender', 'avatar_file', 'active']
+    form_edit_rules = [
+        'first_name', 'last_name', 'email', 'phone', 'birth', 'gender', 'avatar_file', 'active']
 
 class ReviewView(AuthenticatedView):
     column_list = ['id','rating','comment']
@@ -144,12 +156,28 @@ class MyAdminView(AdminIndexView):
         return self.render('admin/index.html', stats=stats)
 
 
+
+class OrderView(AuthenticatedView):
+    column_sortable_list = ['initiated_date', 'total_payment']
+    column_list = ['id','total_payment','received_money','paid_date','delivered_date'
+        ,'payment_method_id']
+    form_create_rules =['id', 'initiated_date', 'cancel_date','total_payment','received_money','paid_date','delivered_date'
+        ,'payment_method_id']
+    form_edit_rules = ['id', 'initiated_date', 'cancel_date','total_payment','received_money','paid_date','delivered_date'
+        ,'payment_method_id']
+
+
+
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session))
 admin.add_view(BookView(Book, db.session))
-admin.add_view(ThayDoiQuyDinh(Configuration, db.session))
+admin.add_view(OrderView(Order, db.session))
 admin.add_view(ReviewView(Review, db.session))
+admin.add_view(UserView(User, db.session))
+admin.add_view(ThayDoiQuyDinh(Configuration, db.session))
+admin.add_view(PhanQuyen(name="Phân Quyền"))
 admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))
 admin.add_view(LogoutView(name="Đăng Xuất"))
+
