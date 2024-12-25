@@ -899,6 +899,37 @@ def cancel_order():
         print("Không thể hủy đơn hàng")
         return jsonify({"error": "Hủy đơn hàng thất bại"}), 400
 
+@app.route('/process_order', methods=['POST'])
+def process_order():
+    data = request.get_json()
+    phone = data.get('phone')
+    # Kiểm tra thông tin khách hàng theo số điện thoại
+    user = dao.get_user_by_phone(phone)
+    print(user)
+    if not user:
+        # Tạo khách hàng mới nếu chưa tồn tại
+        user = dao.new_user_in_order(
+            phone=phone,
+            full_name=data.get('full_name'),
+            email=data.get('email'),
+            city=data.get('city'),
+            district=data.get('district'),
+            ward=data.get('ward'),
+            details=data.get('details')
+        )
+    # Tạo đơn hàng
+    order = dao.add_order_in_order(
+        customer_id=user.id,
+        total_payment=data['total_payment'],
+        payment_method_id=data['payment_method_id'],
+        order_details=data['order_details']
+    )
+    # Trả về kết quả
+    return jsonify({
+        'success': True,
+        'message': 'Đơn hàng đã được tạo thành công',
+    })
+
 if __name__ == '__main__':
     with app.app_context():
         from app import admin

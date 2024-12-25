@@ -155,17 +155,15 @@ class MyAdminView(AdminIndexView):
         stats = dao.count_product_by_cate()
         return self.render('admin/index.html', stats=stats)
 
+
+
 class OrderView(AuthenticatedView):
     column_sortable_list = ['initiated_date']
-
-
-class OrderView(AuthenticatedView):
-    column_sortable_list = ['initiated_date', 'total_payment']
-    column_list = ['id','total_payment','received_money','paid_date','delivered_date'
+    column_list = ['id','received_money','paid_date','delivered_date'
         ,'payment_method_id']
-    form_create_rules =['id', 'initiated_date', 'cancel_date','total_payment','received_money','paid_date','delivered_date'
+    form_create_rules =['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
         ,'payment_method_id']
-    form_edit_rules = ['id', 'initiated_date', 'cancel_date','total_payment','received_money','paid_date','delivered_date'
+    form_edit_rules = ['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
         ,'payment_method_id']
 
 
@@ -182,4 +180,3 @@ admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))
 admin.add_view(LogoutView(name="Đăng Xuất"))
-

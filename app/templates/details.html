@@ -28,37 +28,11 @@
 
             <aside class="col-md-5 col-lg-6 mb-md-0 mb-4 d-flex justify-content-center align-items-center">
                 <div id="productImageCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-indicators">
-                        <button type="button" data-bs-target="#productImageCarousel" data-bs-slide-to="0" class="active"
-                                aria-current="true" aria-label="Slide 1"></button>
-                        <button type="button" data-bs-target="#productImageCarousel" data-bs-slide-to="1"
-                                aria-label="Slide 2"></button>
-                        <button type="button" data-bs-target="#productImageCarousel" data-bs-slide-to="2"
-                                aria-label="Slide 3"></button>
-                    </div>
                     <div class="carousel-inner">
                         <div class="carousel-item active">
                             <img src='{{book.image}}' class="d-block w-100" alt="...">
                         </div>
-                        <div class="carousel-item">
-                            <img src="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732253108/discount-book-1_wi5apx.png"
-                                 class="d-block w-100" alt="...">
-                        </div>
-                        <div class="carousel-item">
-                            <img src="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732253114/book-4_vb4b5w.png"
-                                 class="d-block w-100" alt="...">
-                        </div>
                     </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#productImageCarousel"
-                            data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Trước</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#productImageCarousel"
-                            data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Sau</span>
-                    </button>
                 </div>
             </aside>
 
@@ -128,9 +102,12 @@
         <div class="row">
             <div class="col">
                 <h3 class="pb-2">Mô tả sản phẩm</h3>
-                <p>
-                    {{book.description}}
-                </p>
+                <div class="text-container">
+                    <p>
+                        {{book.description}}
+                    </p>
+                    <button class="toggle-btn">Hiển thị thêm</button>
+                </div>
             </div>
         </div>
     </div> <!-- container.// -->
@@ -262,4 +239,42 @@
         </div>
     </div>
 </section>
+<style>
+.text-container {
+    max-height: 150px; /* Chiều cao tối đa ban đầu */
+    overflow: hidden; /* Giới hạn nội dung */
+    position: relative; /* Cần để định vị tuyệt đối nút */
+    transition: max-height 0.3s ease;
+    padding-bottom: 30px; /* Tạo không gian cho nút */
+}
+
+/* Khi được mở rộng */
+.text-container.expanded {
+    max-height: none; /* Mở toàn bộ nội dung */
+    padding-bottom: 0; /* Xóa không gian thừa */
+}
+
+/* Nút hiển thị thêm/thu gọn */
+.toggle-btn {
+    position: absolute;
+    bottom: 0; /* Đặt tại ranh giới giữa phần hiển thị và ẩn */
+    left: 50%;
+    transform: translate(-50%, 0); /* Dịch xuống một chút để nổi bật */
+    background-color: rgba(255, 255, 255, 0.9); /* Làm nền để nhìn rõ */
+    border: 1px solid #ddd; /* Đường viền nhẹ */
+    color: #007bff;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 1; /* Hiển thị trên nội dung */
+    white-space: nowrap; /* Giữ nút không bị xuống dòng */
+}
+
+.toggle-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+</style>
 {% endblock %}
