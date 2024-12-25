@@ -1,7 +1,7 @@
 import hashlib
 import math
-from app import app, login, dao, utils,db
-from flask import render_template, request, redirect, session, jsonify, url_for,flash
+from app import app, login, dao, utils, db
+from flask import render_template, request, redirect, session, jsonify, url_for, flash, get_flashed_messages
 from flask_login import login_user, logout_user, current_user, login_required
 from app.dao import delete_from_favourites
 from app.utils import cart_stats
@@ -9,6 +9,7 @@ from app.vnpay.form import PaymentForm
 from app.vnpay.vnpay import Vnpay
 import datetime
 import logging
+import re
 
 
 @app.route("/")
@@ -33,21 +34,60 @@ def index():
 
 @app.route("/register", methods=['get', 'post'])
 def register_process():
-    err_msg = ''
-
-    if request.method.__eq__('POST'):
+    err_msg = {'username': '', 'password': '', 'phone': '', 'email': '', 'confirm': ''}
+    # Kiểm tra xem 'email_attempts' đã tồn tại trong session hay chưa
+    if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         confirm = request.form.get('confirm')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
         gender = True if request.form.get('radioGender') == 'male' else False
+        customer = dao.get_user_by_phone(phone)
 
-        if not password.__eq__(confirm):
-            err_msg = 'Mật khẩu không khớp!'
+        # Kiểm tra mật khẩu có khớp không
+        if len(password) < 6:
+            err_msg['password'] = 'Mật khẩu phải có ít nhất 6 ký tự!'
+        if not password == confirm:
+            err_msg['confirm'] = 'Mật khẩu không khớp!'
+
+        # Kiểm tra số điện thoại
+        if not re.match(r'^\d{10,11}$', phone):
+            err_msg['phone'] = 'Số điện thoại phải có 10-11 chữ số!'
+        # Kiểm tra email đúng định dạng
+        if not email:
+            err_msg['email'] = 'Email không được để trống!'
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            session['email_attempts'] += 1
+            err_msg['email'] = 'Email không đúng định dạng!'
+            if session['email_attempts'] >= 2:
+                err_msg['email'] += ' Ví dụ: example@domain.com'
+
+        # Kiểm tra tên đăng nhập đã tồn tại
         if dao.existing_user(username):
-            err_msg = 'Tên đăng nhập đã được sử dụng!'
-        else:
-            data = request.form.copy()
+            err_msg['username'] = 'Tên đăng nhập đã được sử dụng!'
+        # Kiểm tra phone đã tồn tại
+        if dao.existing_phone(phone):
+            err_msg['phone'] = 'Số điện thoại đã được sử dụng!'
 
+        if customer:
+            if customer.username and customer.password:
+                # Nếu đã có username và password, số điện thoại đã được sử dụng cho tài khoản online
+                err_msg['phone'] = 'Số điện thoại đã được đăng kí tài khoản!'
+            else:
+                # Nếu chưa có username và password, cập nhật thông tin
+                customer.username = username
+                customer.email = email
+                customer.gender = gender
+                customer.password = password  # Hash mật khẩu trước khi lưu
+                dao.save_user(customer)
+                flash("Đăng kí thành công!", "success")
+                return redirect(url_for("login_process"))
+
+        # Nếu không có lỗi, thực hiện đăng ký
+        if not any(err_msg.values()):  # Kiểm tra xem có lỗi không
+            session.pop('email_attempts', None)  # Reset số lần thử khi thành công
+            data = request.form.copy()
             city = data['city']
             district = data['district']
             ward = data['ward']
@@ -66,8 +106,8 @@ def register_process():
             data['gender'] = gender
 
             dao.add_user(address_id=address_id, avatar=avatar, **data)
-
-            return redirect('/login')
+            flash("Đăng ký thành công!", "success")
+            return redirect(url_for("login_process"))  # Giả sử route cho trang đăng nhập là 'login'
 
     return render_template('register.html', err_msg=err_msg)
 
@@ -239,6 +279,7 @@ def edit_review():
     except ValueError:
         return jsonify({'error': 'ID review không hợp lệ.'}), 400
 
+
 @app.route('/delete_review', methods=['POST', 'GET'])
 def delete_review():
     review_id = request.args.get('review_id')
@@ -267,6 +308,8 @@ def account():
                            cart_quantity=cart_quantity,
                            received_count=received_count
                            )
+
+
 @login_required
 @app.route('/favourite', methods=['GET', 'POST'])
 def favourite():
@@ -371,7 +414,11 @@ def load_user(user_id):
 
 @app.route('/cart', methods=['GET'])
 def cart():
-    return render_template('cart.html')
+    if current_user.is_authenticated:
+        return render_template('cart.html')
+    else:
+        return render_template('cart.html')
+
 
 @app.route('/api/cart', methods=['POST'])
 def add_to_cart():
@@ -398,6 +445,7 @@ def add_to_cart():
         }
         message = f"Đã thêm thành công {quantity} sản phẩm {name} vào giỏ hàng!"
     session[key] = cart
+
     return jsonify({'message': message,
                     'cart_stats': utils.cart_stats(cart=cart)})
 
@@ -406,11 +454,11 @@ def add_to_cart():
 def update_cart(book_id):
     key = app.config['CART_KEY']
     cart = session.get(key)
-
     if cart and book_id in cart:
         cart[book_id]['quantity'] = int(request.json['quantity'])
 
     session[key] = cart
+
     return jsonify(utils.cart_stats(cart=cart))
 
 
@@ -427,19 +475,6 @@ def delete_cart(book_id):
     return jsonify({'message': message,
                     'cart_stats': utils.cart_stats(cart=cart)})
 
-
-# @app.route('/api/pay')
-# @login_required
-# def pay():
-#     key = app.config['CART_KEY']
-#     cart = session.get(key)
-#     try:
-#         dao.save_order(cart)
-#     except:
-#         return jsonify({'status': 500})
-#     else:
-#         del session[key]
-#     return jsonify({'status': 200})
 
 @app.context_processor
 def common_attr():
@@ -474,13 +509,13 @@ def category():
     order_param = request.args.get('order', 'totalBuy-DESC')
     order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
 
-    books,total_products = dao.filter_books(category_id=cate_id,
-                            checked_publishers=checked_publishers,
-                            price_ranges=price_ranges,
-                            order_by=order_by,
-                            order_dir=order_dir,
-                            page=int(page)
-                             )
+    books, total_products = dao.filter_books(category_id=cate_id,
+                                             checked_publishers=checked_publishers,
+                                             price_ranges=price_ranges,
+                                             order_by=order_by,
+                                             order_dir=order_dir,
+                                             page=int(page)
+                                             )
     publishers = dao.get_publishers_by_category(cate_id)
 
     # Render template với dữ liệu
@@ -498,6 +533,7 @@ def category():
         ORDER_BY_OPTIONS=ORDER_BY_OPTIONS,
         current_page=int(page),
     )
+
 
 @app.route('/categories', methods=['GET'])
 def all_categories():
@@ -522,12 +558,12 @@ def all_categories():
     price_ranges = request.args.getlist('priceRanges')
     order_param = request.args.get('order', 'totalBuy-DESC')
     order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
-    books,total_products = dao.filter_books(checked_publishers=checked_publishers,
-                             price_ranges=price_ranges,
-                             order_by=order_by,
-                             order_dir=order_dir,
-                             page=int(page)
-                             )
+    books, total_products = dao.filter_books(checked_publishers=checked_publishers,
+                                             price_ranges=price_ranges,
+                                             order_by=order_by,
+                                             order_dir=order_dir,
+                                             page=int(page)
+                                             )
     publishers = dao.get_all_publishers()
 
     # Render template
@@ -545,6 +581,7 @@ def all_categories():
         ORDER_BY_OPTIONS=ORDER_BY_OPTIONS,
         current_page=int(page),
     )
+
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
@@ -571,6 +608,7 @@ def live_search():
             return jsonify({"success": False, "message": str(ex), "data": []}), 500
     return jsonify({"success": False, "message": "Query is empty", "data": []})
 
+
 @app.route('/search_result')
 def search_result():
     query = request.args.get('q', '').strip().lower()
@@ -580,6 +618,7 @@ def search_result():
         books = dao.search(query)
         print(books)
     return render_template('search_result.html', books=books)
+
 
 @app.route('/api/pay', methods=['POST'])
 def api_pay():
@@ -653,7 +692,6 @@ def save_import_ticket():
     return jsonify({'message': 'Phiếu nhập đã được lưu thành công!', 'ticket_id': ticket_id})
 
 
-
 @app.route("/payment_return", methods=["GET"])
 def payment_return():
     if request.args:
@@ -673,9 +711,9 @@ def payment_return():
         if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
             if vnp_ResponseCode == "00":
                 dao.order_paid_by_vnpay(order_id=int(order_id[0:2:1]), bank_transaction_number=vnp_BankTranNo,
-                                          vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
-                                          card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
-                                          paid_date=vnp_PayDate)
+                                        vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
+                                        card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
+                                        paid_date=vnp_PayDate)
                 return render_template("vnpay/payment_return.html", title="Kết quả giao dịch",
                                        result="Thành công", order_id=order_id,
                                        amount=amount,
@@ -697,13 +735,14 @@ def payment_return():
     else:
         return render_template("vnpay/payment_return.html", title="Kết quả thanh toán", result="")
 
+
 @app.route("/my_order")
 @login_required
 def myOrder():
     page = request.args.get('page', 1)
     page_size = 4
     current_page = int(page)
-    orders = dao.get_orders_by_customer_id(current_user.id,page=int(page))
+    orders = dao.get_orders_by_customer_id(current_user.id, page=int(page))
     orders_with_total = []
     for order in orders:
         total_payment = dao.calculate_order_total(order.id)  # Tính tổng tiền cho đơn hàng
@@ -711,8 +750,9 @@ def myOrder():
             "order": order,
             "total_payment": total_payment
         })
-    quantity_order=dao.count_orders_by_customer_id(current_user.id)
-    return render_template('my_order.html', title='Order Books',  orders_with_total=orders_with_total, datetime=datetime.datetime,
+    quantity_order = dao.count_orders_by_customer_id(current_user.id)
+    return render_template('my_order.html', title='Order Books', orders_with_total=orders_with_total,
+                           datetime=datetime.datetime,
                            current_page=int(page),
                            pages=math.ceil(quantity_order / page_size),
                            quantity_order=quantity_order
@@ -723,14 +763,17 @@ def myOrder():
 @login_required
 def order_details():
     order_id = request.args.get("order_id")
-    order=dao.get_order_by_id(order_id=order_id)
+    order = dao.get_order_by_id(order_id=order_id)
     order_details = dao.get_order_details(order_id)
-    payment_method= dao.get_payment_method_by_order_id(order_id)
+    payment_method = dao.get_payment_method_by_order_id(order_id)
     user_info = dao.get_user_info_in_order(current_user.id, order_id)
 
     total_payment = dao.calculate_order_total(order_id)  # Tính tổng tiền cho đơn hàng
-    return render_template("order_details.html", order_details=order_details, user_order_info=user_info, order_id = order_id,total_payment=total_payment,order=order,
-                           datetime=datetime.datetime,payment_method=payment_method)
+    return render_template("order_details.html", order_details=order_details, user_order_info=user_info,
+                           order_id=order_id, total_payment=total_payment, order=order,
+                           datetime=datetime.datetime, payment_method=payment_method)
+
+
 # @app.route("/api/order/cash/pay", methods = ["POST"])
 # def intable_pay_order():
 #     try:
@@ -764,7 +807,7 @@ def checkout():
             "full_name": f"{customer.first_name} {customer.last_name}",
             "phone_number": customer.phone,
             "email": customer.email,
-             "city": user_address["city"],
+            "city": user_address["city"],
             "district": user_address["district"],
             "ward": user_address["ward"],
             "details": user_address["details"]
@@ -792,12 +835,12 @@ def checkout():
             # khách hàng mua online
             customer = current_user
             staff = dao.get_user_by_username("saler")
-        order = dao.create_order(customer.id, staff.id,session['cart'], payment_type)
-        print(order)
+        order = dao.create_order(customer.id, staff.id, session['cart'], payment_type)
+
         session[key] = {}  # Xóa cart sau khi tạo đơn hàng
         session.modified = True
 
-        #nhân viên bán hàng tạo đơn hàng cho khách mua trực tiếp
+        # nhân viên bán hàng tạo đơn hàng cho khách mua trực tiếp
         if (current_user.id != customer.id):
             if (order.payment_method.name.__eq__("CASH")):
                 flash("New order has been created", "success")
@@ -807,7 +850,7 @@ def checkout():
             if not address or address["city"] != city or address["district"] != district or address["ward"] != ward or \
                     address["details"] != details:
                 # Tạo địa chỉ mới nếu có thay đổi
-                new_address=dao.add_address(city=city, district=district, ward=ward, street=details)
+                new_address = dao.add_address(city=city, district=district, ward=ward, street=details)
 
                 # Cập nhật `address_id` cho user
                 current_user.address_id = new_address
@@ -825,6 +868,7 @@ def checkout():
         else:
             return redirect(url_for("myOrder"))
     return render_template('checkout.html')
+
 
 @app.route("/vnpay", methods=["GET", "POST"])
 @login_required
@@ -862,7 +906,8 @@ def process_vnpay():
             vnp.requestData['vnp_CreateDate'] = datetime.datetime.now().strftime('%Y%m%d%H%M%S')  # 20150410063022
             vnp.requestData['vnp_IpAddr'] = ipaddr
             vnp.requestData['vnp_ReturnUrl'] = app.config["VNPAY_RETURN_URL"]
-            vnpay_payment_url = vnp.get_payment_url(app.config["VNPAY_PAYMENT_URL"], app.config["VNPAY_HASH_SECRET_KEY"])
+            vnpay_payment_url = vnp.get_payment_url(app.config["VNPAY_PAYMENT_URL"],
+                                                    app.config["VNPAY_HASH_SECRET_KEY"])
             return redirect(vnpay_payment_url)
         else:
             print("Form input not validate")
@@ -880,7 +925,7 @@ def process_vnpay():
         form.order_id.data = order.id
         form.amount.data = dao.calculate_order_total(order.id)
         form.order_desc.data = "%s thanh toán online cho cửa hàng bookstore3h" % (
-            user.last_name+ user.first_name)
+                user.last_name + user.first_name)
         return render_template("vnpay/payment.html", title="Kiểm tra thông tin", form=form)
 
 
@@ -898,6 +943,7 @@ def cancel_order():
     else:
         print("Không thể hủy đơn hàng")
         return jsonify({"error": "Hủy đơn hàng thất bại"}), 400
+
 
 if __name__ == '__main__':
     with app.app_context():

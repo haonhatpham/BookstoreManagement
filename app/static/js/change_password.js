@@ -12,7 +12,6 @@ if (window.location.pathname === '/change_password') {
             toastr.error('Mật khẩu mới không khớp!');
             return;
         }
-
         // Send POST request to the '/change_password' route
         const response = await fetch('/api/change_passwd', {
             method: 'POST',
