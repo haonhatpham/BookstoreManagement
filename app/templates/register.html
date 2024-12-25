@@ -8,15 +8,16 @@
         <div class="card-body">
             <h4 class="card-title mb-4">Đăng ký</h4>
             <form method="post" enctype="multipart/form-data" action="/register">
-                {% if err_msg %}
-                <div class="alert alert-danger ">
-                    {{ err_msg }}
-                </div>
-                {% endif %}
                 <div class="mb-3">
                     <label for="inputUsername" class="form-label">Tên đăng nhập</label>
-                    <input type="text" class="form-control" id="inputUsername" required
+                    <input type="text" class="form-control {% if err_msg.username %}is-invalid{% endif %}"
+                           id="inputUsername" required
                            placeholder="Nhập tên đăng nhập" name="username">
+                    {% if err_msg.username %}
+                    <div class="invalid-feedback">
+                        {{ err_msg.username }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="mb-3">
                     <label for="inputName" class="form-label">Họ tên</label>
@@ -25,15 +26,23 @@
                 </div>
                 <div class="mb-3">
                     <label for="inputEmail" class="form-label">Email</label>
-                    <input type="email" class="form-control" required id="inputEmail" name="email">
-                </div>
-                <div class="mb-3">
-                    <label for="inputBirth" class="form-label">Ngày tháng năm sinh</label>
-                    <input type="date" class="form-control" id="inputBirth" required name="birth">
+                    <input type="text" class="form-control {% if err_msg.email %}is-invalid{% endif %}"
+                           id="inputEmail" name="email" value="{{ request.form.get('email', '') }}">
+                    {% if err_msg.email %}
+                    <div class="invalid-feedback">
+                        {{ err_msg.email }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="mb-3">
                     <label for="inputPhoneNumber" class="form-label">Số điện thoại</label>
-                    <input type="number" class="form-control" required id="inputPhoneNumber" name="phone">
+                    <input type="number" class="form-control {% if err_msg.phone %}is-invalid{% endif %}" required
+                           id="inputPhoneNumber" name="phone">
+                    {% if err_msg.phone %}
+                    <div class="invalid-feedback">
+                        {{ err_msg.phone }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="mb-3">
                     <div class="form-check d-inline-block me-4">
@@ -69,16 +78,30 @@
                 <div class="mb-3">
                     <label for="inputPassword" class="form-label">Mật khẩu</label>
                     <div class="input-group">
-                        <input type="password" class="form-control" required id="inputPassword" name="password" placeholder="Nhập mật khẩu">
+                        <input type="password" class="form-control {% if err_msg.password %}is-invalid{% endif %}"
+                               required
+                               id="inputPassword" name="password"
+                               placeholder="Nhập mật khẩu">
                         <span class="input-group-text" id="showPasswordToggle" style="cursor: pointer;">
-                            <i class="bi bi-eye" id="eyeIcon"></i> <!-- Bootstrap icon for eye -->
+                            <i class="bi bi-eye" id="eyeIcon"></i>
                         </span>
+                        {% if err_msg.password %}
+                        <div class="invalid-feedback">
+                            {{ err_msg.password }}
+                        </div>
+                        {% endif %}
+
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="confirm" class="form-label">Xác nhận mật khẩu</label>
-                    <input type="password" class="form-control" required placeholder="Nhập lại mật khẩu" id="confirm"
-                           name="confirm">
+                    <input type="password" class="form-control {% if err_msg.confirm %}is-invalid{% endif %}" required
+                           placeholder="Nhập lại mật khẩu" id="confirm" name="confirm">
+                    {% if err_msg.confirm %}
+                    <div class="invalid-feedback">
+                        {{ err_msg.confirm }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="mb-3">
                     <label for="avatar">Ảnh đại diện</label>

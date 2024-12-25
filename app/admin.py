@@ -4,7 +4,7 @@ from markupsafe import Markup
 from app import app, db, dao,utils
 from flask_login import login_user, logout_user
 from flask_admin import Admin, BaseView, expose, AdminIndexView
-from app.models import Book, Review, Order, Voucher, Permission, Category, User,Configuration
+from app.models import Book, Review, Order, Permission, Category, User,Configuration
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, login_user
 from app.models import Role
@@ -155,11 +155,13 @@ class MyAdminView(AdminIndexView):
         stats = dao.count_product_by_cate()
         return self.render('admin/index.html', stats=stats)
 
+class OrderView(AuthenticatedView):
+    column_sortable_list = ['initiated_date']
 
 
 class OrderView(AuthenticatedView):
     column_sortable_list = ['initiated_date']
-    column_list = ['id','received_money','paid_date','delivered_date'
+    column_list = ['id','total_payment','received_money','paid_date','delivered_date'
         ,'payment_method_id']
     form_create_rules =['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
         ,'payment_method_id']
@@ -180,3 +182,4 @@ admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))
 admin.add_view(LogoutView(name="Đăng Xuất"))
+

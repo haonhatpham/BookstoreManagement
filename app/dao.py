@@ -5,7 +5,7 @@ from sqlalchemy.testing.suite.test_reflection import users
 from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
     PaymentMethod, Order, OrderDetail, BankingInformation, Address, Review, ImportDetail, ImportTicket, Permission, \
-    RoleHasPermission, UserHasPermission
+    RoleHasPermission
 from datetime import datetime, timedelta
 from app import app, db
 import hashlib
@@ -94,6 +94,9 @@ def get_category(cate_id=None, book_id=None):
 def existing_user(username):
     return User.query.filter_by(username=username).first()
 
+def existing_phone(phone):
+    return User.query.filter_by(phone=phone).first()
+
 
 def add_address(city, district, ward, street):
     address = Address(
@@ -118,7 +121,7 @@ def load_user_address(user_id):
 
 
 # Thêm user ở Client
-def add_user(name, username, password, email, phone, birth, gender, avatar, address_id):
+def add_user(name, username, password, email, phone, gender, avatar, address_id):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
     user_role = Role.query.filter_by(name="Customer").first()
     name_parts = name.strip().split(" ", 1)
@@ -136,7 +139,6 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
         password=password,
         email=email.strip(),
         phone=phone.strip(),
-        birth=birth,
         gender=gender,  # Nam active=True,
         role_id=user_role.id,
         address_id=address_id
@@ -800,29 +802,6 @@ def add_permission_in_role(role_id, permission_id):
     db.session.commit()
 
     return {'success': True, 'message': 'Permission đã được thêm vào Role thành công!'}
-
-
-# Hàm add_permission_in_user
-def add_permission_in_user(user_id, permission_id):
-    user = User.query.get(user_id)
-    if not user:
-        raise ValueError("User không tồn tại!")
-    permission = Permission.query.get(permission_id)
-    if not permission:
-        raise ValueError("Permission không tồn tại!")
-    existing_permission = UserHasPermission.query.filter_by(user_id=user_id, permission_id=permission_id).first()
-    if existing_permission:
-        raise ValueError("Permission đã được gán cho User này!")
-
-    # Thêm Permission vào User
-    new_user_permission = UserHasPermission(user_id=user_id, permission_id=permission_id)
-    db.session.add(new_user_permission)
-    db.session.commit()
-
-    # Trả về kết quả success khi hoàn tất
-    return {'success': True, 'message': 'Phân quyền thành công!'}
-
-
 
 def add_order_in_order(customer_id, total_payment, payment_method_id, order_details):
     new_order = Order(

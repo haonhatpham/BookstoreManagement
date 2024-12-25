@@ -1,7 +1,6 @@
 function addToCart(id,image,name,unit_price){
     //axios fetch
     const quantity = document.getElementById('quantity').value;  // Lấy số lượng từ input
-
     fetch('/api/cart',{
         method: "post",
         body: JSON.stringify({
@@ -9,7 +8,7 @@ function addToCart(id,image,name,unit_price){
             "image": image,
             "name": name,
             "unit_price": unit_price,
-            "quantity": quantity
+            "quantity": quantity,
         }),
         headers: {
             "Content-Type": "application/json"
@@ -23,7 +22,6 @@ function addToCart(id,image,name,unit_price){
        }
        console.info(data.total_quantity)
         // Kiểm tra total_quantity trước khi cập nhật giao diện
-
             let counters = document.getElementsByClassName("cart-counter");
             for (let i = 0; i < counters.length; i++) {
                 counters[i].innerText = data.cart_stats.total_quantity;
@@ -36,7 +34,7 @@ function updateCart(book_id,obj){
     fetch(`/api/cart/${book_id}`, {
         method: "put",
         body: JSON.stringify({
-           "quantity":obj.value
+           "quantity":obj.value,
         }),
         headers: {
             "Content-Type": "application/json"
@@ -49,13 +47,13 @@ function updateCart(book_id,obj){
 
         let d2 = document.getElementsByClassName("cart-amount")
         for (let i = 0; i < d2.length; i++)
-            d2[i].innerText = data.total_amount.toLocaleString("en-US")
+            d2[i].innerText = data.total_amount.toLocaleString("en-US")+ "₫";
     }) //json promise
 }
 
 function deleteCart(book_id){
     if (confirm("Bạn chắc chắn xóa không?") == true){
-        fetch(`/api/cart/${book_id}`, {
+        fetch(`/api/cart/${book_id}?voucher_code=${voucherCode}`, {
             method: "delete"
         }).then(res => res.json()).then(data => {
             console.info(data)
@@ -157,3 +155,4 @@ function pay() {
         });
     }
 }
+

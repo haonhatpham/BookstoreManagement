@@ -1,4 +1,3 @@
-
 if (window.location.pathname === '/details') {
     //    Thêm vào danh sách yêu thích
     document.querySelector("#favourite-form").addEventListener("click", function (event) {
