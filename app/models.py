@@ -62,11 +62,10 @@ class User(BaseModel, UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
-    username = Column(String(100), nullable=False, unique=True)
-    password = Column(String(100), nullable=False)
-    email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
-    phone = Column(String(11, 'utf8mb4_unicode_ci'))
-    birth = Column(DATE, nullable=True)
+    username = Column(String(100), nullable=True, unique=True)
+    password = Column(String(100), nullable=True)
+    email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=True)
+    phone = Column(String(11, 'utf8mb4_unicode_ci'),nullable=False,unique=True)
     gender = Column(Boolean, default=True)  # 1:nam 0:Nữ
     avatar_file = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     active = Column(Boolean, default=True)  # 1: còn hđ 0:hết hđ
@@ -78,10 +77,6 @@ class User(BaseModel, UserMixin):
     employee_orders = relationship("Order", backref="employee", lazy=True, foreign_keys='Order.employee_id')  # 1-n
     reviews = relationship('Review', backref='user', lazy=True)  # 1-n
     import_tickets = relationship('ImportTicket', backref='user', lazy=True)  # 1-n
-    vouchers = db.relationship('Voucher', secondary='user_has_voucher', lazy='subquery',
-                               backref=db.backref('users', lazy=True))  # n-n
-    permission = db.relationship('Permission', secondary='user_has_permission', lazy='subquery',
-                                 backref=backref('users', lazy=True))  # n-n
     favourite_books = db.relationship('Book', secondary=favourite_books, back_populates='users')
     fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
@@ -148,8 +143,6 @@ class Book(BaseModel):
                               backref=db.backref('book', lazy=True))  # n-n
     categories = db.relationship('Category', secondary='book_category', lazy='subquery',
                                  backref=db.backref('book', lazy=True))  # n-n
-    vouchers = db.relationship('Voucher', secondary='book_has_voucher', lazy='subquery',
-                               backref=db.backref('book', lazy=True))  # n-n
 
     orders = relationship('OrderDetail', backref='book')  # n-1
     import_tickets = relationship('ImportDetail', backref='book')  # n-1
@@ -187,34 +180,6 @@ class PaymentMethod(BaseModel):
 
     orders = relationship('Order', backref='payment_method', lazy=True)
 
-
-class Voucher(BaseModel):
-    __tablename__ = 'voucher'
-    name = Column(String(100, 'utf8mb4_unicode_ci'), nullable=False)
-    uses = Column(Integer, nullable=False, default=0)  # số lượng voucher đã sử dụng
-    max_uses = Column(Integer, nullable=False,
-                      default=0)  # Số lượng tối đa voucher có thể sử dụng. Nếu =0 là không xác định
-    max_users_uses = Column(Integer, nullable=False,
-                            default=0)  # Người dùng có thể sử dụng voucher này bao nhiêu lần? Nếu =0 là không xác định
-    type = Column(Boolean, nullable=False, default=1, unique=True)  # Loại voucher: #1: voucher, #2: coupon
-    discount_amount = Column(DOUBLE, default=0)  # % giảm giá hoặc số tiền giảm giá cụ thể
-    start_date = Column(DateTime, nullable=False)  # Ngày bắt đầu voucher
-    end_date = Column(DateTime, nullable=False)  # Ngày kết thúc voucher
-    deleted_at = Column(DateTime)  # Ngày xóa
-
-
-book_has_voucher = db.Table('book_has_voucher', BaseModel.metadata,
-                            Column('book_id', Integer, ForeignKey('book.id')),
-                            Column('voucher_id', Integer, ForeignKey('voucher.id'))
-                            )
-
-
-class UserHasVoucher(BaseModel):
-    __tablename__ = 'user_has_voucher'
-    user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
-    voucher_id = Column(ForeignKey('voucher.id'), nullable=False, index=True)
-
-
 class RoleHasPermission(BaseModel):
     __tablename__ = 'role_has_permission'
     role_id = Column(ForeignKey('role.id'), nullable=False, index=True)
@@ -241,13 +206,6 @@ class Permission(BaseModel):
     __tablename__ = 'permission'
     name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     display_name = Column(String(45, 'utf8mb4_unicode_ci'))
-
-
-class UserHasPermission(BaseModel):
-    __tablename__ = 'user_has_permission'
-
-    user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
-    permission_id = Column(ForeignKey('permission.id'), nullable=False, index=True)
 
 
 class ImportDetail(BaseModel):
@@ -365,7 +323,6 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email="admin@example.com",
             phone="1234567890",
-            birth="2004-10-08",  # Không cần ngày sinh
             gender=True,  # Nam
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
             active=True,
@@ -381,7 +338,6 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email='saler@example.com',
             phone="1234567891",
-            birth="2004-01-01",
             gender=False,
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733467650/photo_sspnsa.jpg",
             active=True,
@@ -397,7 +353,6 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email='storekeeper@example.com',
             phone="0987654321",
-            birth="2000-12-08",
             gender=True,
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733422179/vien-ngoc-trai-ki-dieu_bia_abb1f5dda267482e861d051f77bd41e1_master_v4sroz.jpg",
             active=True,
@@ -424,20 +379,10 @@ if __name__ == '__main__':
             'Ali', 'Mason', 'Mitchell', 'Rose', 'Davis', 'Davies', 'Rodriguez', 'Cox', 'Alexander'
         ]
 
-
-        def random_birthday(start_year=1980, end_year=2005):
-            start_date = datetime(start_year, 1, 1)
-            end_date = datetime(end_year, 12, 31)
-            delta = end_date - start_date
-            random_days = random.randint(0, delta.days)
-            return (start_date + timedelta(days=random_days)).strftime('%Y-%m-%d')
-
-
         for i in range(len(first_names)):
             tmp_email = first_names[i].lower() + "." + last_names[i].lower() + "@example.com"
             # tmp_pass = ''.join(random.choice(string.ascii_lowercase + string.digits) for i in range(10))
             phone = "0"
-            random_birth = random_birthday()
             temp_role = Role.query.filter_by(name="Customer").first()
             for k in range(0, 9):
                 phone += str(random.randint(6, 9))
@@ -449,7 +394,6 @@ if __name__ == '__main__':
                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
                 email=tmp_email,
                 phone=phone,
-                birth=random_birth,
                 gender=random.choice([True, False]),
                 avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733412995/Remove-bg.ai_1733412613451_jyuilr.png",
                 active=True,

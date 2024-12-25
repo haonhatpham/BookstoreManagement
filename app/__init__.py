@@ -7,7 +7,7 @@ from flask_login import LoginManager
 app = Flask(__name__)
 app.secret_key = 'HJGGHD*^&R$YGFGHDYTRER&*TRTYCHG^R&^T'
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:%s@localhost/bookstore3hdb?charset=utf8mb4" % quote(
-    "hieu")
+    "1234")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.config["PAGE_SIZE"] = 9
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -24,5 +24,5 @@ cloudinary.config(cloud_name='dtcxjo4ns',
 
 app.config["VNPAY_TMN_CODE"] = "HGOIVYK1"
 app.config["VNPAY_PAYMENT_URL"] = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-app.config["VNPAY_HASH_SECRET_KEY"]= "2GD9EW3J8D7V7EW11L3D2B0PB22DC7Q1"
+app.config["VNPAY_HASH_SECRET_KEY"]= "I3YXMMI7F8L8YIUI7MEZSLI2JOV12H5C"
 app.config["VNPAY_RETURN_URL"] = "http://localhost:5000/payment_return"
