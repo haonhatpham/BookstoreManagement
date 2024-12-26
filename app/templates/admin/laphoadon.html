@@ -4,10 +4,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
       integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title">Nhập Thông Tin Khách Hàng</h3>
+        <input type="hidden" id="current_user_name" value="{{ current_user.name if current_user.is_authenticated else 'N/A' }}">
     </div>
     <div class="card-body">
         <div class="row">
@@ -60,7 +61,7 @@
 
                     <div class="col-md-6 mb-3">
                         <label for="quantity" class="form-label">Số Lượng </label>
-                        <input type="number" class="form-control" id="quantity" required min="1"
+<input type="number" class="form-control" id="quantity" required min="1"
                                placeholder="Nhập số lượng">
                     </div>
                 </div>
@@ -116,7 +117,7 @@
         </div>
         <div class="card-footer">
             <button class="btn btn-success" onclick="createImportOrder()">
-                <i class="bi bi-file-earmark-plus"></i> Lập Hóa Đơn
+                <i class="bi bi-file-earmark-plus"></i> Lập và Xuất Hóa Đơn
             </button>
         </div>
     </div>
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!phoneNumber) return;
     try {
         const response = await fetch(`/get-customer?phone_number=${phoneNumber}`);
-        const result = await response.json();
+const result = await response.json();
 
         if (result.status === "success") {
             // Cập nhật các trường với thông tin người dùng
@@ -177,11 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
            availableQuantity: row.cells[2].innerText,
            standardPrice: row.cells[3].innerText
        }));
-       localStorage.setItem('bookData', JSON.stringify(data));
+       localStorage.setItem('bookData1', JSON.stringify(data));
    }
 
    function loadFromLocalStorage1() {
-       const data = localStorage.getItem('bookData');
+       const data = localStorage.getItem('bookData1');
        if (data) {
            const books = JSON.parse(data);
            const table = document.getElementById('book-list');
@@ -207,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
            alert("Vui lòng chọn sách và nhập thông tin đầy đủ.");
            return;
        }
-       const bookName = document.getElementById('book-dropdown').selectedOptions[0].text;
+const bookName = document.getElementById('book-dropdown').selectedOptions[0].text;
        const availableQuantity = document.getElementById('available_quantity').value;
        const totalPrice = quantity * unitPrice;
 
@@ -270,10 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
    }
 
     async function createImportOrder() {
-    // Get customer information
     const phoneNumber = document.getElementById('phone_number').value;
     const fullName = document.getElementById('full_name').value;
-
+    const invoiceDate = document.getElementById('input-date').value;
     // Validate required fields
     if (!phoneNumber || !fullName) {
         alert('Vui lòng điền số điện thoại và tên.');
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get book list from table
     const bookList = [];
     const table = document.getElementById('book-list');
-    for (const row of table.rows) {
+for (const row of table.rows) {
         const bookName = row.cells[0].innerText;
         const quantity = parseInt(row.cells[1].innerText);
         const unitPrice = parseFloat(row.cells[2].innerText.replace(/[^\d]/g, '')); // Remove currency formatting
@@ -319,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Calculate total payment
     const totalPayment = bookList.reduce((sum, book) => sum + (book.quantity * book.unit_price), 0);
-
     try {
         const response = await fetch('/api/process_order', {
             method: 'POST',
@@ -339,10 +338,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (result.success) {
             alert('Đơn hàng đã được tạo thành công!');
+            exportToExcel();
             // Clear the form and table
             document.getElementById('bookForm').reset();
             document.getElementById('book-list').innerHTML = '';
-            localStorage.removeItem('bookData');
+            localStorage.removeItem('bookData1');
             // Optionally reload the page or update UI
             location.reload();
         } else {
@@ -353,6 +353,41 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error:', error);
         alert('Đã xảy ra lỗi khi xử lý đơn hàng.');
     }
+
 }
+function exportToExcel() {
+    const phoneNumber = document.getElementById('phone_number').value;
+    const fullName = document.getElementById('full_name').value;
+    const invoiceDate = document.getElementById('input-date').value;
+    const currentUserName = document.getElementById('current_user_name').value;  // Lấy tên nhân viên từ phần tử ẩn
+    console.log(currentUserName);  // Kiểm tra xem tên nhân viên có được điền đúng không
+    const table = document.getElementById('book-list');
+    if (table.rows.length === 0) {
+        alert('Không có dữ liệu để xuất.');
+        return;
+    }
+
+    const orderInfo = [
+        ["Thông tin đơn hàng"],
+["Nhân viên thanh toán:", currentUserName ],  // Thêm thông tin nhân viên thanh toán
+        ["Khách hàng:", fullName],  // Thêm tên khách hàng
+        ["Số điện thoại:", phoneNumber],
+        ["Ngày lập hóa đơn:", invoiceDate],  // Thêm ngày lập hóa đơn
+        [""]  // Dòng trống
+    ];
+    const headers = [["Tên Sách", "Số Lượng", "Đơn Giá", "Thành Tiền"]];
+    const data = Array.from(table.rows).map(row =>
+        Array.from(row.cells).slice(0, 4).map(cell => cell.innerText)
+    );
+
+    const worksheet = XLSX.utils.aoa_to_sheet([...orderInfo, ...headers, ...data]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách");
+
+    const date = new Date();
+    const filename = `Danh_sach_sach_${date.toLocaleDateString('vi-VN')}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+}
+
 </script>
 {% endblock %}
