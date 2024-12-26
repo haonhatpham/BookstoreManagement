@@ -153,7 +153,11 @@ class MyAdminView(AdminIndexView):
     @expose('/')
     def index(self):
         stats = dao.count_product_by_cate()
-        return self.render('admin/index.html', stats=stats)
+        u = db.session.query(User.id).count()
+        c = db.session.query(Category.id).count()
+        b = db.session.query(Book.id).count()
+        o = db.session.query(Order.id).count()
+        return self.render('admin/index.html', stats=stats, u = u, c=c, b=b, o=o)
 
 class OrderView(AuthenticatedView):
     column_sortable_list = ['initiated_date']
