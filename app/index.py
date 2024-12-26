@@ -7,7 +7,7 @@ from app.dao import delete_from_favourites
 from app.utils import cart_stats
 from app.vnpay.form import PaymentForm
 from app.vnpay.vnpay import Vnpay
-import datetime
+from datetime import datetime
 import logging
 import re
 
@@ -505,8 +505,7 @@ def category():
     # Lấy các tiêu chí lọc từ request
     checked_publishers = request.args.getlist('checkedPublishers')
     price_ranges = request.args.getlist('priceRanges')
-    print(price_ranges)
-    order_param = request.args.get('order', 'totalBuy-DESC')
+    order_param = request.args.get('order', 'unit_price-ASC')
     order_by, order_dir = order_param.split('-')  # Tách tên cột và chiều sắp xếp
 
     books, total_products = dao.filter_books(category_id=cate_id,
@@ -674,7 +673,7 @@ def statistic():
     return data
 
 
-@app.route('/save_import_ticket', methods=['POST'])
+@app.route('/api/save_import_ticket', methods=['POST'])
 def save_import_ticket():
     data = request.json
     employee_id = current_user.id
@@ -711,9 +710,9 @@ def payment_return():
         if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
             if vnp_ResponseCode == "00":
                 dao.order_paid_by_vnpay(order_id=int(order_id[0:2:1]), bank_transaction_number=vnp_BankTranNo,
-                                        vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
-                                        card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
-                                        paid_date=vnp_PayDate)
+                                          vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
+                                          card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
+                                          paid_date=vnp_PayDate)
                 return render_template("vnpay/payment_return.html", title="Kết quả giao dịch",
                                        result="Thành công", order_id=order_id,
                                        amount=amount,
@@ -925,24 +924,85 @@ def process_vnpay():
         form.order_id.data = order.id
         form.amount.data = dao.calculate_order_total(order.id)
         form.order_desc.data = "%s thanh toán online cho cửa hàng bookstore3h" % (
-                user.last_name + user.first_name)
+            user.last_name+ user.first_name)
         return render_template("vnpay/payment.html", title="Kiểm tra thông tin", form=form)
 
 
-@app.route("/cancel_order", methods=["POST"])
-@login_required
-def cancel_order():
-    data = request.get_json()
-    order_id = data.get("order_id")
-    # Cập nhật trạng thái đơn hàng trong cơ sở dữ liệu
-    success = dao.cancel_order(order_id, current_user.id)
+def user_to_dict(user):
+    address = user.Address  # Truy cập thông tin địa chỉ từ quan hệ Address
+    return {
+        "phone": user.phone,
+        "full_name": f"{user.first_name} {user.last_name}",
+        "email": user.email,
+        "city": address.city if address else None,
+        "district": address.district if address else None,
+        "ward": address.ward if address else None,
+        "details": address.details if address else None,
+    }
 
-    if success:
-        print("Hủy đơn hàng thành công")
-        return jsonify({"message": "Hủy đơn hàng thành công"}), 200
+
+@app.route('/get-customer', methods=['GET'])
+def get_customer():
+    phone_number = request.args.get('phone_number')
+    customers = dao.load_User()
+    customer = next((c for c in customers if c.phone == phone_number), None)
+    if customer:
+        return jsonify({"status": "success", "data": user_to_dict(customer)})
     else:
-        print("Không thể hủy đơn hàng")
-        return jsonify({"error": "Hủy đơn hàng thất bại"}), 400
+        return jsonify({"status": "not_found", "message": "Không tìm thấy thông tin khách hàng."})
+
+@app.route('/api/process_order', methods=['POST'])
+def process_order():
+    try:
+        data = request.get_json()
+        phone = data.get('phone')
+        # Kiểm tra thông tin khách hàng theo số điện thoại
+        user = dao.get_user_by_phone(phone)
+
+        if not user:
+            # Tạo khách hàng mới nếu chưa tồn tại
+            user = dao.new_user_in_order(
+                phone=phone,
+                full_name=data.get('full_name'),
+            )
+
+        # Tạo đơn hàng
+        order = dao.add_order_in_order(
+            customer_id=user.id,
+            received_money=data['total_payment'],
+            payment_method_id=data['payment_method_id'],
+            order_details=data['order_details']
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Đơn hàng đã được tạo thành công',
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+
+
+@app.route('/revenue-stats', methods=['GET'])
+def revenue_stats():
+    # Lấy tháng và năm từ query parameters
+    month = request.args.get('month', default=None, type=int)
+    year = request.args.get('year', default=datetime.now().year, type=int)
+
+    # Nếu người dùng chỉ truyền `year` thì dùng hàm `revenue_stats_by_time` cho cả năm
+    if month is None:
+        stats = dao.revenue_stats_by_time(year=year)
+    else:
+        stats = dao.revenue_stats_by_time(time='month', year=year)
+
+        # Lọc thêm theo tháng
+        stats = [stat for stat in stats if stat[0] == month]
+
+    return render_template('admin\chart.html', stats=stats)
+
 
 if __name__ == '__main__':
     with app.app_context():

@@ -120,6 +120,7 @@ class Category(BaseModel):
     image = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
 
+
     def __str__(self):
         return self.name
 
@@ -185,6 +186,8 @@ class RoleHasPermission(BaseModel):
     role_id = Column(ForeignKey('role.id'), nullable=False, index=True)
     permission_id = Column(ForeignKey('permission.id'), nullable=False, index=True)
 
+    role = relationship('Role', backref=backref('role_permissions', lazy=True))
+    permission = relationship('Permission', backref=backref('permission_roles', lazy=True))
 
 class ImportTicket(BaseModel):
     __tablename__ = 'import_ticket'
@@ -323,6 +326,7 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email="admin@example.com",
             phone="1234567890",
+            birth="2004-10-08",  # Không cần ngày sinh
             gender=True,  # Nam
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
             active=True,
@@ -338,6 +342,7 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email='saler@example.com',
             phone="1234567891",
+            birth="2004-01-01",
             gender=False,
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733467650/photo_sspnsa.jpg",
             active=True,
@@ -427,11 +432,13 @@ if __name__ == '__main__':
 
             db.session.commit()
         permissions = [
-            {"name": "view_admin_panel", "display_name": "Truy cập trang quản trị"},
             {"name": "manage_users", "display_name": "Quản lý người dùng"},
+            {"name": "manage_categories", "display_name": "Quản lý thể loại"},
             {"name": "manage_books", "display_name": "Quản lý sách"},
+            {"name": "manage_review", "display_name": "Quản lý đánh giá"},
             {"name": "manage_orders", "display_name": "Quản lý đơn hàng"},
-            {"name": "manage_categories", "display_name": "Quản lý danh mục"},
+            {"name": "manage_voucher", "display_name": "Quản lý khuyến mãi"},
+            {"name": "change_configuration", "display_name": "Thay đổi quy định"},
             {"name": "view_reports", "display_name": "Xem báo cáo"},
             {"name": "create_import_slip", "display_name": "Lập phiếu nhập"},
             {"name": "create_order", "display_name": "Lập hóa đơn"},

@@ -16,8 +16,6 @@ def cart_stats(cart):
 
 def statistic_revenue():
     results = dao.statistic_revenue()
-    # for data in results:
-    #     print(data)
     return [data[1] for data in dao.statistic_revenue()]
 
 
@@ -62,3 +60,5 @@ def statistic_category_by_month(month):
         data.append(temp)
         index += 1
     return data
+
+
