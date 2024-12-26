@@ -14,8 +14,7 @@ from sqlalchemy import desc, engine, or_, func
 from sqlalchemy.orm import session, sessionmaker
 import random
 import logging, time
-
-
+import secrets
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -293,11 +292,11 @@ def filter_books(category_id=None, checked_publishers=None, price_ranges=None, o
         )
     else:
         raise ValueError(f"Invalid order_by column: {order_by}")
-    count_all_books =len(books.all())
+    count_all_books = len(books.all())
     page_size = app.config["PAGE_SIZE"]
     start = (page - 1) * page_size
     books = books.slice(start, start + page_size)
-    return books.all(),count_all_books
+    return books.all(), count_all_books
 
 
 # Lấy nhà xuất bản theo id của thể loại
@@ -312,8 +311,10 @@ def get_publishers_by_category(category_id):
     )
     return publishers
 
+
 def get_all_publishers():
     return Publisher.query.all()
+
 
 def get_sold_quantity(book_id):
     book_sold = (OrderDetail.query
@@ -324,6 +325,7 @@ def get_sold_quantity(book_id):
     for i in range(len(book_sold)):
         sold_quantity += book_sold[i].quantity
     return sold_quantity
+
 
 def add_to_favourites(user_id, book_id):
     existing_favourite = db.session.query(favourite_books).filter_by(user_id=user_id, book_id=book_id).first()
@@ -352,8 +354,10 @@ def get_configuration():
 def get_payment_method_by_id(id):
     return PaymentMethod.query.get(id)
 
+
 def get_payment_method_all():
     return PaymentMethod.query.all()
+
 
 def get_payment_method_all():
     return PaymentMethod.query.all()
@@ -391,8 +395,8 @@ def get_order_by_id(order_id):
     return Order.query.get(order_id)
 
 
-def get_orders_by_customer_id(customer_id,page=1):
-    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.desc())
+def get_orders_by_customer_id(customer_id, page=1):
+    query = Order.query.filter_by(customer_id=customer_id).order_by(Order.id.desc())
     page_size = 4
     start = (page - 1) * page_size
     query = query.slice(start, start + page_size)
@@ -400,8 +404,9 @@ def get_orders_by_customer_id(customer_id,page=1):
 
 
 def count_orders_by_customer_id(customer_id):
-    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
+    query = Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
     return len(query)
+
 
 def save_banking_information(order_id, bank_transaction_number, vnpay_transaction_number, bank_code, card_type,
                              secure_hash):
@@ -421,6 +426,7 @@ def order_delivered(order_id, delivered_date=datetime.now()):
     save_order_sampledb(order)
     return 0
 
+
 def get_order_details(order_id):
     return (Order.query
             .join(OrderDetail, OrderDetail.order_id == Order.id)
@@ -430,13 +436,16 @@ def get_order_details(order_id):
             .filter(order_id == OrderDetail.order_id)
             .all())
 
+
 def get_user_info_in_order(user_id, order_id):
     return (User.query
             .join(Order, User.id == Order.customer_id)
             .join(Address, User.address_id == Address.id)
             .filter(user_id == Order.customer_id, order_id == Order.id)
-            .with_entities(User.id, User.first_name, User.last_name, User.phone, Order.initiated_date, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
+            .with_entities(User.id, User.first_name, User.last_name, User.phone, Order.initiated_date,
+                           Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
             .first())
+
 
 def create_order(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
     configuration = get_configuration()
@@ -476,6 +485,7 @@ def create_order(customer_id, staff_id, books, payment_method_id, initial_date=d
         save_order_details(od)
     return order
 
+
 def create_order_sample(customer_id, staff_id, books, payment_method_id, initial_date=datetime.now()):
     configuration = get_configuration()
     customer = get_user_by_id(customer_id)
@@ -512,8 +522,10 @@ def create_order_sample(customer_id, staff_id, books, payment_method_id, initial
     for od in order_details:
         od.order = order
         save_order_details(od)
-    return order,total_payment
-def order_paid_incash(total_payment,received_money, order_id, paid_date=datetime.now()):
+    return order, total_payment
+
+
+def order_paid_incash(total_payment, received_money, order_id, paid_date=datetime.now()):
     order = get_order_by_id(order_id)
     if order is None or order.paid_date:
         return -1
@@ -586,13 +598,29 @@ def count_product_by_cate():
         .group_by(Category.id).all()
 
 
-def stats_revenue(kw=None):
-    query = db.session.query(Book.id, Book.name, func.sum(OrderDetail.quantity * OrderDetail.unit_price)) \
-        .join(OrderDetail, OrderDetail.book_id.__eq__(Book.id))
-    if kw:
-        query = query.filter(Book.name.contains(kw))
+def revenue_stats_by_time(time='month', year=datetime.now().year, month=None):
+    query = db.session.query(
+        func.extract(time, Order.initiated_date),
+        Category.name,
+        func.sum(OrderDetail.quantity * OrderDetail.unit_price)
+    ).join(
+        OrderDetail, OrderDetail.order_id == Order.id
+    ).join(
+        Book, Book.id == OrderDetail.book_id
+    ).join(
+        book_category, book_category.c.book_id == Book.id
+    ).join(
+        Category, book_category.c.category_id == Category.id
+    ).filter(
+        func.extract('year', Order.initiated_date) == year
+    )
+    if month:
+        query = query.filter(func.extract('month', Order.initiated_date) == month)
 
-    return query.group_by(Book.id).order_by(Book.id).all()
+    return query.group_by(
+        func.extract(time, Order.initiated_date),
+        Category.name
+    ).all()
 
 
 def search(kw):
@@ -611,88 +639,26 @@ def search(kw):
         return []
 
 
-def statistic_revenue():
-    return db.session.query(
-        func.extract("month", Order.paid_date).label("month"),  # Lấy tháng từ paid_date trong Order
-        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")  # Tính doanh thu
-    ) \
-        .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(
-        func.extract("month", Order.paid_date)).all()
-
-
-def stat_category_by_month(month):
-    return db.session.query(
-        Category.name,
-        func.count(OrderDetail.book_id),
-        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")
-    ) \
-        .join(book_category, book_category.c.category_id == Category.id) \
-        .join(Book, book_category.c.book_id == Book.id) \
-        .join(OrderDetail, Book.id == OrderDetail.book_id) \
-        .join(Order, OrderDetail.order_id == Order.id) \
-        .group_by(Category.name) \
-        .filter(func.extract("month", Order.paid_date) == month) \
-        .order_by(desc("revenue")) \
-        .all()
-
-
-def stat_book_by_month(month):
-    category_list = func.group_concat(Category.name).label("categories")
+def stat_book_by_month_and_year(month, year):
+    category_list = func.group_concat(Category.name)
     return db.session.query(
         Book.name,
         category_list,
-        func.sum(OrderDetail.quantity).label("quantity")
+        func.sum(OrderDetail.quantity)
     ) \
-        .join(OrderDetail, Book.id == OrderDetail.book_id) \
-        .join(Order, OrderDetail.order_id == Order.id) \
-        .join(book_category, book_category.c.book_id == Book.id) \
-        .join(Category, book_category.c.category_id == Category.id) \
-        .group_by(Book.name) \
-        .filter(func.extract("month", Order.paid_date) == month) \
-        .order_by(desc("quantity")) \
-        .all()
-
-
-def statistic_revenue():
-    return db.session.query(
-        func.extract("month", Order.paid_date).label("month"),  # Lấy tháng từ paid_date trong Order
-        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")  # Tính doanh thu
+    .join(OrderDetail, Book.id == OrderDetail.book_id) \
+    .join(Order, OrderDetail.order_id == Order.id) \
+    .join(book_category, book_category.c.book_id == Book.id) \
+    .join(Category, book_category.c.category_id == Category.id) \
+    .group_by(Book.name) \
+    .filter(
+        func.extract("month", Order.paid_date) == month,
+        func.extract("year", Order.paid_date) == year
     ) \
-        .join(Order, Order.id == OrderDetail.order_id).group_by(func.extract("month", Order.paid_date)).order_by(
-        func.extract("month", Order.paid_date)).all()
+    .order_by(desc(func.sum(OrderDetail.quantity))) \
+    .all()
 
 
-def stat_category_by_month(month):
-    return db.session.query(
-        Category.name,
-        func.count(OrderDetail.book_id),
-        func.sum(OrderDetail.quantity * OrderDetail.unit_price).label("revenue")
-    ) \
-        .join(book_category, book_category.c.category_id == Category.id) \
-        .join(Book, book_category.c.book_id == Book.id) \
-        .join(OrderDetail, Book.id == OrderDetail.book_id) \
-        .join(Order, OrderDetail.order_id == Order.id) \
-        .group_by(Category.name) \
-        .filter(func.extract("month", Order.paid_date) == month) \
-        .order_by(desc("revenue")) \
-        .all()
-
-
-def stat_book_by_month(month):
-    category_list = func.group_concat(Category.name).label("categories")
-    return db.session.query(
-        Book.name,
-        category_list,
-        func.sum(OrderDetail.quantity).label("quantity")
-    ) \
-        .join(OrderDetail, Book.id == OrderDetail.book_id) \
-        .join(Order, OrderDetail.order_id == Order.id) \
-        .join(book_category, book_category.c.book_id == Book.id) \
-        .join(Category, book_category.c.category_id == Category.id) \
-        .group_by(Book.name) \
-        .filter(func.extract("month", Order.paid_date) == month) \
-        .order_by(desc("quantity")) \
-        .all()
 
 
 def get_import_rules():
@@ -730,18 +696,8 @@ def save_import_ticket(employee_id, import_date, details):
     db.session.commit()
 
 
-def new_user_in_order(phone, full_name, email, city, district, ward, details):
-    new_address = Address(
-        city=city.strip(),
-        district=district.strip(),
-        ward=ward.strip(),
-        details=details.strip()
-    )
-    db.session.add(new_address)
-    db.session.commit()
-    timestamp = int(time.time())
-    random_number = random.randint(1000, 9999)
-    unique_username = f"user_{timestamp}_{random_number}"
+def new_user_in_order(phone, full_name):
+
     name_parts = full_name.strip().split(' ')
     if len(name_parts) > 1:
         last_name = name_parts[0]  # Họ là phần tử đầu tiên
@@ -753,12 +709,10 @@ def new_user_in_order(phone, full_name, email, city, district, ward, details):
         first_name=first_name,
         last_name=last_name,
         phone=phone.strip(),
-        email=email.strip(),
         role_id=2,  # Gán role User
-        address_id=new_address.id,
-        username=unique_username,
+
         password='',
-        fs_uniquifier=unique_username
+        fs_uniquifier=secrets.token_hex(16)
     )
     db.session.add(new_user)
     db.session.commit()
@@ -823,15 +777,18 @@ def add_permission_in_user(user_id, permission_id):
     return {'success': True, 'message': 'Phân quyền thành công!'}
 
 
-
-def add_order_in_order(customer_id, total_payment, payment_method_id, order_details):
+def add_order_in_order(customer_id, received_money, payment_method_id, order_details):
+    time_to_cancel_order = db.session.query(Configuration).filter_by(key="time_to_cancel_order").first()
+    time_to_cancel_order_hours = 0
+    if time_to_cancel_order:
+        time_to_cancel_order_hours = int(time_to_cancel_order.value)
     new_order = Order(
         customer_id=customer_id,
         employee_id=current_user.id,
         initiated_date=datetime.now(),
-        cancel_date=datetime.now(),
-        total_payment=total_payment,
-        received_money=total_payment,
+        cancel_date=datetime.now() + timedelta(hours=time_to_cancel_order_hours),
+        received_money=received_money,
+        paid_date=datetime.now(),
         payment_method_id=payment_method_id  # Mặc định là 1
     )
     db.session.add(new_order)
@@ -841,6 +798,14 @@ def add_order_in_order(customer_id, total_payment, payment_method_id, order_deta
         book_id = detail['book_id']
         quantity = detail['quantity']
         unit_price = detail['unit_price']
+
+        # Giảm số lượng sách trong kho
+        book = Book.query.get(book_id)
+        if book.available_quantity >= quantity:
+            book.available_quantity -= quantity
+        else:
+            raise Exception(f"{book.name} không đủ số lượng!")
+
         order_detail = OrderDetail(
             order_id=new_order.id,
             book_id=book_id,
@@ -927,18 +892,22 @@ def get_user_address(customer_id):
 def get_user_by_username(username):
     return User.query.filter(User.username.__eq__(username)).first()
 
+
 def save_user(user):
     db.session.add(user)
     db.session.commit()
 
+
 def get_orders_count(user_id):
     return Order.query.filter(Order.customer_id == user_id).count()
+
 
 def get_delivering_count(user_id):
     return Order.query \
         .filter(Order.customer_id == user_id,  # Lọc theo ID người dùng
                 Order.paid_date.isnot(None),  # Đã thanh toán
                 Order.delivered_date.is_(None)).count()
+
 
 def get_received_count(user_id):
     return Order.query \
@@ -958,6 +927,7 @@ def calculate_order_total(order_id):
 
     return int(total_payment)
 
+
 def cancel_order(order_id, user_id):
     order = Order.query.filter_by(id=order_id, customer_id=user_id).first()
     if order:
@@ -966,14 +936,19 @@ def cancel_order(order_id, user_id):
         return True
     return False
 
+
 def get_payment_method_by_order_id(order_id):
     order = Order.query.filter(Order.id == order_id).first()  # Tìm đơn hàng
     if order and order.payment_method_id:
-        return PaymentMethod.query.filter(PaymentMethod.id == order.payment_method_id).first()  # Tìm phương thức thanh toán
+        return PaymentMethod.query.filter(
+            PaymentMethod.id == order.payment_method_id).first()  # Tìm phương thức thanh toán
     return None
+
 
 if __name__ == "__main__":
     with app.app_context():
+        # print(stat_book_by_month_and_year(4,2024))
+        # print(revenue_stats_by_time(year=2024,month=2))
         # Address
         cities = [
             'Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 'Can Tho',

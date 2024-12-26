@@ -62,9 +62,9 @@ class User(BaseModel, UserMixin):
     __tablename__ = 'user'
     first_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
     last_name = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
-    username = Column(String(100), nullable=False, unique=True)
-    password = Column(String(100), nullable=False)
-    email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False)
+    username = Column(String(100), nullable=True, unique=True)
+    password = Column(String(100), nullable=True)
+    email = Column(String(45, 'utf8mb4_unicode_ci'), nullable=True)
     phone = Column(String(11, 'utf8mb4_unicode_ci'))
     birth = Column(DATE, nullable=True)
     gender = Column(Boolean, default=True)  # 1:nam 0:Nữ
@@ -124,6 +124,7 @@ class Category(BaseModel):
     name = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
     image = Column(String(200, 'utf8mb4_unicode_ci'), nullable=False,
                    default="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732252873/tieu-thuyet_u0ymle.png")
+
 
     def __str__(self):
         return self.name
@@ -220,6 +221,8 @@ class RoleHasPermission(BaseModel):
     role_id = Column(ForeignKey('role.id'), nullable=False, index=True)
     permission_id = Column(ForeignKey('permission.id'), nullable=False, index=True)
 
+    role = relationship('Role', backref=backref('role_permissions', lazy=True))
+    permission = relationship('Permission', backref=backref('permission_roles', lazy=True))
 
 class ImportTicket(BaseModel):
     __tablename__ = 'import_ticket'
@@ -483,11 +486,13 @@ if __name__ == '__main__':
 
             db.session.commit()
         permissions = [
-            {"name": "view_admin_panel", "display_name": "Truy cập trang quản trị"},
             {"name": "manage_users", "display_name": "Quản lý người dùng"},
+            {"name": "manage_categories", "display_name": "Quản lý thể loại"},
             {"name": "manage_books", "display_name": "Quản lý sách"},
+            {"name": "manage_review", "display_name": "Quản lý đánh giá"},
             {"name": "manage_orders", "display_name": "Quản lý đơn hàng"},
-            {"name": "manage_categories", "display_name": "Quản lý danh mục"},
+            {"name": "manage_voucher", "display_name": "Quản lý khuyến mãi"},
+            {"name": "change_configuration", "display_name": "Thay đổi quy định"},
             {"name": "view_reports", "display_name": "Xem báo cáo"},
             {"name": "create_import_slip", "display_name": "Lập phiếu nhập"},
             {"name": "create_order", "display_name": "Lập hóa đơn"},

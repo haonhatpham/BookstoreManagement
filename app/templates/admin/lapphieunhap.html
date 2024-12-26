@@ -308,7 +308,7 @@ function createImportSlip() {
         details: validDetails
     };
 
-    fetch('/save_import_ticket', {
+    fetch('/api/save_import_ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
