@@ -43,11 +43,13 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <input type="number"  onblur="updateCart({{ c.id }}, this)" value="{{ c.quantity }}" min="1" class="form-control">
+                                    <input type="number" onblur="updateCart({{ c.id }}, this)" value="{{ c.quantity }}"
+                                           min="1" class="form-control">
                                 </td>
                                 <td class="text-center text-nowrap">
-<!--                                    <a href="#" class="btn btn-success">Cập nhật</a>-->
-                                    <input type="button" value="Xóa" onclick="deleteCart({{ c.id }})" class="btn btn-danger ms-1"></input>
+                                    <!--                                    <a href="#" class="btn btn-success">Cập nhật</a>-->
+                                    <input type="button" value="Xóa" onclick="deleteCart({{ c.id }})"
+                                           class="btn btn-danger ms-1"></input>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -63,14 +65,14 @@
 
                     <div class="card-body border-top">
                         {% if current_user.is_authenticated %}
-<!--                        <input type="button" class="btn btn-primary float-end" onclick="pay()"  value="Thanh toán">-->
-                        <a class="icon-link icon-link-hover btn btn-primary float-end" href="{{ url_for('checkout') }}">
-                            Thanh toán
-                            <i class="bi bi-arrow-right p-0 m-0"></i>
-                        </a>
-<!--                        <i class="bi bi-arrow-right p-0 m-0"></i>-->
+                            {% if has_items %}
+                            <a class="icon-link icon-link-hover btn btn-primary float-end" href="{{ url_for('checkout') }}">
+                                Thanh toán
+                                <i class="bi bi-arrow-right p-0 m-0"></i>
+                            </a>
+                            {% endif %}
                         {% else %}
-                        <p class="float-end">Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán</p>
+                            <p class="float-end">Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán</p>
                         {% endif %}
                         <a href="/" class="btn btn-light">Tiếp tục mua sắm</a>
                     </div> <!-- card-body.// -->
@@ -83,7 +85,8 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-xxl-6 col-lg-12 col-6">Số lượng:</dt>
-                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><span class="cart-counter">{{ cart.total_quantity }}</span></dd>
+                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><span class="cart-counter">{{ cart.total_quantity }}</span>
+                            </dd>
                             <dt class="col-xxl-6 col-lg-12 col-6">Tạm tính:</dt>
                             <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><span class="cart-amount">{{ "{:,.0f}".format(cart.total_amount)}}₫</span>
                             </dd>

@@ -1,75 +1,85 @@
-    <header class="header" id="header">
-        <nav class="nav container">
-            <a href="/" class="nav__logo">
-                <i class="ri-book-3-line"></i> BookStore 3H
-            </a>
-            <div class="nav__menu">
-                <ul class="nav__list" style="margin: auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav__item dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <strong><i class="bi bi-list"></i> Danh mục sản phẩm</strong>
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 11">Sách giáo khoa</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 2">Sách khoa học</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 10">Truyện tranh</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 12">Tiểu thuyết</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/categories">Tất cả danh mục</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav__item">
-                        <a href="#featured" class="nav__link">
-                            <i class="ri-price-tag-3-line"></i>
-                            <span>Sản phẩm bán chạy</span>
-                        </a>
-                    </li>
-                    <li class="nav__item">
-                        <a href="#new" class="nav__link">
-                            <i class="ri-bookmark-line"></i>
-                            <span>Sản phẩm mới</span>
-                        </a>
-                    </li>
-                </ul>
+<header class="header" id="header">
+    <nav class="nav container">
+        <a href="/" class="nav__logo">
+            <i class="ri-book-3-line"></i> BookStore 3H
+        </a>
+        <div class="nav__menu">
+            <ul class="nav__list" style="margin: auto">
+                <li class="nav-item dropdown">
+                    <a class="nav__item dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <strong><i class="bi bi-list"></i> Danh mục sản phẩm</strong>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 11">Sách giáo khoa</a>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 2">Sách khoa học</a>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 10">Truyện tranh</a>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ url_for('category') }}?category_id= 12">Tiểu thuyết</a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="/categories">Tất cả danh mục</a></li>
+                    </ul>
+                </li>
+                <li class="nav__item">
+                    <a href="{{ '/categories' if request.path != '/' else '#featured' }}" class="nav__link">
+                        <i class="ri-bookmark-line"></i>
+                        <span>Sản phẩm bán chạy</span>
+                    </a>
+                </li>
+                <li class="nav__item">
+                    <a href="{{ '/categories?order=created_at-DESC' if request.path != '/' else '#new' }}" class="nav__link">
+                        <i class="ri-bookmark-line"></i>
+                        <span>Sản phẩm mới</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav__actions">
+            <!-- Search button -->
+            <div class="search-container">
+                <button id="toggleSearch" class="btn"><i class="ri-search-line search-button" id="search-button"></i>
+                </button>
+                <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm sách..."
+                       autocomplete="off">
+                <ul id="searchResults" class="list-group"></ul>
             </div>
 
-            <div class="nav__actions">
-                <!-- Search button -->
-                <div class="search-container">
-                    <button id="toggleSearch" class="btn"><i class="ri-search-line search-button" id="search-button"></i></button>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm sách..." autocomplete="off" >
-                    <ul id="searchResults" class="list-group"></ul>
+            <!-- Login button -->
+            <div class="icon-container">
+                {% if current_user.is_authenticated %}
+                <a class="text-danger" href="/">
+                    <img src="{{ current_user.avatar_file }}" width="25" class="rounded-circle"/>
+                </a>
+                <div class="dropdown-menu">
+                    <a class="btn-login btn" href="/logout" role="button">Đăng xuất</a>
+                    <a class="btn-register btn" href="/account" role="button">Thông tin cá nhân</a>
                 </div>
-
-                <!-- Login button -->
-                <div class="icon-container">
-                    {% if current_user.is_authenticated %}
-                    <a class="text-danger" href="/">
-                        <img src="{{ current_user.avatar_file }}" width="25" class="rounded-circle"/>
-                    </a>
-                    <div class="dropdown-menu">
-                        <a class="btn-login btn" href="/logout" role="button">Đăng xuất</a>
-                        <a class="btn-register btn" href="/account" role="button">Thông tin cá nhân</a>
-                    </div>
-                    {% else %}
-                    <i class="ri-user-line login-button" id="login-button"></i>
-                    <div class="dropdown-menu">
-                        <a class="btn-login btn" href="/register" role="button">Đăng ký</a>
-                        <a class="btn-register btn" href="/login" role="button">Đăng nhập</a>
-                    </div>
-                    {% endif %}
+                {% else %}
+                <i class="ri-user-line login-button" id="login-button"></i>
+                <div class="dropdown-menu">
+                    <a class="btn-login btn" href="/register" role="button">Đăng ký</a>
+                    <a class="btn-register btn" href="/login" role="button">Đăng nhập</a>
                 </div>
+                {% endif %}
+            </div>
 
-                <!-- Theme button -->
-                <i class="ri-moon-line change-theme" id="theme-button"></i>
+            <!-- Theme button -->
+            <i class="ri-moon-line change-theme" id="theme-button"></i>
 
-                <!-- Cart button -->
-                <a href="/cart" class="nav__item text-body position-relative">
-                    <i class="ri-shopping-cart-line" id="cart-button"></i>
-                    <span id="total-cart-items-quantity" class="position-absolute bottom-50 mt-2 badge rounded-pill bg-primary cart-counter">
+            <!-- Cart button -->
+            <a href="/cart" class="nav__item text-body position-relative">
+                <i class="ri-shopping-cart-line" id="cart-button"></i>
+                <span id="total-cart-items-quantity"
+                      class="position-absolute bottom-50 mt-2 badge rounded-pill bg-primary cart-counter">
                         {{ cart.total_quantity }}
                     </span>
-                </a>
-            </div>
-        </nav>
-    </header>
+            </a>
+        </div>
+    </nav>
+</header>
