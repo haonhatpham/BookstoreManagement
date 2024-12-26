@@ -346,6 +346,7 @@ class MyAdminView(AdminIndexView):
         return self.render('admin/index.html', stats=stats, u=u, c=c, b=b, o=o)
 
 
+
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session,name=' Quản Lý Thể Loại'))
 admin.add_view(BookView(Book, db.session,name=' Quản Lý Sách'))
