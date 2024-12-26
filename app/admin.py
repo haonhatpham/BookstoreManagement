@@ -292,20 +292,6 @@ class MyAdminView(AdminIndexView):
         o = db.session.query(Order.id).count()
         return self.render('admin/index.html', stats=stats, u = u, c=c, b=b, o=o)
 
-class OrderView(AuthenticatedView):
-    column_sortable_list = ['initiated_date']
-
-
-class OrderView(AuthenticatedView):
-    column_sortable_list = ['initiated_date']
-    column_list = ['id','total_payment','received_money','paid_date','delivered_date'
-        ,'payment_method_id']
-    form_create_rules =['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
-        ,'payment_method_id']
-    form_edit_rules = ['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
-        ,'payment_method_id']
-
-
 
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
 admin.add_view(CategoryView(Category, db.session))
