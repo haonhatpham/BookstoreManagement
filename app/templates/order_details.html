@@ -101,7 +101,7 @@
                           class="btn btn-danger"
                           onclick="cancelOrder({{ order_id }})" > Hủy đơn hàng
                         </button>
-                        {% if payment_method.name == "Chuyển khoản" and order.paid_date is none %}
+                        {% if payment_method.name == "Chuyển khoản" and order.paid_date is none and order.cancel_date != order.updated_at %}
                         <button>
                             <a href="{{ url_for('process_vnpay', order_id=order_id, user_id=user_order_info.id) }}"
                                class="btn btn-primary ms-2">
