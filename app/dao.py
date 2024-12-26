@@ -638,20 +638,30 @@ def search(kw):
         return []
 
 
-def stat_book_by_month_and_year(month, year):
+def stat_book_by_month_and_year(time, month, year):
     category_list = func.group_concat(Category.name)
-    return db.session.query(
+
+    query = db.session.query(
         Book.name,
         category_list,
-        func.sum(OrderDetail.quantity).label("quantity")
+        func.sum(OrderDetail.quantity)
     ) \
         .join(OrderDetail, Book.id == OrderDetail.book_id) \
         .join(Order, OrderDetail.order_id == Order.id) \
         .join(book_category, book_category.c.book_id == Book.id) \
         .join(Category, book_category.c.category_id == Category.id) \
-        .group_by(Book.name) \
-        .filter(func.extract("month", Order.paid_date) == month) \
-        .order_by(desc("quantity")) \
+        .group_by(Book.name)
+
+    # Điều kiện lọc tùy vào giá trị 'time'
+    if time == 'month':  # Lọc theo tháng và năm
+        query = query.filter(
+            func.extract("month", Order.paid_date) == month,
+            func.extract("year", Order.paid_date) == year
+        )
+    elif time == 'year':  # Chỉ lọc theo năm
+        query = query.filter(func.extract("year", Order.paid_date) == year)
+
+    return query.order_by(desc(func.sum(OrderDetail.quantity))) \
         .all()
 
 
@@ -919,108 +929,108 @@ def get_payment_method_by_order_id(order_id):
 
 if __name__ == "__main__":
     with app.app_context():
-        # print(stat_book_by_month_and_year(4,2024))
-        # print(revenue_stats_by_time(year=2024,month=2))
+        # print(stat_book_by_month_and_year('year',1,2025))
+        print(revenue_stats_by_time(year=2025,month=1))
         # Address
-        cities = [
-            'Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 'Can Tho',
-            'Hue', 'Nha Trang', 'Vung Tau', 'Da Lat', 'Quy Nhon',
-            'Long Xuyen', 'Rach Gia', 'Thai Nguyen', 'Thanh Hoa', 'Vinh',
-            'Dong Hoi', 'Ha Long', 'Cam Ranh', 'Phan Rang', 'Phan Thiet',
-            'Pleiku', 'Buon Ma Thuot', 'Kon Tum', 'My Tho', 'Soc Trang'
-        ]
-
-        districts = [
-            'Ba Dinh', 'Thanh Xuan', 'Cau Giay', 'Binh Thanh', 'Tan Binh',
-            'Hai Chau', 'Son Tra', 'Lien Chieu', 'Le Chan', 'Ngo Quyen',
-            'Ninh Kieu', 'Cai Rang', 'Thuan An', 'Di An', 'Tan Uyen',
-            'Xuan Phu', 'Phu Hoi', 'Hai Ba Trung', 'Dong Da', 'Hoan Kiem',
-            'Thach That', 'Soc Son', 'Hoai Duc', 'Thanh Tri', 'Ha Dong'
-        ]
-
-        wards = [
-            'Ngoc Ha', 'Khuong Dinh', 'Dich Vong', 'Ward 12', 'Ward 6',
-            'Thuan Phuoc', 'An Hai Bac', 'Man Thai', 'Tran Nguyen Han', 'Ngo Quyen',
-            'Hung Loi', 'An Cu', 'Binh Hoa', 'Tan Dong Hiep', 'Phu My',
-            'Thuy Xuan', 'Phu Cat', 'Hai Tan', 'Trung Hoa', 'Quang An',
-            'Tay Ho', 'Mai Dich', 'Yen So', 'Van Quan', 'Mo Lao'
-        ]
-
-        details = [
-            '123 Nguyen Trai Street', '456 Tran Hung Dao Street', '789 Le Loi Avenue',
-            '12 Phan Dinh Phung Street', '34 Vo Thi Sau Street',
-            '56 Bach Dang Street', '78 Hai Ba Trung Street', '90 Ngo Quyen Street',
-            '23 Hoang Hoa Tham Street', '45 Ly Thai To Street',
-            '67 Pasteur Street', '89 Dien Bien Phu Street', '101 Vo Van Tan Street',
-            '222 Ly Chinh Thang Street', '333 Cach Mang Thang Tam Street',
-            '444 Truong Dinh Street', '555 Le Hong Phong Street', '666 Pham Van Dong Street',
-            '777 Nguyen Van Linh Street', '888 Ton Duc Thang Street',
-            '999 Bui Thi Xuan Street', '1010 Huynh Tan Phat Street', '1111 Truong Sa Street',
-            '1212 Hoang Dieu Street', '1313 Tran Phu Street'
-        ]
-
-        address_ids = []
-        for a in range(len(cities)):
-            address = add_address(cities[a], districts[a], wards[a], details[a])
-            address_ids.append(address)
-        users = User.query.all()
-        for u in users:
-            u.address_id = random.choice(address_ids)
-        db.session.commit()
-
-        # Comment
-        books = Book.query.all()
-        comments = [
-            'Great work on this project! The results are impressive and clearly show the effort put into development. The attention to detail in the implementation stands out, and it has significantly improved the user experience. Keep up the excellent work!',
-            'Consider optimizing the code for better performance. While the functionality is solid, some areas of the code could benefit from refactoring to reduce redundancy and improve efficiency. This would also make the system easier to maintain in the long run.',
-            'The documentation is clear and helpful, making it easy for others to understand how the system works. Including additional examples and potential use cases would further enhance its value, especially for new developers joining the team.',
-            'There seems to be a bug when handling edge cases, such as unexpected input formats or extreme values. It would be great to add more test cases to ensure robustness and prevent these issues from occurring in production environments.',
-            'The design is intuitive and user-friendly, making it easy for users to navigate the interface. However, it might be worth exploring additional features, such as customization options or advanced settings, to cater to a broader range of user needs.'
-        ]
-
-        user_ids = [user.id for user in users]
-        book_ids = [book.id for book in books]
-
-        for r in range(len(book_ids)):
-            review = add_review(
-                user_id=random.choice(user_ids),
-                book_id=r + 1,
-                comment=random.choice(comments),
-                rating=random.randint(1, 5)
-            )
-
-        # Order
-        import datetime
-
-        in_cash = PaymentMethod(name='CASH')
-        internet_banking = PaymentMethod(name='BANKING')
-        staff_id = 2
-        customer_list = User.query.filter(User.id > 3)
-        book_list = Book.query.all()
-        start_date = datetime.datetime(2024, 1, 1)
-        days_increment = 0
-        for customer in customer_list:
-            random_number = random.randint(4, 7)
-            order_details = []
-            for i in range(0, random_number):
-                b = random.choice(book_list)
-                q = random.randint(1, 5)
-                f = True
-                for o in order_details:
-                    if o['id'] == b.id:
-                        o['quantity'] += q
-                        f = False
-                if f:
-                    detail = {}
-                    detail['id'] = b.id
-                    detail['quantity'] = q
-                    order_details.append(detail)
-            initial_date = start_date + datetime.timedelta(days=days_increment)
-            if days_increment > 30 * 12:
-                days_increment = 0
-            days_increment += 20
-            order,total_payment = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
-            rand_num = random.randint(1, 10)
-            order_paid_incash(total_payment,total_payment, order.id,
-                              order.initiated_date + datetime.timedelta(hours=rand_num))
-            order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))
+        # cities = [
+        #     'Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 'Can Tho',
+        #     'Hue', 'Nha Trang', 'Vung Tau', 'Da Lat', 'Quy Nhon',
+        #     'Long Xuyen', 'Rach Gia', 'Thai Nguyen', 'Thanh Hoa', 'Vinh',
+        #     'Dong Hoi', 'Ha Long', 'Cam Ranh', 'Phan Rang', 'Phan Thiet',
+        #     'Pleiku', 'Buon Ma Thuot', 'Kon Tum', 'My Tho', 'Soc Trang'
+        # ]
+        #
+        # districts = [
+        #     'Ba Dinh', 'Thanh Xuan', 'Cau Giay', 'Binh Thanh', 'Tan Binh',
+        #     'Hai Chau', 'Son Tra', 'Lien Chieu', 'Le Chan', 'Ngo Quyen',
+        #     'Ninh Kieu', 'Cai Rang', 'Thuan An', 'Di An', 'Tan Uyen',
+        #     'Xuan Phu', 'Phu Hoi', 'Hai Ba Trung', 'Dong Da', 'Hoan Kiem',
+        #     'Thach That', 'Soc Son', 'Hoai Duc', 'Thanh Tri', 'Ha Dong'
+        # ]
+        #
+        # wards = [
+        #     'Ngoc Ha', 'Khuong Dinh', 'Dich Vong', 'Ward 12', 'Ward 6',
+        #     'Thuan Phuoc', 'An Hai Bac', 'Man Thai', 'Tran Nguyen Han', 'Ngo Quyen',
+        #     'Hung Loi', 'An Cu', 'Binh Hoa', 'Tan Dong Hiep', 'Phu My',
+        #     'Thuy Xuan', 'Phu Cat', 'Hai Tan', 'Trung Hoa', 'Quang An',
+        #     'Tay Ho', 'Mai Dich', 'Yen So', 'Van Quan', 'Mo Lao'
+        # ]
+        #
+        # details = [
+        #     '123 Nguyen Trai Street', '456 Tran Hung Dao Street', '789 Le Loi Avenue',
+        #     '12 Phan Dinh Phung Street', '34 Vo Thi Sau Street',
+        #     '56 Bach Dang Street', '78 Hai Ba Trung Street', '90 Ngo Quyen Street',
+        #     '23 Hoang Hoa Tham Street', '45 Ly Thai To Street',
+        #     '67 Pasteur Street', '89 Dien Bien Phu Street', '101 Vo Van Tan Street',
+        #     '222 Ly Chinh Thang Street', '333 Cach Mang Thang Tam Street',
+        #     '444 Truong Dinh Street', '555 Le Hong Phong Street', '666 Pham Van Dong Street',
+        #     '777 Nguyen Van Linh Street', '888 Ton Duc Thang Street',
+        #     '999 Bui Thi Xuan Street', '1010 Huynh Tan Phat Street', '1111 Truong Sa Street',
+        #     '1212 Hoang Dieu Street', '1313 Tran Phu Street'
+        # ]
+        #
+        # address_ids = []
+        # for a in range(len(cities)):
+        #     address = add_address(cities[a], districts[a], wards[a], details[a])
+        #     address_ids.append(address)
+        # users = User.query.all()
+        # for u in users:
+        #     u.address_id = random.choice(address_ids)
+        # db.session.commit()
+        #
+        # # Comment
+        # books = Book.query.all()
+        # comments = [
+        #     'Great work on this project! The results are impressive and clearly show the effort put into development. The attention to detail in the implementation stands out, and it has significantly improved the user experience. Keep up the excellent work!',
+        #     'Consider optimizing the code for better performance. While the functionality is solid, some areas of the code could benefit from refactoring to reduce redundancy and improve efficiency. This would also make the system easier to maintain in the long run.',
+        #     'The documentation is clear and helpful, making it easy for others to understand how the system works. Including additional examples and potential use cases would further enhance its value, especially for new developers joining the team.',
+        #     'There seems to be a bug when handling edge cases, such as unexpected input formats or extreme values. It would be great to add more test cases to ensure robustness and prevent these issues from occurring in production environments.',
+        #     'The design is intuitive and user-friendly, making it easy for users to navigate the interface. However, it might be worth exploring additional features, such as customization options or advanced settings, to cater to a broader range of user needs.'
+        # ]
+        #
+        # user_ids = [user.id for user in users]
+        # book_ids = [book.id for book in books]
+        #
+        # for r in range(len(book_ids)):
+        #     review = add_review(
+        #         user_id=random.choice(user_ids),
+        #         book_id=r + 1,
+        #         comment=random.choice(comments),
+        #         rating=random.randint(1, 5)
+        #     )
+        #
+        # # Order
+        # import datetime
+        #
+        # in_cash = PaymentMethod(name='CASH')
+        # internet_banking = PaymentMethod(name='BANKING')
+        # staff_id = 2
+        # customer_list = User.query.filter(User.id > 3)
+        # book_list = Book.query.all()
+        # start_date = datetime.datetime(2024, 1, 1)
+        # days_increment = 0
+        # for customer in customer_list:
+        #     random_number = random.randint(4, 7)
+        #     order_details = []
+        #     for i in range(0, random_number):
+        #         b = random.choice(book_list)
+        #         q = random.randint(1, 5)
+        #         f = True
+        #         for o in order_details:
+        #             if o['id'] == b.id:
+        #                 o['quantity'] += q
+        #                 f = False
+        #         if f:
+        #             detail = {}
+        #             detail['id'] = b.id
+        #             detail['quantity'] = q
+        #             order_details.append(detail)
+        #     initial_date = start_date + datetime.timedelta(days=days_increment)
+        #     if days_increment > 30 * 12:
+        #         days_increment = 0
+        #     days_increment += 20
+        #     order,total_payment = create_order_sample(customer.id, staff_id, order_details, in_cash.id, initial_date)
+        #     rand_num = random.randint(1, 10)
+        #     order_paid_incash(total_payment,total_payment, order.id,
+        #                       order.initiated_date + datetime.timedelta(hours=rand_num))
+        #     order_delivered(order.id, order.initiated_date + datetime.timedelta(hours=rand_num + 1))

@@ -177,11 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
            availableQuantity: row.cells[2].innerText,
            standardPrice: row.cells[3].innerText
        }));
-       localStorage.setItem('bookData', JSON.stringify(data));
+       localStorage.setItem('bookData1', JSON.stringify(data));
    }
 
    function loadFromLocalStorage1() {
-       const data = localStorage.getItem('bookData');
+       const data = localStorage.getItem('bookData1');
        if (data) {
            const books = JSON.parse(data);
            const table = document.getElementById('book-list');
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear the form and table
             document.getElementById('bookForm').reset();
             document.getElementById('book-list').innerHTML = '';
-            localStorage.removeItem('bookData');
+            localStorage.removeItem('bookData1');
             // Optionally reload the page or update UI
             location.reload();
         } else {
