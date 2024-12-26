@@ -35,6 +35,8 @@ def index():
 @app.route("/register", methods=['get', 'post'])
 def register_process():
     err_msg = {'username': '', 'password': '', 'phone': '', 'email': '', 'confirm': ''}
+    if 'email_attempts' not in session:
+        session['email_attempts'] = 0
     # Kiểm tra xem 'email_attempts' đã tồn tại trong session hay chưa
     if request.method == 'POST':
         username = request.form.get('username')
