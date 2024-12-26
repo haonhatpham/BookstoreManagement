@@ -660,20 +660,6 @@ def api_pay():
         return jsonify({'status': 500, 'message': str(e)})
 
 
-@app.route("/statistic", methods=['GET'])
-def statistic():
-    month = int(request.args.get("month"))
-    type = request.args.get("type")
-    data = None
-    if type == 'book':
-        data = utils.statistic_book_by_month(month)
-    if type == 'category':
-        data = utils.statistic_category_by_month(month)
-    if type == 'overall':
-        data = utils.statistic_revenue()
-    return data
-
-
 @app.route('/save_import_ticket', methods=['POST'])
 def save_import_ticket():
     data = request.json
