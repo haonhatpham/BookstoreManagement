@@ -930,7 +930,6 @@ def cancel_order():
         print("Không thể hủy đơn hàng")
         return jsonify({"error": "Hủy đơn hàng thất bại"}), 400
 
-
 if __name__ == '__main__':
     with app.app_context():
         from app import admin
