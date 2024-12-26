@@ -10,153 +10,126 @@
         <h3 class="card-title">Nhập Thông Tin Khách Hàng</h3>
     </div>
     <div class="card-body">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="phone_number">Số điện thoại</label>
-                    <input type="text" class="form-control" id="phone_number" name="phone_number" required onchange="checkPhoneNumber()">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="full_name">Họ tên</label>
-                    <input type="text" class="form-control" id="full_name" name="full_name" required>
-                </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="phone_number">Số điện thoại</label>
+                <input type="text" class="form-control" id="phone_number" name="phone_number" required
+                       onchange="checkPhoneNumber()">
             </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="city">Tỉnh/Thành phố</label>
-                    <input type="text" class="form-control" id="city" name="city" required>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="district">Quận/Huyện</label>
-                    <input type="text" class="form-control" id="district" name="district" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="ward">Phường/Thị xã</label>
-                    <input type="text" class="form-control" id="ward" name="ward" required>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label for="details">Số nhà, Tên đường</label>
-                <input type="text" class="form-control" id="details" name="details" required>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mt-4">
-        <div class="row mb-3">
-            <div class="col-md-8">
-                <h1 class="display-6">Chọn Sách</h1>
-            </div>
-            <div class="col-md-4 text-end">
-                <button class="btn btn-success" onclick="showAddBookForm()">
-                    <i class="bi bi-plus-lg"></i> Chọn Sách
-                </button>
-            </div>
-        </div>
-
-        <!-- Form nhập sách -->
-        <div id="add-book-form" class="card mb-4" style="display: none;">
-            <div class="card-header">
-                <h3 class="card-title">Nhập Chi Tiết Sách</h3>
-            </div>
-            <div class="card-body">
-                <form id="bookForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="book-dropdown" class="form-label">Chọn Sách</label>
-                            <select id="book-dropdown" class="form-control" onchange="loadBookDetails()">
-                                <option value="">Chọn Sách</option>
-                                {% for b in data %}
-                                <option value="{{ b.id }}"
-                                        data-name="{{ b.name }}"
-                                        data-available="{{ b.available_quantity }}"
-                                        data-price="{{ b.standard_price }}">
-                                    {{ b.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="quantity" class="form-label">Số Lượng </label>
-                            <input type="number" class="form-control" id="quantity" required min="1"
-                                   placeholder="Nhập số lượng">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="available_quantity" class="form-label">Số Lượng Hiện Có</label>
-                            <input type="number" class="form-control" id="available_quantity" readonly>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="standard_price" class="form-label">Đơn Giá (VNĐ)</label>
-                            <input type="number" class="form-control" id="standard_price" readonly>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-primary" onclick="saveBook()">
-                            <i class="bi bi-save"></i> Lưu Sách
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="cancelBookForm()">
-                            <i class="bi bi-x-lg"></i> Hủy
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Danh Sách Sách Nhập</h3>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="input-date" class="form-label">Ngày Nhập:</label>
-                        <input type="date" id="input-date" class="form-control">
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-light">
-                        <tr>
-                            <th>Tên Sách</th>
-                            <th>Số Lượng</th>
-                            <th>Đơn Giá</th>
-                            <th>Thành Tiền</th>
-                            <th>Hành Động</th>
-                        </tr>
-                        </thead>
-                        <tbody id="book-list">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card-footer">
-                <button class="btn btn-success" onclick="createImportOrder()">
-                    <i class="bi bi-file-earmark-plus"></i> Lập Hóa Đơn
-                </button>
+            <div class="col-md-6 mb-3">
+                <label for="full_name">Họ tên</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required>
             </div>
         </div>
     </div>
 </div>
-<script>
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1 class="display-6">Chọn Sách</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-success" onclick="showAddBookForm()">
+                <i class="bi bi-plus-lg"></i> Chọn Sách
+            </button>
+        </div>
+    </div>
 
+    <!-- Form nhập sách -->
+    <div id="add-book-form" class="card mb-4" style="display: none;">
+        <div class="card-header">
+            <h3 class="card-title">Nhập Chi Tiết Sách</h3>
+        </div>
+        <div class="card-body">
+            <form id="bookForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="book-dropdown" class="form-label">Chọn Sách</label>
+                        <select id="book-dropdown" class="form-control" onchange="loadBookDetails()">
+                            <option value="">Chọn Sách</option>
+                            {% for b in data %}
+                            <option value="{{ b.id }}"
+                                    data-name="{{ b.name }}"
+                                    data-available="{{ b.available_quantity }}"
+                                    data-price="{{ b.standard_price }}">
+                                {{ b.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="quantity" class="form-label">Số Lượng </label>
+                        <input type="number" class="form-control" id="quantity" required min="1"
+                               placeholder="Nhập số lượng">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="available_quantity" class="form-label">Số Lượng Hiện Có</label>
+                        <input type="number" class="form-control" id="available_quantity" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="standard_price" class="form-label">Đơn Giá (VNĐ)</label>
+                        <input type="number" class="form-control" id="standard_price" readonly>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-primary" onclick="saveBook()">
+                        <i class="bi bi-save"></i> Lưu Sách
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelBookForm()">
+                        <i class="bi bi-x-lg"></i> Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Danh Sách Sách Mua</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="input-date" class="form-label">Ngày Nhập:</label>
+                    <input type="date" id="input-date" class="form-control">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Tên Sách</th>
+                        <th>Số Lượng</th>
+                        <th>Đơn Giá</th>
+                        <th>Thành Tiền</th>
+                        <th>Hành Động</th>
+                    </tr>
+                    </thead>
+                    <tbody id="book-list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-success" onclick="createImportOrder()">
+                <i class="bi bi-file-earmark-plus"></i> Lập Hóa Đơn
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
 document.addEventListener('DOMContentLoaded', () => {
        loadFromLocalStorage1();
    });
    async function checkPhoneNumber() {
    const phoneNumber = document.getElementById('phone_number').value;
-
     if (!phoneNumber) return;
-
     try {
         const response = await fetch(`/get-customer?phone_number=${phoneNumber}`);
         const result = await response.json();
@@ -165,36 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Cập nhật các trường với thông tin người dùng
             const data = result.data;
             document.getElementById('full_name').value = data.full_name;
-            document.getElementById('email').value = data.email;
-            document.getElementById('city').value = data.city;
-            document.getElementById('district').value = data.district;
-            document.getElementById('ward').value = data.ward;
-            document.getElementById('details').value = data.details;
 
             // Thiết lập các trường còn lại là read-only
             document.getElementById('full_name').readOnly = true;
-            document.getElementById('email').readOnly = true;
-            document.getElementById('city').readOnly = true;
-            document.getElementById('district').readOnly = true;
-            document.getElementById('ward').readOnly = true;
-            document.getElementById('details').readOnly = true;
+
         } else {
             alert(result.message);
             // Xóa thông tin cũ
             document.getElementById('full_name').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('city').value = '';
-            document.getElementById('district').value = '';
-            document.getElementById('ward').value = '';
-            document.getElementById('details').value = '';
 
             // Thiết lập các trường còn lại là read-only
             document.getElementById('full_name').readOnly = false;
-            document.getElementById('email').readOnly = false;
-            document.getElementById('city').readOnly = false;
-            document.getElementById('district').readOnly = false;
-            document.getElementById('ward').readOnly = false;
-            document.getElementById('details').readOnly = false;
+
         }
     } catch (error) {
         console.error("Error:", error);
@@ -318,15 +273,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get customer information
     const phoneNumber = document.getElementById('phone_number').value;
     const fullName = document.getElementById('full_name').value;
-    const email = document.getElementById('email').value;
-    const city = document.getElementById('city').value;
-    const district = document.getElementById('district').value;
-    const ward = document.getElementById('ward').value;
-    const details = document.getElementById('details').value;
 
     // Validate required fields
-    if (!phoneNumber || !fullName || !email || !city || !district ||!ward ||!details) {
-        alert('Vui lòng điền đầy đủ thông tin khách hàng và ngày nhập.');
+    if (!phoneNumber || !fullName) {
+        alert('Vui lòng điền số điện thoại và tên.');
+        return;
+    }
+
+    const phoneRegex = /^\d{10,12}$/; // Kiểm tra số điện thoại có 10-12 chữ số
+    if (!phoneRegex.test(phoneNumber)) {
+        alert('Số điện thoại phải có từ 10 đến 12 chữ số.');
         return;
     }
 
@@ -365,8 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalPayment = bookList.reduce((sum, book) => sum + (book.quantity * book.unit_price), 0);
 
     try {
-        // Combine customer and order creation
-        const response = await fetch('/process_order', {
+        const response = await fetch('/api/process_order', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -374,11 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({
                 phone: phoneNumber,
                 full_name: fullName,
-                email: email,
-                city: city,
-                district: district,
-                ward: ward,
-                details: details,
                 total_payment: totalPayment,
                 payment_method_id: 1,
                 order_details: bookList
@@ -393,14 +343,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('bookForm').reset();
             document.getElementById('book-list').innerHTML = '';
             localStorage.removeItem('bookData');
+            // Optionally reload the page or update UI
+            location.reload();
         } else {
-            alert('Có lỗi xảy ra khi tạo đơn hàng: ' + result.message);
+            // Show error message from server
+            alert('Lỗi: ' + result.message);
         }
-        } catch (error) {
-           console.error('Error:', error);
-          alert('Đã xảy ra lỗi khi xử lý đơn hàng.');
-        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Đã xảy ra lỗi khi xử lý đơn hàng.');
+    }
 }
-
 </script>
 {% endblock %}
