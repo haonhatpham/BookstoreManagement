@@ -10,7 +10,7 @@ from app.vnpay.vnpay import Vnpay
 from datetime import datetime
 import logging
 import re
-
+import datetime
 
 @app.route("/")
 def index():
@@ -35,6 +35,8 @@ def index():
 @app.route("/register", methods=['get', 'post'])
 def register_process():
     err_msg = {'username': '', 'password': '', 'phone': '', 'email': '', 'confirm': ''}
+    if 'email_attempts' not in session:
+        session['email_attempts'] = 0
     # Kiểm tra xem 'email_attempts' đã tồn tại trong session hay chưa
     if request.method == 'POST':
         username = request.form.get('username')
@@ -710,9 +712,9 @@ def payment_return():
         if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
             if vnp_ResponseCode == "00":
                 dao.order_paid_by_vnpay(order_id=int(order_id[0:2:1]), bank_transaction_number=vnp_BankTranNo,
-                                          vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
-                                          card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
-                                          paid_date=vnp_PayDate)
+                                        vnpay_transaction_number=vnp_TransactionNo, bank_code=vnp_BankCode,
+                                        card_type=vnp_CardType, secure_hash=vnp_SecureHash, received_money=amount,
+                                        paid_date=vnp_PayDate)
                 return render_template("vnpay/payment_return.html", title="Kết quả giao dịch",
                                        result="Thành công", order_id=order_id,
                                        amount=amount,
