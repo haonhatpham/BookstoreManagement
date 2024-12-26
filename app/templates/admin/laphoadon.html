@@ -8,7 +8,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title">Nhập Thông Tin Khách Hàng</h3>
-        <input type="hidden" id="current_user_name" value="{{ current_user.name if current_user.is_authenticated else 'N/A' }}">
+        <input type="hidden" id="current_user_username" value="{{current_user.username}}">
     </div>
     <div class="card-body">
         <div class="row">
@@ -359,7 +359,7 @@ function exportToExcel() {
     const phoneNumber = document.getElementById('phone_number').value;
     const fullName = document.getElementById('full_name').value;
     const invoiceDate = document.getElementById('input-date').value;
-    const currentUserName = document.getElementById('current_user_name').value;  // Lấy tên nhân viên từ phần tử ẩn
+    const currentUserName = document.getElementById('current_user_username').value;  // Lấy tên nhân viên từ phần tử ẩn
     console.log(currentUserName);  // Kiểm tra xem tên nhân viên có được điền đúng không
     const table = document.getElementById('book-list');
     if (table.rows.length === 0) {
