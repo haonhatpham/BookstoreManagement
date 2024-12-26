@@ -5,7 +5,7 @@ from sqlalchemy.testing.suite.test_reflection import users
 from sqlalchemy import func
 from app.models import Book, Category, User, book_category, Role, Publisher, favourite_books, Configuration, \
     PaymentMethod, Order, OrderDetail, BankingInformation, Address, Review, ImportDetail, ImportTicket, Permission, \
-    RoleHasPermission, UserHasPermission
+    RoleHasPermission
 from datetime import datetime, timedelta
 from app import app, db
 import hashlib
@@ -93,6 +93,9 @@ def get_category(cate_id=None, book_id=None):
 def existing_user(username):
     return User.query.filter_by(username=username).first()
 
+def existing_phone(phone):
+    return User.query.filter_by(phone=phone).first()
+
 
 def add_address(city, district, ward, street):
     address = Address(
@@ -117,7 +120,7 @@ def load_user_address(user_id):
 
 
 # Thêm user ở Client
-def add_user(name, username, password, email, phone, birth, gender, avatar, address_id):
+def add_user(name, username, password, email, phone, gender, avatar, address_id):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
     user_role = Role.query.filter_by(name="Customer").first()
     name_parts = name.strip().split(" ", 1)
@@ -135,7 +138,6 @@ def add_user(name, username, password, email, phone, birth, gender, avatar, addr
         password=password,
         email=email.strip(),
         phone=phone.strip(),
-        birth=birth,
         gender=gender,  # Nam active=True,
         role_id=user_role.id,
         address_id=address_id
@@ -292,11 +294,11 @@ def filter_books(category_id=None, checked_publishers=None, price_ranges=None, o
         )
     else:
         raise ValueError(f"Invalid order_by column: {order_by}")
-    count_all_books = len(books.all())
+    count_all_books =len(books.all())
     page_size = app.config["PAGE_SIZE"]
     start = (page - 1) * page_size
     books = books.slice(start, start + page_size)
-    return books.all(), count_all_books
+    return books.all(),count_all_books
 
 
 # Lấy nhà xuất bản theo id của thể loại
@@ -354,10 +356,8 @@ def get_configuration():
 def get_payment_method_by_id(id):
     return PaymentMethod.query.get(id)
 
-
 def get_payment_method_all():
     return PaymentMethod.query.all()
-
 
 def get_payment_method_all():
     return PaymentMethod.query.all()
@@ -395,8 +395,8 @@ def get_order_by_id(order_id):
     return Order.query.get(order_id)
 
 
-def get_orders_by_customer_id(customer_id, page=1):
-    query = Order.query.filter_by(customer_id=customer_id).order_by(Order.id.desc())
+def get_orders_by_customer_id(customer_id,page=1):
+    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.desc())
     page_size = 4
     start = (page - 1) * page_size
     query = query.slice(start, start + page_size)
@@ -404,7 +404,7 @@ def get_orders_by_customer_id(customer_id, page=1):
 
 
 def count_orders_by_customer_id(customer_id):
-    query = Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
+    query= Order.query.filter_by(customer_id=customer_id).order_by(Order.id.asc()).all()
     return len(query)
 
 
@@ -442,8 +442,7 @@ def get_user_info_in_order(user_id, order_id):
             .join(Order, User.id == Order.customer_id)
             .join(Address, User.address_id == Address.id)
             .filter(user_id == Order.customer_id, order_id == Order.id)
-            .with_entities(User.id, User.first_name, User.last_name, User.phone, Order.initiated_date,
-                           Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
+            .with_entities(User.id, User.first_name, User.last_name, User.phone, Order.initiated_date, Order.delivered_at, Address.city, Address.ward, Address.district, Address.details)
             .first())
 
 
@@ -644,21 +643,16 @@ def stat_book_by_month_and_year(month, year):
     return db.session.query(
         Book.name,
         category_list,
-        func.sum(OrderDetail.quantity)
+        func.sum(OrderDetail.quantity).label("quantity")
     ) \
-    .join(OrderDetail, Book.id == OrderDetail.book_id) \
-    .join(Order, OrderDetail.order_id == Order.id) \
-    .join(book_category, book_category.c.book_id == Book.id) \
-    .join(Category, book_category.c.category_id == Category.id) \
-    .group_by(Book.name) \
-    .filter(
-        func.extract("month", Order.paid_date) == month,
-        func.extract("year", Order.paid_date) == year
-    ) \
-    .order_by(desc(func.sum(OrderDetail.quantity))) \
-    .all()
-
-
+        .join(OrderDetail, Book.id == OrderDetail.book_id) \
+        .join(Order, OrderDetail.order_id == Order.id) \
+        .join(book_category, book_category.c.book_id == Book.id) \
+        .join(Category, book_category.c.category_id == Category.id) \
+        .group_by(Book.name) \
+        .filter(func.extract("month", Order.paid_date) == month) \
+        .order_by(desc("quantity")) \
+        .all()
 
 
 def get_import_rules():
@@ -754,28 +748,6 @@ def add_permission_in_role(role_id, permission_id):
     db.session.commit()
 
     return {'success': True, 'message': 'Permission đã được thêm vào Role thành công!'}
-
-
-# Hàm add_permission_in_user
-def add_permission_in_user(user_id, permission_id):
-    user = User.query.get(user_id)
-    if not user:
-        raise ValueError("User không tồn tại!")
-    permission = Permission.query.get(permission_id)
-    if not permission:
-        raise ValueError("Permission không tồn tại!")
-    existing_permission = UserHasPermission.query.filter_by(user_id=user_id, permission_id=permission_id).first()
-    if existing_permission:
-        raise ValueError("Permission đã được gán cho User này!")
-
-    # Thêm Permission vào User
-    new_user_permission = UserHasPermission(user_id=user_id, permission_id=permission_id)
-    db.session.add(new_user_permission)
-    db.session.commit()
-
-    # Trả về kết quả success khi hoàn tất
-    return {'success': True, 'message': 'Phân quyền thành công!'}
-
 
 def add_order_in_order(customer_id, received_money, payment_method_id, order_details):
     time_to_cancel_order = db.session.query(Configuration).filter_by(key="time_to_cancel_order").first()

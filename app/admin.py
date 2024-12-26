@@ -1,10 +1,10 @@
-from flask import redirect, request, url_for, render_template, flash
+from flask import redirect, request, url_for, render_template,flash
 from flask_admin.helpers import get_url
 from markupsafe import Markup
-from app import app, db, dao, utils
+from app import app, db, dao,utils
 from flask_login import login_user, logout_user
 from flask_admin import Admin, BaseView, expose, AdminIndexView
-from app.models import Book, Review, Order, Voucher, Permission, Category, User, Configuration, RoleHasPermission
+from app.models import Book, Review, Order, Permission, Category, User,Configuration,RoleHasPermission
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, login_user
 from app.models import Role
@@ -285,7 +285,26 @@ class RoleHasPermissionView(AuthenticatedView):
 class MyAdminView(AdminIndexView):
     @expose('/')
     def index(self):
-        return self.render('admin/index.html')
+        stats = dao.count_product_by_cate()
+        u = db.session.query(User.id).count()
+        c = db.session.query(Category.id).count()
+        b = db.session.query(Book.id).count()
+        o = db.session.query(Order.id).count()
+        return self.render('admin/index.html', stats=stats, u = u, c=c, b=b, o=o)
+
+class OrderView(AuthenticatedView):
+    column_sortable_list = ['initiated_date']
+
+
+class OrderView(AuthenticatedView):
+    column_sortable_list = ['initiated_date']
+    column_list = ['id','total_payment','received_money','paid_date','delivered_date'
+        ,'payment_method_id']
+    form_create_rules =['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
+        ,'payment_method_id']
+    form_edit_rules = ['id', 'initiated_date', 'cancel_date','received_money','paid_date','delivered_date'
+        ,'payment_method_id']
+
 
 
 admin = Admin(app=app, name="BookStore3H", template_mode="bootstrap4", index_view=MyAdminView())
@@ -300,3 +319,4 @@ admin.add_view(LapHoaDon(name="Lập Hóa Đơn"))
 admin.add_view(LapPhieuNhap(name="Lập Phiếu Nhập"))
 admin.add_view(StatsView(name="Thống Kê"))
 admin.add_view(LogoutView(name="Đăng Xuất"))
+

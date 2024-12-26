@@ -1,4 +1,3 @@
-
 if (window.location.pathname === '/details') {
     //    Thêm vào danh sách yêu thích
     document.querySelector("#favourite-form").addEventListener("click", function (event) {
@@ -254,3 +253,21 @@ if (window.location.pathname === '/details') {
         }
     }
 }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.querySelector(".toggle-btn");
+    const textContainer = document.querySelector(".text-container");
+
+    toggleBtn.addEventListener("click", function () {
+        textContainer.classList.toggle("expanded");
+        if (textContainer.classList.contains("expanded")) {
+            toggleBtn.textContent = "Thu gọn";
+            toggleBtn.style.transform = "translate(-50%, 0)"; // Đặt lại vị trí sau khi mở
+        } else {
+            toggleBtn.textContent = "Hiển thị thêm";
+            toggleBtn.style.transform = "translate(-50%, 0)"; // Quay lại vị trí ban đầu
+        }
+    });
+});
+
