@@ -326,7 +326,6 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email="admin@example.com",
             phone="1234567890",
-            birth="2004-10-08",  # Không cần ngày sinh
             gender=True,  # Nam
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1732976606/dd7862a2-d925-464f-8729-69c6f71f4960_bborg7.jpg",
             active=True,
@@ -342,7 +341,6 @@ if __name__ == '__main__':
             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
             email='saler@example.com',
             phone="1234567891",
-            birth="2004-01-01",
             gender=False,
             avatar_file="https://res.cloudinary.com/dtcxjo4ns/image/upload/v1733467650/photo_sspnsa.jpg",
             active=True,
