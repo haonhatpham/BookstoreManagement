@@ -116,6 +116,7 @@ def register_process():
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
+    err_msg = None
     if request.method.__eq__('POST'):
         username = request.form.get('username')
         password = request.form.get('password')
@@ -129,7 +130,7 @@ def login_process():
         else:
             err_msg = 'Tên đăng nhập hoặc mật khẩu không chính xác'
 
-    return render_template('login.html')
+    return render_template('login.html' , err_msg=err_msg)
 
 
 @app.route("/logout")
