@@ -23,6 +23,11 @@
                     <header class="card-header">
                         <strong class="d-inline-block me-4">Mã đơn hàng: {{order_id}}</strong>
                         <span>Ngày mua: {{ order.initiated_date.strftime('%d/%m/%Y') }}</span>
+                        {% if order.paid_date is none %}
+                        <strong class="d-inline-block me-4 text-danger">
+                            Đơn hàng của bạn sẽ bị hủy vào lúc {{ order.cancel_date.strftime('%d/%m/%Y %H:%M:%S') }} nếu không thanh toán
+                        </strong>
+                        {% endif %}
                     </header> <!-- card-header.// -->
 
                     <div class="card-body pb-0">

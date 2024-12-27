@@ -74,6 +74,23 @@ function deleteCart(book_id){
 
             let c = document.getElementById(`cart${book_id}`)
             c.style.display = "none"
+
+            if (data.cart_stats.total_quantity === 0) {
+                // Ẩn bảng sản phẩm
+                document.querySelector('.cart-table').style.display = 'none';
+                // Hiển thị thông báo giỏ hàng trống
+                const emptyMessage = `
+                    <div class="d-flex justify-content-center p-5 font-monospace">
+                        Không có sản phẩm nào trong giỏ hàng :(
+                    </div>`;
+                const tableContainer = document.querySelector('.table-responsive-xl');
+                tableContainer.innerHTML = emptyMessage;
+
+                const checkoutButton = document.querySelector('.btn.btn-primary');
+                if (checkoutButton) {
+                    checkoutButton.style.display = 'none';
+                }
+            }
         }).catch(err => console.info(err)) //json promise
     }
 }

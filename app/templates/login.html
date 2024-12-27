@@ -32,14 +32,5 @@
     </div> <!-- card .// -->
     <p class="text-center mt-4">Không có tài khoản? <a href="/register">Đăng ký</a></p>
 </section> <!-- section-content.// -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <script>
-                alert("{{ message }}");  // Hiển thị thông báo dưới dạng alert
-            </script>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
 {% endblock %}
 

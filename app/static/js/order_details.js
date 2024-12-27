@@ -17,13 +17,6 @@
         if (cancelButton) {
                  cancelButton.disabled = true;
         }
-//        // Cập nhật trạng thái DOM
-//        const statusElement = document.querySelector(`#order-status-${orderId}`);
-//        if (statusElement) {
-//            statusElement.textContent = "Hủy đơn hàng";
-//            statusElement.classList.remove("badge-primary", "badge-warning");
-//            statusElement.classList.add("badge-danger");
-//        }
     } else if (data.error) {
         toastr.error(data.error);
     }

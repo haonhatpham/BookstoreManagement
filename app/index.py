@@ -417,13 +417,7 @@ def load_user(user_id):
 
 @app.route('/cart', methods=['GET'])
 def cart():
-    key = app.config['CART_KEY']
-    cart = session.get(key)
-    has_items = bool(cart)  # Kiểm tra nếu giỏ hàng có sản phẩm (cart không rỗng)
-    if current_user.is_authenticated:
-        return render_template('cart.html', has_items=has_items)
-    else:
-        return render_template('cart.html')
+    return render_template('cart.html')
 
 
 @app.route('/api/cart', methods=['POST'])
@@ -617,11 +611,9 @@ def live_search():
 @app.route('/search_result')
 def search_result():
     query = request.args.get('q', '').strip().lower()
-    print(query)
     books = []
     if query:
         books = dao.search(query)
-        print(books)
     return render_template('search_result.html', books=books)
 
 
@@ -840,7 +832,7 @@ def checkout():
             # khách hàng mua online
             customer = current_user
             staff = dao.get_user_by_username("saler")
-        order = dao.create_order(customer.id, staff.id, session['cart'], payment_type)
+        order = dao.create_order(customer.id, staff.id, session['cart'], payment_type,initial_date=datetime.datetime.now())
 
         session[key] = {}  # Xóa cart sau khi tạo đơn hàng
         session.modified = True
@@ -1007,7 +999,7 @@ def revenue_stats():
         # Lọc thêm theo tháng
         stats = [stat for stat in stats if stat[0] == month]
 
-    return render_template('admin\chart.html', stats=stats)
+    return render_template('admin/chart.html', stats=stats)
 @app.route("/cancel_order", methods=["POST"])
 @login_required
 def cancel_order():
@@ -1027,5 +1019,4 @@ def cancel_order():
 if __name__ == '__main__':
     with app.app_context():
         from app import admin
-
         app.run(debug=True)

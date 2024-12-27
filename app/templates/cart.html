@@ -47,7 +47,7 @@
                                            min="1" class="form-control">
                                 </td>
                                 <td class="text-center text-nowrap">
-                                    <!--                                    <a href="#" class="btn btn-success">Cập nhật</a>-->
+                                    <!-- <a href="#" class="btn btn-success">Cập nhật</a>-->
                                     <input type="button" value="Xóa" onclick="deleteCart({{ c.id }})"
                                            class="btn btn-danger ms-1"></input>
                                 </td>
@@ -65,7 +65,7 @@
 
                     <div class="card-body border-top">
                         {% if current_user.is_authenticated %}
-                            {% if has_items %}
+                            {% if session['cart'] %}
                             <a class="icon-link icon-link-hover btn btn-primary float-end" href="{{ url_for('checkout') }}">
                                 Thanh toán
                                 <i class="bi bi-arrow-right p-0 m-0"></i>
@@ -91,7 +91,7 @@
                             <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><span class="cart-amount">{{ "{:,.0f}".format(cart.total_amount)}}₫</span>
                             </dd>
                             <dt class="col-xxl-6 col-lg-12 col-6">Tổng cộng:</dt>
-                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><strong>{{
+                            <dd class="col-xxl-6 col-lg-12 col-6 text-end mb-3"><strong class="cart-amount">{{
                                 "{:,.0f}".format(cart.total_amount) }}₫</strong></dd>
                         </dl>
                     </div> <!-- card-body.// -->

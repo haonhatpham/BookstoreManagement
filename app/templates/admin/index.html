@@ -1,7 +1,5 @@
 {% extends 'admin/master.html' %}
-
 {% block body %}
- {{ super() }}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 {% if current_user.is_authenticated and  current_user.role.name in ["Admin","Sales","Storekeeper"] %}
@@ -52,28 +50,6 @@
       </div> <!-- card.// -->
     </div> <!-- container.// -->
   </section> <!-- section-content.// -->
-
-
-<!--<div class="row">-->
-<!--    <div class="col-md-5 col-sm-12">-->
-<!--        <table class="table">-->
-<!--            <tr>-->
-<!--                <th>ID</th>-->
-<!--                <th>Thể loại sách</th>-->
-<!--                <th>Số sản phẩm</th>-->
-<!--            </tr>-->
-<!--            {% for s in stats %}-->
-<!--            <tr>-->
-<!--                <td>{{s[0]}}</td>-->
-<!--                <td>{{s[1]}}</td>-->
-<!--                <td>{{s[2]}}</td>-->
-<!--            </tr>-->
-<!--            {% endfor %}-->
-<!--        </table>-->
-<!--    </div>-->
-<!--    <div class="col-md-7 col-sm-12"></div>-->
-<!--</div>-->
-
 {% else %}
 <section class="section-content" style="margin: 100px 0;">
     <h2 class="text-center">ĐĂNG NHẬP QUẢN TRỊ</h2>
