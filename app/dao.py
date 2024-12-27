@@ -605,7 +605,7 @@ def revenue_stats_by_time(time='month', year=datetime.now().year, month=None):
     ).join(
         OrderDetail, OrderDetail.order_id == Order.id
     ).join(
-        Book, Book.id == OrderDetail.book_id
+        Book, Book.id == OrderDetail.book_id,
     ).join(
         book_category, book_category.c.book_id == Book.id
     ).join(
@@ -637,9 +637,8 @@ def search(kw):
         logging.error(f"Error during search: {str(ex)}")
         return []
 
-
 def stat_book_by_month_and_year(time, month, year):
-    category_list = func.group_concat(Category.name)
+    category_list = func.group_concat(func.distinct(Category.name))
 
     query = db.session.query(
         Book.name,
@@ -663,6 +662,7 @@ def stat_book_by_month_and_year(time, month, year):
 
     return query.order_by(desc(func.sum(OrderDetail.quantity))) \
         .all()
+
 
 
 def get_import_rules():

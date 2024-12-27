@@ -95,17 +95,7 @@
                         </tr>
                     </thead>
                     <tbody id="book-list">
-                        {% for p in phieu %}
-                        <tr>
-                            <td>{{ p.bookName }}</td>
-                            <td>{{ p.quantity }}</td>
-                            <td>{{ p.available_quantity }}</td>
-                            <td>{{ p.standard_price }}</td>
-                            <td>
-                                <button class="btn btn-danger" onclick="deleteBook({{ p.id }})">Xóa</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
+
                     </tbody>
                 </table>
             </div>
@@ -141,7 +131,6 @@ function checkConf(){
         alert(`Số lượng nhập phải lớn hơn hoặc bằng ${maxStockForImport}`);
         return false;
     }
-
     return true;
 }
 

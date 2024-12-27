@@ -98,9 +98,7 @@ class StatsView(AuthenticatedBaseView):
     @expose("/")
     def index(self):
         month = request.args.get('month', default=None, type=int)
-        print(month)
         year = request.args.get('year', default=datetime.now().year, type=int)
-        print(year)
         if month:
             stats = dao.revenue_stats_by_time(time='month', year=year, month=month)
             stats2 = dao.stat_book_by_month_and_year(time='month',year=year, month=month)
@@ -117,10 +115,6 @@ class StatsView(AuthenticatedBaseView):
 
 class LapHoaDon(AuthenticatedBaseView):
     required_permission = "create_order"  # Quyền cần thiết
-
-    def is_accessible(self):
-        return current_user.is_authenticated and current_user.role.name in ["Sales", "Admin"]
-
     @expose("/")
     def index(self):
         data = dao.load_book()
@@ -130,10 +124,6 @@ class LapHoaDon(AuthenticatedBaseView):
 
 class LapPhieuNhap(AuthenticatedBaseView):
     required_permission = "create_import_slip"  # Quyền cần thiết
-
-    def is_accessible(self):
-        return current_user.is_authenticated and current_user.role.name in ["Storekeeper", "Admin"]
-
     @expose("/")
     def index(self):
         data = dao.load_book()
